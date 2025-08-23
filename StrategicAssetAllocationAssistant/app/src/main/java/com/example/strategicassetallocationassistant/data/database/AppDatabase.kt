@@ -14,20 +14,14 @@ import com.example.strategicassetallocationassistant.data.database.dao.*
  * 
  * 包含以下表：
  * - assets: 资产主表
- * - stock_positions: 股票持仓表
- * - offshore_fund_positions: 场外基金持仓表
- * - money_fund_positions: 货币基金持仓表
  * - portfolio: 投资组合表（现金信息）
  */
 @Database(
     entities = [
         AssetEntity::class,
-        StockPositionEntity::class,
-        OffshoreFundPositionEntity::class,
-        MoneyFundPositionEntity::class,
         PortfolioEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -35,9 +29,6 @@ abstract class AppDatabase : RoomDatabase() {
     
     // DAO 接口
     abstract fun assetDao(): AssetDao
-    abstract fun stockPositionDao(): StockPositionDao
-    abstract fun offshoreFundPositionDao(): OffshoreFundPositionDao
-    abstract fun moneyFundPositionDao(): MoneyFundPositionDao
     abstract fun portfolioDao(): PortfolioDao
     
     companion object {

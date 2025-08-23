@@ -3,6 +3,8 @@ package com.example.strategicassetallocationassistant.data.database.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.strategicassetallocationassistant.AssetType
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 /**
@@ -15,7 +17,13 @@ data class AssetEntity(
     val id: String,           // UUID转换为String存储
     val name: String,         // 资产名称
     val type: AssetType,      // 资产类型
-    val targetWeight: Double  // 目标占比
+    val targetWeight: Double,  // 目标占比
+
+    // 持仓信息
+    val code: String?,
+    val shares: Double?,
+    val unitValue: Double?,
+    val lastUpdateTime: java.time.LocalDateTime?
 ) {
     companion object {
         /**
@@ -25,13 +33,21 @@ data class AssetEntity(
             id: UUID,
             name: String,
             type: AssetType,
-            targetWeight: Double
+            targetWeight: Double,
+            code: String?,
+            shares: Double?,
+            unitValue: Double?,
+            lastUpdateTime: LocalDateTime?
         ): AssetEntity {
             return AssetEntity(
                 id = id.toString(),
                 name = name,
                 type = type,
-                targetWeight = targetWeight
+                targetWeight = targetWeight,
+                code = code,
+                shares = shares,
+                unitValue = unitValue,
+                lastUpdateTime = lastUpdateTime
             )
         }
     }

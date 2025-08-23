@@ -61,12 +61,8 @@
     - 数据库设计：多表方案
         - **设计思路**：采用多表设计，将不同类型的持仓信息分别存储在独立的表中，通过外键关联
         - **表结构**：
-            - `assets`表（主表）：id(UUID), name, type, targetWeight
-            - `stock_positions`表：asset_id(外键), code, shares, marketValue, lastUpdateTime
-            - `offshore_fund_positions`表：asset_id(外键), code, shares, netValue, lastUpdateTime
-            - `money_fund_positions`表：asset_id(外键), code, shares, lastUpdateTime
+            - `assets`表（主表）：id(UUID), name, type, targetWeight, code, shares, value, lastUpdateTime
             - `portfolio`表：cash(Double)
-        - **外键关系**：各Position表的asset_id字段作为外键指向assets表的id字段
         - **优势**：数据规范化、类型安全、扩展性好、查询效率高、数据完整性保证
         - **映射关系**：Repository负责在Domain对象与Room Entity之间转换
     - [x] 创建Entity,DAO和数据库类

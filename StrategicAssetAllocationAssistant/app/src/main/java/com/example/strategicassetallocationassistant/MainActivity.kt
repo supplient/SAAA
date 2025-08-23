@@ -63,13 +63,12 @@ class PortfolioViewModel : ViewModel() {
         val now = LocalDateTime.now()
 
         val sampleAssets = listOf(
-            // 股票组合（这是一个没有position的资产，其价值为0）
+            // 股票组合（空持仓）
             Asset(
                 id = UUID.randomUUID(),
                 name = "股票组合",
                 type = AssetType.STOCK,
-                targetWeight = 0.30, // 30%
-                position = null
+                targetWeight = 0.30
             ),
             // 股票1
             Asset(
@@ -77,12 +76,10 @@ class PortfolioViewModel : ViewModel() {
                 name = "腾讯控股",
                 type = AssetType.STOCK,
                 targetWeight = 0.15,
-                position = StockPosition(
-                    code = "00700",
-                    lastUpdateTime = now.minusHours(1),
-                    shares = 200.0,
-                    marketValue = 380.0
-                )
+                code = "00700",
+                shares = 200.0,
+                unitValue = 380.0,
+                lastUpdateTime = now.minusHours(1)
             ),
             // 股票2
             Asset(
@@ -90,37 +87,32 @@ class PortfolioViewModel : ViewModel() {
                 name = "阿里巴巴",
                 type = AssetType.STOCK,
                 targetWeight = 0.15,
-                position = StockPosition(
-                    code = "09988",
-                    lastUpdateTime = now.minusHours(1),
-                    shares = 300.0,
-                    marketValue = 85.0
-                )
+                code = "09988",
+                shares = 300.0,
+                unitValue = 85.0,
+                lastUpdateTime = now.minusHours(1)
             ),
             // 场外基金
             Asset(
                 id = UUID.randomUUID(),
                 name = "易方达蓝筹精选混合",
                 type = AssetType.OFFSHORE_FUND,
-                targetWeight = 0.30, // 30%
-                position = OffshoreFundPosition(
-                    code = "005827",
-                    lastUpdateTime = now.minusDays(1),
-                    shares = 1000.0,
-                    netValue = 2.15
-                )
+                targetWeight = 0.30,
+                code = "005827",
+                shares = 1000.0,
+                unitValue = 2.15,
+                lastUpdateTime = now.minusDays(1)
             ),
             // 货币基金
             Asset(
                 id = UUID.randomUUID(),
                 name = "余额宝货币基金",
                 type = AssetType.MONEY_FUND,
-                targetWeight = 0.10, // 10%
-                position = MoneyFundPosition(
-                    code = "000198",
-                    lastUpdateTime = now.minusDays(1),
-                    shares = 50000.0
-                )
+                targetWeight = 0.10,
+                code = "000198",
+                shares = 50000.0,
+                unitValue = 1.0,
+                lastUpdateTime = now.minusDays(1)
             )
         )
 
@@ -174,52 +166,24 @@ fun AssetItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 持仓信息（根据类型显示不同信息）
-            asset.position?.let { position ->
-                // 显示资产代码
-                Text(
-                    text = "资产代码: ${position.code}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                // 根据具体类型显示详细信息
-                when (position) {
-                    is MoneyFundPosition -> {
-                        Text(
-                            text = "份额: ${position.shares}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    is OffshoreFundPosition -> {
-                        Text(
-                            text = "份额: ${position.shares}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "净值: ${position.netValue}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    is StockPosition -> {
-                        Text(
-                            text = "持股数量: ${position.shares}股",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "每股价格: ¥${position.marketValue}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+            // 持仓信息显示
+            asset.code?.let {
+                Text("资产代码: $it", style = MaterialTheme.typography.bodyMedium)
+            }
+            asset.shares?.let {
+                Text("份额: $it", style = MaterialTheme.typography.bodyMedium)
+            }
+            when (asset.type) {
+                AssetType.STOCK -> asset.unitValue?.let {
+                    Text("每股价格: ¥$it", style = MaterialTheme.typography.bodyMedium)
                 }
-
-                // 显示更新时间（所有Position都有的共同属性）
-                Text(
-                    text = "更新时间: ${position.lastUpdateTime}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                AssetType.OFFSHORE_FUND -> asset.unitValue?.let {
+                    Text("净值: $it", style = MaterialTheme.typography.bodyMedium)
+                }
+                else -> {}
+            }
+            asset.lastUpdateTime?.let {
+                Text("更新时间: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(8.dp))

@@ -61,47 +61,6 @@ enum class AssetType {
     STOCK            // 场内股票
 }
 
-// 持仓信息基类
-@Serializable
-abstract class Position() {
-	abstract val code: String
-	abstract @Contextual val lastUpdateTime: LocalDateTime
-    // 计算当前市值（由具体子类实现）
-    abstract fun calculateCurrentMarketValue(): Double
-}
-
-// 货币基金持仓信息
-@Serializable
-data class MoneyFundPosition(
-    override val code: String,                   // 基金代码
-    override @Contextual val lastUpdateTime: LocalDateTime, // 份额更新时间
-    val shares: Double             // 份额
-) : Position() {
-    override fun calculateCurrentMarketValue(): Double = shares  // 货币基金份额直接等于市值
-}
-
-// 场外基金持仓信息
-@Serializable
-data class OffshoreFundPosition(
-    override val code: String,                   // 基金代码
-    override @Contextual val lastUpdateTime: LocalDateTime, // 净值更新时间
-    val shares: Double,             // 份额
-    val netValue: Double           // 净值
-) : Position() {
-    override fun calculateCurrentMarketValue(): Double = shares * netValue
-}
-
-// 场内股票持仓信息
-@Serializable
-data class StockPosition(
-    override val code: String,                   // 股票代码
-    override @Contextual val lastUpdateTime: LocalDateTime, // 市值更新时间
-    val shares: Double,             // 份额（股数）
-    val marketValue: Double        // 市值（每股价格）
-) : Position() {
-    override fun calculateCurrentMarketValue(): Double = shares * marketValue
-}
-
 // 资产数据模型
 @Serializable
 data class Asset(
@@ -109,11 +68,17 @@ data class Asset(
     val name: String,               // 资产名称
     val type: AssetType,            // 资产类型
     val targetWeight: Double,       // 目标占比（0.0-1.0）
-    val position: Position?         // 持仓信息
+    val code: String? = null,                       // 资产代码：基金编号或股票编号
+    val shares: Double? = null,                    // 份额/股数
+    val unitValue: Double? = null,                 // 单位价格：货币基金恒为1，股票为每股价格，基金为净值
+    @Contextual val lastUpdateTime: LocalDateTime? = null  // 数据最后更新时间
 ) {
-    // 计算当前市场价值，直接转发调用Position的计算方法
+    // 计算当前市场价值
     val currentMarketValue: Double
-        get() = position?.calculateCurrentMarketValue() ?: 0.0
+        get() = (shares ?: 0.0) * (unitValue ?: when (type) {
+            AssetType.MONEY_FUND -> 1.0
+            else -> 0.0
+        })
 }
 
 // 资产配置的顶层数据结构，包含所有资产和一个总的现金账户。
