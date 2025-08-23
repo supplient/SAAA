@@ -12,7 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.strategicassetallocationassistant.ui.theme.StrategicAssetAllocationAssistantTheme
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.strategicassetallocationassistant.data.database.AppDatabase
+import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
@@ -113,7 +117,7 @@ fun AssetItem(
 // 主屏幕组件
 @Composable
 fun AssetListScreen(
-    viewModel: PortfolioViewModel = viewModel(),
+    viewModel: PortfolioViewModel,
     modifier: Modifier = Modifier
 ) {
     val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
@@ -182,7 +186,28 @@ class MainActivity : ComponentActivity() {
         setContent {
             StrategicAssetAllocationAssistantTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    // 手动构造 Repository -> ViewModel
+                    val context = this@MainActivity
+                    val db = remember { AppDatabase.getDatabase(context) }
+                    val repository = remember { PortfolioRepository(db.assetDao(), db.portfolioDao()) }
+
+                    // 自定义 ViewModelFactory
+                    val vmFactory = remember(repository) {
+                        object : ViewModelProvider.Factory {
+                            @Suppress("UNCHECKED_CAST")
+                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                if (modelClass.isAssignableFrom(PortfolioViewModel::class.java)) {
+                                    return PortfolioViewModel(repository) as T
+                                }
+                                throw IllegalArgumentException("Unknown ViewModel class")
+                            }
+                        }
+                    }
+
+                    val viewModel: PortfolioViewModel = viewModel(factory = vmFactory)
+
                     AssetListScreen(
+                        viewModel = viewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

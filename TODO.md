@@ -67,9 +67,9 @@
         - **映射关系**：Repository负责在Domain对象与Room Entity之间转换
     - [x] 创建Entity,DAO和数据库类
 - [x] **2.2. 创建数据仓库:** 实现 `PortfolioRepository`，用于从 Room 数据库中读取资产数据。
-- [ ] **2.3. 更新 ViewModel:** 修改 `PortfolioViewModel`，通过仓库从数据库异步加载资产列表（使用 `Flow`）。
-- [ ] **2.4. 数据库预填充:** 实现一个一次性逻辑，在数据库首次创建时，向其中插入一些初始的样本数据。
-- [ ] **2.5. 运行与验证:** 运行应用，确认显示的资产数据是从数据库加载的。可以使用 Android Studio 的 **Database Inspector** 查看数据库内容。
+- [x] **2.3. 更新 ViewModel:** 修改 `PortfolioViewModel`，通过仓库从数据库异步加载资产列表（使用 `Flow`）。
+- [x] **2.4. 数据库预填充:** 实现一个一次性逻辑，在数据库首次创建时，向其中插入一些初始的样本数据。
+- [x] **2.5. 运行与验证:** 运行应用，确认显示的资产数据是从数据库加载的。可以使用 Android Studio 的 **Database Inspector** 查看数据库内容。
 
 ### 里程碑 3: 资产的增删改功能
 
