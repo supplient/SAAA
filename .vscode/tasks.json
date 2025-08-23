@@ -123,6 +123,105 @@
             },
             "problemMatcher": [],
             "detail": "查看所有可用的Gradle任务"
+        },
+        {
+            "label": "AVD: List Available Devices",
+            "type": "shell",
+            "command": "E:\\code\\Android\\Sdk\\emulator\\emulator.exe",
+            "args": ["-list-avds"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "列出所有可用的Android虚拟设备"
+        },
+        {
+            "label": "AVD: Start Emulator",
+            "type": "shell",
+            "command": "E:\\code\\Android\\Sdk\\emulator\\emulator.exe",
+            "args": ["-avd", "Honor_90_GT"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "isBackground": true,
+            "problemMatcher": [],
+            "detail": "启动指定的Android模拟器"
+        },
+        {
+            "label": "AVD: Kill All Emulators",
+            "type": "shell",
+            "command": "taskkill",
+            "args": ["/IM", "qemu-system-x86_64.exe", "/F"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "强制关闭所有运行中的模拟器进程"
+        },
+        {
+            "label": "Android: Debug Build & Install",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["installDebug"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "构建Debug版本并安装到连接的设备"
+        },
+        {
+            "label": "AVD: Start App on Device",
+            "type": "shell",
+            "command": "adb",
+            "args": ["shell", "am", "start", "-n", "com.example.strategicassetallocationassistant/.MainActivity"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "在设备或模拟器上启动应用"
+        },
+        {
+            "label": "Android: Deploy & Launch",
+            "dependsOn": [
+                "Android: Debug Build & Install",
+                "AVD: Start App on Device"
+            ],
+            "dependsOrder": "sequence",
+            "group": "build",
+            "detail": "依次执行：构建Debug版本并安装 → 启动应用"
         }
     ]
 }

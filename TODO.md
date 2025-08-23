@@ -45,8 +45,12 @@
 - [x] **1.4. 运行应用:** 在 Android 模拟器上编译并运行应用，验证列表是否正确显示。
 - [x] 迭代改进
 	- [x] ID改为使用UUID
-- [x] 环境搭建
+- [ ] 环境搭建
 	- [x] 在cursor里实现编译，方便ai排查编译报错
+    - [ ] 在cursor里调试，因为开启android studio的话build目录的权限就会被锁上，导致没法在cursor里编译了
+        - [x] avd启动
+        - [x] 安装apk到avd上
+        - [ ] 从cursor连接到avd上进行调试
 
 ### 里程碑 2: 本地数据持久化与展示
 
@@ -55,6 +59,17 @@
 - [ ] **2.1. 集成 Room 数据库:**
     - [ ] 添加 Room 依赖。
     - [ ] 创建 `AssetDao` 和数据库类。
+        - 数据库设计：多表方案
+            - **设计思路**：采用多表设计，将不同类型的持仓信息分别存储在独立的表中，通过外键关联
+            - **表结构**：
+                - `assets`表（主表）：id(UUID), name, type, targetWeight
+                - `stock_positions`表：asset_id(外键), code, shares, marketValue, lastUpdateTime
+                - `offshore_fund_positions`表：asset_id(外键), code, shares, netValue, lastUpdateTime
+                - `money_fund_positions`表：asset_id(外键), code, shares, lastUpdateTime
+                - `portfolio`表：cash(Double)
+            - **外键关系**：各Position表的asset_id字段作为外键指向assets表的id字段
+            - **优势**：数据规范化、类型安全、扩展性好、查询效率高、数据完整性保证
+            - **映射关系**：Repository负责在Domain对象与Room Entity之间转换
 - [ ] **2.2. 创建数据仓库:** 实现 `PortfolioRepository`，用于从 Room 数据库中读取资产数据。
 - [ ] **2.3. 更新 ViewModel:** 修改 `PortfolioViewModel`，通过仓库从数据库异步加载资产列表（使用 `Flow`）。
 - [ ] **2.4. 数据库预填充:** 实现一个一次性逻辑，在数据库首次创建时，向其中插入一些初始的样本数据。
