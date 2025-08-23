@@ -37,12 +37,12 @@
 	- [x] 验证项目初始化，跑通Android Studio里的编译->调试流程
 		- 成功：![](pic/2025-08-23-14-33-19.png)
 	- [x] 确认是否包含Jetpack Compose
-- [ ] **1.2. 定义核心数据模型:** 仅创建 `Asset` 数据类。
-- [ ] **1.3. 创建UI和ViewModel:**
-    - [ ] 创建一个 `PortfolioViewModel`。
-    - [ ] 在 ViewModel 中创建一个硬编码的 `Asset` 列表（例如2-3个样本资产）。
-    - [ ] 创建一个主屏幕 Composable，使用 `LazyColumn` 从 ViewModel 获取并显示这个静态列表。
-- [ ] **1.4. 运行应用:** 在 Android 模拟器上编译并运行应用，验证列表是否正确显示。
+- [x] **1.2. 定义核心数据模型:** 仅创建 `Asset` 数据类。
+- [x] **1.3. 创建UI和ViewModel:**
+    - [x] 创建一个 `PortfolioViewModel`。
+    - [x] 在 ViewModel 中创建一个硬编码的 `Asset` 列表（例如2-3个样本资产）。
+    - [x] 创建一个主屏幕 Composable，使用 `LazyColumn` 从 ViewModel 获取并显示这个静态列表。
+- [x] **1.4. 运行应用:** 在 Android 模拟器上编译并运行应用，验证列表是否正确显示。
 
 ### 里程碑 2: 本地数据持久化与展示
 

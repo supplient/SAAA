@@ -12,9 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.strategicassetallocationassistant.ui.theme.StrategicAssetAllocationAssistantTheme
-import kotlinx.serialization.Serializable
-import java.time.LocalDateTime
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,186 +23,120 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-
-// 资产类型枚举
-enum class AssetType {
-    MONEY_FUND,      // 货币基金
-    OFFSHORE_FUND,   // 场外基金
-    STOCK,           // 场内股票
-    ASSET_PACKAGE    // 资产包
-}
-
-// 货币基金持仓信息
-@Serializable
-data class MoneyFundPosition(
-    val fundCode: String,           // 基金编号
-    val shares: Double,             // 份额
-    val lastUpdateTime: LocalDateTime  // 份额更新时间
-)
-
-// 场外基金持仓信息
-@Serializable
-data class OffshoreFundPosition(
-    val fundCode: String,           // 基金编号
-    val shares: Double,             // 份额
-    val netValue: Double,           // 净值
-    val lastUpdateTime: LocalDateTime  // 净值更新时间
-)
-
-// 场内股票持仓信息
-@Serializable
-data class StockPosition(
-    val stockCode: String,          // 股票编号
-    val shares: Double,             // 份额（股数）
-    val marketValue: Double,        // 市值（每股价格）
-    val lastUpdateTime: LocalDateTime  // 市值更新时间
-)
-
-// 资产数据模型
-@Serializable
-data class Asset(
-    val id: String,                 // 资产ID
-    val name: String,               // 资产名称
-    val parentId: String?,          // 父级资产ID
-    val type: AssetType,            // 资产类型
-    val targetWeight: Double,       // 目标占比（0.0-1.0）
-    val moneyFundPosition: MoneyFundPosition? = null,      // 货币基金持仓信息
-    val offshoreFundPosition: OffshoreFundPosition? = null, // 场外基金持仓信息
-    val stockPosition: StockPosition? = null,              // 股票持仓信息
-    val cash: Double? = null        // 现金金额（仅对现金资产有效）
-) {
-    // 计算当前市场价值
-    val currentMarketValue: Double
-        get() = when (type) {
-            AssetType.MONEY_FUND -> moneyFundPosition?.shares ?: 0.0
-            AssetType.OFFSHORE_FUND -> {
-                val position = offshoreFundPosition
-                if (position != null) position.shares * position.netValue else 0.0
-            }
-            AssetType.STOCK -> {
-                val position = stockPosition
-                if (position != null) position.shares * position.marketValue else 0.0
-            }
-            AssetType.ASSET_PACKAGE -> cash ?: 0.0
-        }
-}
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDateTime
 
 // 投资组合ViewModel
 class PortfolioViewModel : ViewModel() {
 
-    // 硬编码的样本资产数据
-    private val _assets = MutableStateFlow<List<Asset>>(createSampleAssets())
-    val assets: StateFlow<List<Asset>> = _assets.asStateFlow()
+    private val _portfolio = MutableStateFlow(createSamplePortfolio())
+    val portfolioState: StateFlow<Portfolio> = _portfolio.asStateFlow()
 
-    // 创建样本资产数据
-    private fun createSampleAssets(): List<Asset> {
+    // 从顶层Portfolio StateFlow中派生出资产列表的Flow
+    private val assets: StateFlow<List<Asset>> = portfolioState.map { it.assets }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    // 当资产列表更新时，自动计算每个资产的市值，并创建一个ID到市值的映射
+    val assetId2Value: StateFlow<Map<String, Double>> = assets.map { assetList ->
+        assetList.associate { asset ->
+            asset.id to asset.currentMarketValue
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyMap()
+    )
+
+    // 创建样本投资组合数据
+    private fun createSamplePortfolio(): Portfolio {
         val now = LocalDateTime.now()
 
-        return listOf(
-            // 现金资产
+        val sampleAssets = listOf(
+            // 股票组合（这是一个没有position的资产，其价值为0）
             Asset(
-                id = "cash_001",
-                name = "现金",
-                parentId = null,
-                type = AssetType.ASSET_PACKAGE,
-                targetWeight = 0.05, // 5%
-                cash = 10000.0
+                id = "stock_package_001",
+                name = "股票组合",
+                type = AssetType.STOCK,
+                targetWeight = 0.30, // 30%
+                position = null
             ),
-
-            // 货币基金
+            // 股票1
             Asset(
-                id = "fund_001",
-                name = "余额宝货币基金",
-                parentId = null,
-                type = AssetType.MONEY_FUND,
-                targetWeight = 0.10, // 10%
-                moneyFundPosition = MoneyFundPosition(
-                    fundCode = "000198",
-                    shares = 50000.0,
-                    lastUpdateTime = now.minusDays(1)
+                id = "stock_002",
+                name = "腾讯控股",
+                type = AssetType.STOCK,
+                targetWeight = 0.15,
+                position = StockPosition(
+                    code = "00700",
+                    lastUpdateTime = now.minusHours(1),
+                    shares = 200.0,
+                    marketValue = 380.0
                 )
             ),
-
+            // 股票2
+            Asset(
+                id = "stock_003",
+                name = "阿里巴巴",
+                type = AssetType.STOCK,
+                targetWeight = 0.15,
+                position = StockPosition(
+                    code = "09988",
+                    lastUpdateTime = now.minusHours(1),
+                    shares = 300.0,
+                    marketValue = 85.0
+                )
+            ),
             // 场外基金
             Asset(
                 id = "offshore_fund_001",
                 name = "易方达蓝筹精选混合",
-                parentId = null,
                 type = AssetType.OFFSHORE_FUND,
                 targetWeight = 0.30, // 30%
-                offshoreFundPosition = OffshoreFundPosition(
-                    fundCode = "005827",
+                position = OffshoreFundPosition(
+                    code = "005827",
+                    lastUpdateTime = now.minusDays(1),
                     shares = 1000.0,
-                    netValue = 2.15,
-                    lastUpdateTime = now.minusDays(1)
+                    netValue = 2.15
                 )
             ),
-
-            // 场内股票
+            // 货币基金
             Asset(
-                id = "stock_001",
-                name = "贵州茅台",
-                parentId = null,
-                type = AssetType.STOCK,
-                targetWeight = 0.25, // 25%
-                stockPosition = StockPosition(
-                    stockCode = "600519",
-                    shares = 100.0,
-                    marketValue = 1650.0,
-                    lastUpdateTime = now.minusHours(2)
-                )
-            ),
-
-            // 股票资产包（包含多只股票）
-            Asset(
-                id = "stock_package_001",
-                name = "股票组合",
-                parentId = null,
-                type = AssetType.ASSET_PACKAGE,
-                targetWeight = 0.30, // 30%
-                cash = 150000.0
-            ),
-
-            // 股票包下的子股票
-            Asset(
-                id = "stock_002",
-                name = "腾讯控股",
-                parentId = "stock_package_001",
-                type = AssetType.STOCK,
-                targetWeight = 0.15,
-                stockPosition = StockPosition(
-                    stockCode = "00700",
-                    shares = 200.0,
-                    marketValue = 380.0,
-                    lastUpdateTime = now.minusHours(1)
-                )
-            ),
-
-            Asset(
-                id = "stock_003",
-                name = "阿里巴巴",
-                parentId = "stock_package_001",
-                type = AssetType.STOCK,
-                targetWeight = 0.15,
-                stockPosition = StockPosition(
-                    stockCode = "09988",
-                    shares = 300.0,
-                    marketValue = 85.0,
-                    lastUpdateTime = now.minusHours(1)
+                id = "fund_001",
+                name = "余额宝货币基金",
+                type = AssetType.MONEY_FUND,
+                targetWeight = 0.10, // 10%
+                position = MoneyFundPosition(
+                    code = "000198",
+                    lastUpdateTime = now.minusDays(1),
+                    shares = 50000.0
                 )
             )
+        )
+
+        return Portfolio(
+            assets = sampleAssets,
+            cash = 10000.0 // 顶层现金
         )
     }
 }
 
 // 显示单个资产的组件
 @Composable
-fun AssetItem(asset: Asset, modifier: Modifier = Modifier) {
+fun AssetItem(
+    asset: Asset,
+    marketValue: Double, // 直接接收预先计算好的市值
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -232,7 +165,6 @@ fun AssetItem(asset: Asset, modifier: Modifier = Modifier) {
                         AssetType.MONEY_FUND -> "货币基金"
                         AssetType.OFFSHORE_FUND -> "场外基金"
                         AssetType.STOCK -> "股票"
-                        AssetType.ASSET_PACKAGE -> "资产包"
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -247,44 +179,26 @@ fun AssetItem(asset: Asset, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-            // 父级资产ID（如果有）
-            asset.parentId?.let {
-                Text(
-                    text = "父级ID: $it",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             // 持仓信息（根据类型显示不同信息）
-            when (asset.type) {
-                AssetType.MONEY_FUND -> {
-                    asset.moneyFundPosition?.let { position ->
-                        Text(
-                            text = "基金代码: ${position.fundCode}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+            asset.position?.let { position ->
+                // 显示资产代码
+                Text(
+                    text = "资产代码: ${position.code}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                // 根据具体类型显示详细信息
+                when (position) {
+                    is MoneyFundPosition -> {
                         Text(
                             text = "份额: ${position.shares}",
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        Text(
-                            text = "更新时间: ${position.lastUpdateTime}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
-                }
 
-                AssetType.OFFSHORE_FUND -> {
-                    asset.offshoreFundPosition?.let { position ->
-                        Text(
-                            text = "基金代码: ${position.fundCode}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    is OffshoreFundPosition -> {
                         Text(
                             text = "份额: ${position.shares}",
                             style = MaterialTheme.typography.bodyMedium
@@ -293,20 +207,9 @@ fun AssetItem(asset: Asset, modifier: Modifier = Modifier) {
                             text = "净值: ${position.netValue}",
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        Text(
-                            text = "更新时间: ${position.lastUpdateTime}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
-                }
 
-                AssetType.STOCK -> {
-                    asset.stockPosition?.let { position ->
-                        Text(
-                            text = "股票代码: ${position.stockCode}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    is StockPosition -> {
                         Text(
                             text = "持股数量: ${position.shares}股",
                             style = MaterialTheme.typography.bodyMedium
@@ -315,22 +218,15 @@ fun AssetItem(asset: Asset, modifier: Modifier = Modifier) {
                             text = "每股价格: ¥${position.marketValue}",
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        Text(
-                            text = "更新时间: ${position.lastUpdateTime}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
 
-                AssetType.ASSET_PACKAGE -> {
-                    asset.cash?.let { cash ->
-                        Text(
-                            text = "现金金额: ¥${cash}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
+                // 显示更新时间（所有Position都有的共同属性）
+                Text(
+                    text = "更新时间: ${position.lastUpdateTime}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -346,7 +242,7 @@ fun AssetItem(asset: Asset, modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "市值: ¥${String.format("%.2f", asset.currentMarketValue)}",
+                    text = "市值: ¥${String.format("%.2f", marketValue)}", // 使用传入的市值
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -362,7 +258,8 @@ fun AssetListScreen(
     viewModel: PortfolioViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
-    val assets by viewModel.assets.collectAsState()
+    val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
+    val assetId2Value by viewModel.assetId2Value.collectAsState() // 获取市值映射表
 
     Column(
         modifier = modifier
@@ -378,12 +275,43 @@ fun AssetListScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
+        // 显示总现金
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "可用现金",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "¥${String.format("%.2f", portfolio.cash)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+
         // 资产列表
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
-            items(assets) { asset ->
-                AssetItem(asset = asset)
+            items(portfolio.assets) { asset -> // 使用从Portfolio中解构出的assets列表
+                // 从映射表中查找当前资产的市值，如果找不到则默认为0.0
+                val value = assetId2Value[asset.id] ?: 0.0
+                AssetItem(asset = asset, marketValue = value)
             }
         }
     }
@@ -402,21 +330,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    StrategicAssetAllocationAssistantTheme {
-        Greeting("Android")
     }
 }
