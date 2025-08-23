@@ -1,0 +1,128 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Android: Assemble Debug",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["assembleDebug"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "编译Debug版本APK - 快速开发测试"
+        },
+        {
+            "label": "Android: Assemble Release",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["assembleRelease"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "编译Release版本APK - 用于发布"
+        },
+        {
+            "label": "Android: Build (Complete)",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["build"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "完整构建 - 包含测试和代码检查"
+        },
+        {
+            "label": "Android: Clean",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["clean"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "清理构建缓存和输出文件"
+        },
+        {
+            "label": "Android: Clean Build",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["clean", "build"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "清理后完整重新构建"
+        },
+        {
+            "label": "Android: List Tasks",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["tasks"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "查看所有可用的Gradle任务"
+        }
+    ]
+}

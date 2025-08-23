@@ -1,4 +1,0 @@
----
-alwaysApply: true
----
-Do not use gradle to compile. I'll do this in Android Studio
