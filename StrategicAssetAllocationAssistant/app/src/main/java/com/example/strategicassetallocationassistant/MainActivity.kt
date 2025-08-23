@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDateTime
+import java.util.UUID
 
 // 投资组合ViewModel
 class PortfolioViewModel : ViewModel() {
@@ -47,7 +48,7 @@ class PortfolioViewModel : ViewModel() {
         )
 
     // 当资产列表更新时，自动计算每个资产的市值，并创建一个ID到市值的映射
-    val assetId2Value: StateFlow<Map<String, Double>> = assets.map { assetList ->
+    val assetId2Value: StateFlow<Map<UUID, Double>> = assets.map { assetList ->
         assetList.associate { asset ->
             asset.id to asset.currentMarketValue
         }
@@ -64,7 +65,7 @@ class PortfolioViewModel : ViewModel() {
         val sampleAssets = listOf(
             // 股票组合（这是一个没有position的资产，其价值为0）
             Asset(
-                id = "stock_package_001",
+                id = UUID.randomUUID(),
                 name = "股票组合",
                 type = AssetType.STOCK,
                 targetWeight = 0.30, // 30%
@@ -72,7 +73,7 @@ class PortfolioViewModel : ViewModel() {
             ),
             // 股票1
             Asset(
-                id = "stock_002",
+                id = UUID.randomUUID(),
                 name = "腾讯控股",
                 type = AssetType.STOCK,
                 targetWeight = 0.15,
@@ -85,7 +86,7 @@ class PortfolioViewModel : ViewModel() {
             ),
             // 股票2
             Asset(
-                id = "stock_003",
+                id = UUID.randomUUID(),
                 name = "阿里巴巴",
                 type = AssetType.STOCK,
                 targetWeight = 0.15,
@@ -98,7 +99,7 @@ class PortfolioViewModel : ViewModel() {
             ),
             // 场外基金
             Asset(
-                id = "offshore_fund_001",
+                id = UUID.randomUUID(),
                 name = "易方达蓝筹精选混合",
                 type = AssetType.OFFSHORE_FUND,
                 targetWeight = 0.30, // 30%
@@ -111,7 +112,7 @@ class PortfolioViewModel : ViewModel() {
             ),
             // 货币基金
             Asset(
-                id = "fund_001",
+                id = UUID.randomUUID(),
                 name = "余额宝货币基金",
                 type = AssetType.MONEY_FUND,
                 targetWeight = 0.10, // 10%
@@ -171,14 +172,6 @@ fun AssetItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 资产ID
-            Text(
-                text = "ID: ${asset.id}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
             Spacer(modifier = Modifier.height(8.dp))
 
             // 持仓信息（根据类型显示不同信息）

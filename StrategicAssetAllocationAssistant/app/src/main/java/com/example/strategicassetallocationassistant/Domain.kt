@@ -13,6 +13,7 @@ import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 // Custom serializer for LocalDateTime
 object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
@@ -27,9 +28,23 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
     }
 }
 
-// Serialization module for LocalDateTime
+// Custom serializer for UUID
+object UUIDSerializer : KSerializer<UUID> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: UUID) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): UUID {
+        return UUID.fromString(decoder.decodeString())
+    }
+}
+
+// Serialization module for LocalDateTime and UUID
 val serializationModule = SerializersModule {
     contextual(LocalDateTimeSerializer)
+    contextual(UUIDSerializer)
 }
 
 // JSON instance with custom LocalDateTime serializer
@@ -90,11 +105,11 @@ data class StockPosition(
 // 资产数据模型
 @Serializable
 data class Asset(
-    val id: String,                 // 资产ID
+    @Contextual val id: UUID,       // 资产ID (UUID)
     val name: String,               // 资产名称
     val type: AssetType,            // 资产类型
     val targetWeight: Double,       // 目标占比（0.0-1.0）
-    val position: Position?         // 持仓信息（对于资产包/分类，此项为null）
+    val position: Position?         // 持仓信息
 ) {
     // 计算当前市场价值，直接转发调用Position的计算方法
     val currentMarketValue: Double
