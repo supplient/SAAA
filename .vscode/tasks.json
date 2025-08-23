@@ -180,7 +180,10 @@
             "label": "Android: Debug Build",
             "type": "shell",
             "command": ".\\gradlew.bat",
-            "args": ["assembleDebug"],
+            "args": [
+                "assembleDebug",
+                "--info",
+            ],
             "options": {
                 "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
             },
@@ -194,7 +197,7 @@
                 "clear": false
             },
             "problemMatcher": [],
-            "detail": "构建Debug版本并安装到连接的设备"
+            "detail": "构建Debug版本"
         },
         {
             "label": "Android: Debug Install",
@@ -214,7 +217,7 @@
                 "clear": false
             },
             "problemMatcher": [],
-            "detail": "构建Debug版本并安装到连接的设备"
+            "detail": "安装Debug版本到连接的设备"
         },
         {
             "label": "AVD: Start App on Device",
