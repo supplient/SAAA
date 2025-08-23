@@ -177,7 +177,27 @@
             "detail": "强制关闭所有运行中的模拟器进程"
         },
         {
-            "label": "Android: Debug Build & Install",
+            "label": "Android: Debug Build",
+            "type": "shell",
+            "command": ".\\gradlew.bat",
+            "args": ["assembleDebug"],
+            "options": {
+                "cwd": "${workspaceFolder}/StrategicAssetAllocationAssistant"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": [],
+            "detail": "构建Debug版本并安装到连接的设备"
+        },
+        {
+            "label": "Android: Debug Install",
             "type": "shell",
             "command": ".\\gradlew.bat",
             "args": ["installDebug"],
@@ -216,7 +236,8 @@
         {
             "label": "Android: Deploy & Launch",
             "dependsOn": [
-                "Android: Debug Build & Install",
+                "Android: Debug Build",
+                "Android: Debug Install",
                 "AVD: Start App on Device"
             ],
             "dependsOrder": "sequence",
