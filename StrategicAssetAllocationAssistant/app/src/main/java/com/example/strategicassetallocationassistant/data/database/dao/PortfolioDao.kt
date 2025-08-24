@@ -40,6 +40,26 @@ interface PortfolioDao {
      */
     @Query("UPDATE portfolio SET cash = :cash WHERE id = 1")
     suspend fun updateCash(cash: Double)
+
+    /** 更新是否顺延标记 */
+    @Query("UPDATE portfolio SET isBuyOpportunityPostponed = :flag WHERE id = 1")
+    suspend fun updateBuyOpportunityPostponed(flag: Boolean)
+
+    /** 获取是否顺延标记 */
+    @Query("SELECT isBuyOpportunityPostponed FROM portfolio WHERE id = 1")
+    suspend fun getBuyOpportunityPostponed(): Boolean?
+
+    /**
+     * 更新上一次买入机会检查时间
+     */
+    @Query("UPDATE portfolio SET lastBuyOpportunityCheck = :time WHERE id = 1")
+    suspend fun updateLastBuyOpportunityCheck(time: java.time.LocalDateTime?)
+
+    /**
+     * 获取上一次买入机会检查时间
+     */
+    @Query("SELECT lastBuyOpportunityCheck FROM portfolio WHERE id = 1")
+    suspend fun getLastBuyOpportunityCheck(): java.time.LocalDateTime?
     
     /**
      * 删除投资组合信息

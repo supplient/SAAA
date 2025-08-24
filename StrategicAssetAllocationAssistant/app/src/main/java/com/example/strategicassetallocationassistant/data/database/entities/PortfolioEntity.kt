@@ -16,4 +16,8 @@ data class PortfolioEntity(
     val id: Int = 1,  // 固定ID，确保表中只有一条记录
     val cash: Double,  // 现金金额
     val note: String? = null
+    ,val isBuyOpportunityPostponed: Boolean = false
+    ,@Serializable(with = com.example.strategicassetallocationassistant.LocalDateTimeSerializer::class)
+    val lastBuyOpportunityCheck: java.time.LocalDateTime? = null,
+    val pendingBuyOpportunity: Boolean = false
 )

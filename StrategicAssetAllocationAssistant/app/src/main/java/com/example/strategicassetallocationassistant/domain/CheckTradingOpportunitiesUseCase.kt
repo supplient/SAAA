@@ -1,37 +1,41 @@
 package com.example.strategicassetallocationassistant.domain
 
-import com.example.strategicassetallocationassistant.TradeType
 import com.example.strategicassetallocationassistant.TradingOpportunity
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
-import java.util.UUID
-import javax.inject.Inject
 
 /**
- * 简单的交易机会检查用例：
- * 当前版本：固定为第一个资产生成一条示例机会。
+ * 检查投资组合中的资产偏离情况，生成买入/卖出交易机会。
+ * 规则来源：REQUIRE.md 中“交易机会规则”章节，做了简化：
+ * 1. 卖出机会：当某资产占比超过目标占比 0.4% 时，卖出超出部分的一半。
+ * 2. 买入机会：每周三 14:00 触发一次，买入距离目标占比最远且低于目标的资产。
+ *    买入金额按规则简化实现。
  */
 class CheckTradingOpportunitiesUseCase @Inject constructor(
-    private val repository: PortfolioRepository
+    private val repository: PortfolioRepository,
+    private val sellCalculator: SellOpportunityCalculator,
+    private val buyCalculator: BuyOpportunityCalculator,
+    private val windowChecker: BuyOpportunityWindowChecker
 ) {
     suspend operator fun invoke(): List<TradingOpportunity> = withContext(Dispatchers.IO) {
         val portfolio = repository.getPortfolioOnce()
-        val first = portfolio.assets.firstOrNull() ?: return@withContext emptyList()
+        val opportunities = mutableListOf<TradingOpportunity>()
+
+        // 卖出机会
+        opportunities += sellCalculator.calculate(portfolio)
+
+        // 买入机会窗口判断
         val now = LocalDateTime.now()
-        val suggestion = TradingOpportunity(
-            id = UUID.randomUUID(),
-            assetId = first.id,
-            type = TradeType.BUY,
-            shares = 10.0,
-            price = (first.unitValue ?: 1.0),
-            fee = 0.0,
-            amount = 10.0 * (first.unitValue ?: 1.0),
-            time = now,
-            reason = "示例机会：为 ${first.name} 买入 10 份以测试流程"
-        )
-        listOf(suggestion)
+        if (windowChecker.shouldTrigger(now, repository.getLastBuyOpportunityCheck())) {
+            opportunities += buyCalculator.calculate(portfolio)
+            // 更新检查时间
+            repository.updateLastBuyOpportunityCheck(now)
+        }
+
+        opportunities
     }
 }
 

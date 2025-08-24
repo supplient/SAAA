@@ -53,7 +53,7 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _priceInput = MutableStateFlow("")
     val priceInput: StateFlow<String> = _priceInput.asStateFlow()
 
-    private val _feeInput = MutableStateFlow("")
+    private val _feeInput = MutableStateFlow("5")
     val feeInput: StateFlow<String> = _feeInput.asStateFlow()
 
     private val _reasonInput = MutableStateFlow("")
@@ -139,7 +139,7 @@ class AddEditTransactionViewModel @Inject constructor(
     private fun buildTransaction(): Transaction? {
         val shares = _sharesInput.value.toDoubleOrNull() ?: return null
         val price = _priceInput.value.toDoubleOrNull() ?: return null
-        val fee = _feeInput.value.toDoubleOrNull() ?: 0.0
+        val fee = _feeInput.value.toDoubleOrNull() ?: 5.0
         val assetUuid = _selectedAssetId.value ?: return null // Asset is mandatory now
 
         val amount = shares * price + fee

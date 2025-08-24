@@ -232,6 +232,24 @@ class PortfolioRepository @Inject constructor(
         tradingOpportunityDao.deleteById(id.toString())
     }
 
+    /* -------------------- 买入机会顺延标记 -------------------- */
+
+    suspend fun isBuyOpportunityPostponed(): Boolean =
+        portfolioDao.getBuyOpportunityPostponed() ?: false
+
+    suspend fun setBuyOpportunityPostponed(flag: Boolean) {
+        portfolioDao.updateBuyOpportunityPostponed(flag)
+    }
+
+    /* ---------------------------- 买入机会检查时间 ---------------------------- */
+
+    suspend fun getLastBuyOpportunityCheck(): java.time.LocalDateTime? =
+        portfolioDao.getLastBuyOpportunityCheck()
+
+    suspend fun updateLastBuyOpportunityCheck(time: java.time.LocalDateTime?) {
+        portfolioDao.updateLastBuyOpportunityCheck(time)
+    }
+
     /* ---------------------------- 私有扩展 ---------------------------- */
 
     private fun AssetEntity.toDomain(): Asset = Asset(
