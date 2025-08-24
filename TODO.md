@@ -75,12 +75,14 @@
 
 **目标:** 实现用户手动添加、编辑和删除资产的功能。
 
-- [ ] **3.1. 创建导航:** 添加 Navigation Compose 依赖，设置主列表页和添加/编辑页之间的导航。
-- [ ] **3.2. 创建添加/编辑屏幕:**
-    - [ ] 设计一个表单 UI，用于输入资产信息。
-    - [ ] 创建对应的 `AddEditAssetViewModel`。
+- [x] **3.1. 创建导航:** 添加 Navigation Compose 依赖，设置主列表页和添加/编辑页之间的导航。
+- [x] **3.2. 创建添加/编辑屏幕:**
+    - [x] 设计一个表单 UI，用于输入资产信息。
+    - [x] 创建对应的 `AddEditAssetViewModel`
+        - 用于`AddEditAssetScreen`的临时数据存储，实现和UI的分离
+        - 当保存/取消编辑操作后，该view model里的数据就会被应用掉然后销毁
 - [ ] **3.3. 实现数据操作:**
-    - [ ] 在 `PortfolioRepository` 和 `AssetDao` 中添加 `insert`、`update`、`delete` 方法。
+    - [ ] 在 Repository和 DAO 中添加 `insert`、`update`、`delete` 方法，提供对数据库中Asset增删改的接口
     - [ ] 在 ViewModel 中调用这些方法来保存或删除资产。
 - [ ] **3.4. 运行与验证:** 运行应用，尝试添加一个新资产，编辑一个现有资产，然后删除它，确认所有操作都正确反映在主屏幕和数据库中。
 
