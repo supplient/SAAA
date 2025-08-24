@@ -33,9 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.material3.Checkbox
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.work.WorkManager
 import androidx.compose.material.icons.filled.List
 
 // 显示单个资产的组件
@@ -187,20 +184,6 @@ fun AssetListScreen(
                 IconButton(onClick = onOpenTransactions) {
                     Icon(imageVector = Icons.Default.List, contentDescription = "交易")
                 }
-                val context = androidx.compose.ui.platform.LocalContext.current
-                val isAutoRefreshEnabled = rememberSaveable { mutableStateOf(true) }
-                Checkbox(
-                    checked = isAutoRefreshEnabled.value,
-                    onCheckedChange = { checked ->
-                        isAutoRefreshEnabled.value = checked
-                        if (checked) {
-                            // schedule
-                            com.example.strategicassetallocationassistant.background.WorkScheduler.schedule(context)
-                        } else {
-                            WorkManager.getInstance(context).cancelUniqueWork("MarketDataSync")
-                        }
-                    }
-                )
                 IconButton(onClick = { viewModel.refreshMarketData() }) {
                     Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                 }
