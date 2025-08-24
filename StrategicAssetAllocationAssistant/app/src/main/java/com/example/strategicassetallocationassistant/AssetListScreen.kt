@@ -157,6 +157,12 @@ fun AssetItem(
                     color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
             }
+
+            // 备注
+            analysis.asset.note?.takeIf { it.isNotBlank() }?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = "备注: $it", style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }

@@ -14,5 +14,6 @@ import kotlinx.serialization.Serializable
 data class PortfolioEntity(
     @PrimaryKey
     val id: Int = 1,  // 固定ID，确保表中只有一条记录
-    val cash: Double  // 现金金额
+    val cash: Double,  // 现金金额
+    val note: String? = null
 )

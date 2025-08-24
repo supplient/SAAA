@@ -56,6 +56,9 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _feeInput = MutableStateFlow("")
     val feeInput: StateFlow<String> = _feeInput.asStateFlow()
 
+    private val _reasonInput = MutableStateFlow("")
+    val reasonInput: StateFlow<String> = _reasonInput.asStateFlow()
+
     private val editingTxId: UUID? = savedStateHandle.get<String>(ARG_TRANSACTION_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     private val fromOpportunityId: UUID? = savedStateHandle.get<String>(ARG_OPPORTUNITY_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     private val initialAssetId: UUID? = savedStateHandle.get<String>(ARG_ASSET_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
@@ -70,6 +73,7 @@ class AddEditTransactionViewModel @Inject constructor(
                     _sharesInput.value = tx.shares.toString()
                     _priceInput.value = tx.price.toString()
                     _feeInput.value = tx.fee.toString()
+                    _reasonInput.value = tx.reason.orEmpty()
                 }
             }
         }
@@ -84,6 +88,7 @@ class AddEditTransactionViewModel @Inject constructor(
                     _sharesInput.value = op.shares.toString()
                     _priceInput.value = op.price.toString()
                     _feeInput.value = op.fee.toString()
+                    _reasonInput.value = op.reason
                 }
             }
         }
@@ -107,6 +112,7 @@ class AddEditTransactionViewModel @Inject constructor(
     fun onSharesChange(value: String) { _sharesInput.value = value }
     fun onPriceChange(value: String) { _priceInput.value = value }
     fun onFeeChange(value: String) { _feeInput.value = value }
+    fun onReasonChange(value: String) { _reasonInput.value = value }
 
     suspend fun save(): Boolean {
         val tx = buildTransaction() ?: return false
@@ -145,7 +151,8 @@ class AddEditTransactionViewModel @Inject constructor(
             price = price,
             fee = fee,
             amount = amount,
-            time = LocalDateTime.now()
+            time = LocalDateTime.now(),
+            reason = _reasonInput.value.ifBlank { null }
         )
     }
 }

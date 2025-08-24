@@ -204,6 +204,14 @@ fun AddEditAssetScreen(
                 label = { Text("单位价格 / 净值") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // 备注
+            OutlinedTextField(
+                value = viewModel.note.collectAsState().value,
+                onValueChange = { viewModel.onNoteChange(it) },
+                label = { Text("备注") },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 

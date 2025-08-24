@@ -242,7 +242,8 @@ class PortfolioRepository @Inject constructor(
         code = code,
         shares = shares,
         unitValue = unitValue,
-        lastUpdateTime = lastUpdateTime
+        lastUpdateTime = lastUpdateTime,
+        note = note
     )
 
     private fun Asset.toEntity(): AssetEntity = AssetEntity.create(
@@ -253,7 +254,8 @@ class PortfolioRepository @Inject constructor(
         code = code,
         shares = shares,
         unitValue = unitValue,
-        lastUpdateTime = lastUpdateTime
+        lastUpdateTime = lastUpdateTime,
+        note = note
     )
 
     /**
@@ -275,7 +277,8 @@ class PortfolioRepository @Inject constructor(
         price = price,
         fee = fee,
         amount = amount,
-        time = time
+        time = time,
+        reason = reason
     )
 
     private fun Transaction.toEntity(): TransactionEntity = TransactionEntity.create(
@@ -286,7 +289,8 @@ class PortfolioRepository @Inject constructor(
         price = price,
         fee = fee,
         amount = amount,
-        time = time
+        time = time,
+        reason = reason
     )
 
     private fun TradingOpportunityEntity.toDomain(): com.example.strategicassetallocationassistant.TradingOpportunity =

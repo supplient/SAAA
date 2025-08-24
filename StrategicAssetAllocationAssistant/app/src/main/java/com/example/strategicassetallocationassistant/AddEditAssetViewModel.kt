@@ -51,6 +51,9 @@ class AddEditAssetViewModel @Inject constructor(
     private val _unitValueInput = MutableStateFlow("")
     val unitValueInput: StateFlow<String> = _unitValueInput.asStateFlow()
 
+    private val _note = MutableStateFlow("")
+    val note: StateFlow<String> = _note.asStateFlow()
+
     /** id == null means we are adding a new asset. Expose for UI to check mode. */
     val editingAssetId: UUID? = savedStateHandle.get<String>(ARG_ASSET_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
 
@@ -65,6 +68,7 @@ class AddEditAssetViewModel @Inject constructor(
                     _code.value = asset.code ?: ""
                     _sharesInput.value = asset.shares?.toString() ?: ""
                     _unitValueInput.value = asset.unitValue?.toString() ?: ""
+                    _note.value = asset.note.orEmpty()
                 }
             }
         }
@@ -78,6 +82,7 @@ class AddEditAssetViewModel @Inject constructor(
     fun onCodeChange(value: String) { _code.value = value }
     fun onSharesChange(value: String) { _sharesInput.value = value }
     fun onUnitValueChange(value: String) { _unitValueInput.value = value }
+    fun onNoteChange(value: String) { _note.value = value }
 
     /**
      * Persist the form. Returns true if success, false if validation failed.
@@ -115,7 +120,8 @@ class AddEditAssetViewModel @Inject constructor(
             code = _code.value.ifBlank { null },
             shares = shares,
             unitValue = unitValue,
-            lastUpdateTime = LocalDateTime.now()
+            lastUpdateTime = LocalDateTime.now(),
+            note = _note.value.ifBlank { null }
         )
     }
 }

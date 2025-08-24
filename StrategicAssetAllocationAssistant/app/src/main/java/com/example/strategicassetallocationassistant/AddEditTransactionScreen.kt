@@ -24,6 +24,7 @@ fun AddEditTransactionScreen(navController: NavController) {
     val shares by viewModel.sharesInput.collectAsState()
     val price by viewModel.priceInput.collectAsState()
     val fee by viewModel.feeInput.collectAsState()
+    val reason by viewModel.reasonInput.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     var typeExpanded by remember { mutableStateOf(false) }
@@ -83,7 +84,10 @@ fun AddEditTransactionScreen(navController: NavController) {
             }
             OutlinedTextField(value = shares, onValueChange = viewModel::onSharesChange, label = { Text("份额") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = price, onValueChange = viewModel::onPriceChange, label = { Text("价格") }, modifier = Modifier.fillMaxWidth())
+
             OutlinedTextField(value = fee, onValueChange = viewModel::onFeeChange, label = { Text("手续费") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(value = reason, onValueChange = viewModel::onReasonChange, label = { Text("交易理由 (可选)") }, modifier = Modifier.fillMaxWidth())
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = { navController.navigateUp() }) { Text("取消") }

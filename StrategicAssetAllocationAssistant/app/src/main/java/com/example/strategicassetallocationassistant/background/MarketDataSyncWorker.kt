@@ -52,7 +52,10 @@ class MarketDataSyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
-            updateMarketData()
+            // 更新市场数据并获取成功/失败统计
+            val stats = updateMarketData()
+            // 通知用户市场数据已刷新
+            NotificationHelper.notifyMarketDataUpdated(applicationContext, stats.success, stats.fail)
             // 检查交易机会并保存
             val ops = checkTradingOpportunities()
             if (ops.isNotEmpty()) {

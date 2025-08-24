@@ -18,7 +18,8 @@ data class TransactionEntity(
     val price: Double,
     val fee: Double,
     val amount: Double,
-    val time: LocalDateTime
+    val time: LocalDateTime,
+    val reason: String? = null
 ) {
     companion object {
         fun create(
@@ -29,7 +30,8 @@ data class TransactionEntity(
             price: Double,
             fee: Double,
             amount: Double,
-            time: LocalDateTime = LocalDateTime.now()
+            time: LocalDateTime = LocalDateTime.now(),
+            reason: String? = null
         ): TransactionEntity = TransactionEntity(
             id = id.toString(),
             assetId = assetId?.toString(),
@@ -38,7 +40,8 @@ data class TransactionEntity(
             price = price,
             fee = fee,
             amount = amount,
-            time = time
+            time = time,
+            reason = reason
         )
     }
 }

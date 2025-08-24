@@ -77,7 +77,8 @@ data class Asset(
     val code: String? = null,                       // 资产代码：基金编号或股票编号
     val shares: Double? = null,                    // 份额/股数
     val unitValue: Double? = null,                 // 单位价格：货币基金恒为1，股票为每股价格，基金为净值
-    @Contextual val lastUpdateTime: LocalDateTime? = null  // 数据最后更新时间
+    @Contextual val lastUpdateTime: LocalDateTime? = null,  // 数据最后更新时间
+    val note: String? = null                      // 备注
 ) {
     // 计算当前市场价值
     val currentMarketValue: Double
@@ -104,7 +105,8 @@ data class Transaction(
     val price: Double,
     val fee: Double,
     val amount: Double,
-    @Contextual val time: LocalDateTime
+    @Contextual val time: LocalDateTime,
+    val reason: String? = null
 )
 
 // 交易机会（和 Transaction 字段一致，额外包含触发理由）

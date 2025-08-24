@@ -77,6 +77,10 @@ private fun TransactionRow(tx: Transaction, onClick: () -> Unit) {
             Text("份额: ${tx.shares}  价格: ${tx.price}", style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(2.dp))
             Text("金额: ${tx.amount}  手续费: ${tx.fee}", style = MaterialTheme.typography.bodySmall)
+            tx.reason?.takeIf { it.isNotBlank() }?.let {
+                Spacer(Modifier.height(2.dp))
+                Text(text = "理由: $it", style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
