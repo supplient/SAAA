@@ -21,7 +21,10 @@ import androidx.navigation.compose.composable
 import com.example.strategicassetallocationassistant.navigation.NavRoutes
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import dagger.hilt.android.AndroidEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,26 +32,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             StrategicAssetAllocationAssistantTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // 手动构造 Repository -> ViewModel
-                    val context = this@MainActivity
-                    val db = remember { AppDatabase.getDatabase(context) }
-                    val repository = remember { PortfolioRepository(db.assetDao(), db.portfolioDao()) }
-
-                    // 自定义 ViewModelFactory
-                    val vmFactory = remember(repository) {
-                        object : ViewModelProvider.Factory {
-                            @Suppress("UNCHECKED_CAST")
-                            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                if (modelClass.isAssignableFrom(PortfolioViewModel::class.java)) {
-                                    return PortfolioViewModel(repository) as T
-                                }
-                                throw IllegalArgumentException("Unknown ViewModel class")
-                            }
-                        }
-                    }
-
-                    val viewModel: PortfolioViewModel = viewModel(factory = vmFactory)
-
                     val navController = rememberNavController()
 
                     NavHost(
@@ -57,6 +40,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(NavRoutes.AssetList.route) {
+                            val viewModel: PortfolioViewModel = hiltViewModel()
                             AssetListScreen(
                                 viewModel = viewModel,
                                 modifier = Modifier.fillMaxSize(),
@@ -70,7 +54,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable(NavRoutes.AddAsset.route) {
-                            AddEditAssetScreen(navController = navController, assetId = null)
+                            AddEditAssetScreen(navController = navController)
                         }
 
                         composable(
@@ -78,9 +62,8 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument(NavRoutes.EditAsset.ARG_ASSET_ID) {
                                 type = NavType.StringType
                             })
-                        ) { backStackEntry ->
-                            val assetIdArg = backStackEntry.arguments?.getString(NavRoutes.EditAsset.ARG_ASSET_ID)
-                            AddEditAssetScreen(navController, assetIdArg)
+                        ) {
+                            AddEditAssetScreen(navController)
                         }
                     }
                 }

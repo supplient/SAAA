@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
 import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Repository responsible for interacting with Room database and converting
@@ -19,7 +21,8 @@ import java.util.UUID
  * NOTE: 生产环境下应当通过依赖注入 (Hilt) 获取 DAO 对象；此处直接在构造函数中传入，
  * 以便在不使用 DI 的情况下保持简单。
  */
-class PortfolioRepository(
+@Singleton
+class PortfolioRepository @Inject constructor(
     private val assetDao: AssetDao,
     private val portfolioDao: PortfolioDao
 ) {

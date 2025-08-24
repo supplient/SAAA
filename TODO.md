@@ -87,11 +87,36 @@
 - [x] **3.4. 运行与验证:** 运行应用，尝试添加一个新资产，编辑一个现有资产，然后删除它，确认所有操作都正确反映在主屏幕和数据库中。
 - [x] 删除资产
 
+### 里程碑 3.5: 集成 Hilt 依赖注入框架
+
+**目标:** 重构现有代码库，引入 Hilt 以实现依赖项的自动化管理，为后续网络模块等功能的开发奠定架构基础。
+
+- [x] **3.5.1. 添加 Hilt 依赖和插件:**
+    - [x] 在项目根目录和 app 模块的 `build.gradle.kts` 文件中添加 Hilt 插件。
+    - [x] 在 app 模块的 `build.gradle.kts` 文件中添加 Hilt 相关依赖。
+- [x] **3.5.2. 配置 Application 类:**
+    - [x] 创建一个自定义的 `Application` 类 (例如 `MainApplication.kt`)。
+    - [x] 为该类添加 `@HiltAndroidApp` 注解。
+    - [x] 在 `AndroidManifest.xml` 中将 application-name 指向这个新创建的类。
+- [x] **3.5.3. 迁移 Activity 和 ViewModel:**
+    - [x] 为 `MainActivity` 添加 `@AndroidEntryPoint` 注解。
+    - [x] 为 `PortfolioViewModel` 和 `AddEditAssetViewModel` 添加 `@HiltViewModel` 注解，并用 `@Inject` 标注其构造函数。
+    - [x] 更新 UI 代码，使用 `hiltViewModel()` 来获取 ViewModel 实例。
+- [x] **3.5.4. 创建 Hilt 模块并迁移数据层:**
+    - [x] 创建一个 Hilt 模块 (例如 `DatabaseModule.kt`) 来提供数据库实例 (`AppDatabase`) 和 DAO (`AssetDao`, `PortfolioDao`)。
+    - [x] 为 `PortfolioRepository` 的构造函数添加 `@Inject` 注解，让 Hilt 负责其创建和依赖注入。
+- [x] **3.5.5. 运行与验证:**
+    - [x] 编译并运行应用，确保所有功能（列表显示、增、删、改）在重构后依然正常工作。
+
 ### 里程碑 4: 集成网络请求与手动刷新
 
 **目标:** 引入网络功能，通过手动操作从远程 API 获取数据并更新资产市值。
 
 - [ ] **4.1. 集成 Retrofit:** 添加 Retrofit 和 Kotlinx.serialization 依赖，并配置网络客户端。
+    - [x] 添加依赖
+    - [ ] 创建 Hilt 网络模块 (NetworkModule)
+    - [ ] 在 NetworkModule 中配置并提供 OkHttpClient 实例 (用于日志记录等)
+    - [ ] 在 NetworkModule 中配置并提供 Retrofit 实例 (设置基础URL和序列化转换器)
 - [ ] **4.2. 定义API接口:** 选择一个金融数据 API，并为其创建一个简单的 Retrofit 接口（例如，根据资产代码查询价格）。
 - [ ] **4.3. 添加刷新按钮:** 在主屏幕上添加一个“手动刷新”按钮。
 - [ ] **4.4. 实现刷新逻辑:**

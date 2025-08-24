@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.UUID
+import javax.inject.Inject
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 /**
  * ViewModel for Add / Edit Asset screen.
@@ -18,9 +20,10 @@ import java.util.UUID
  * “add” and “edit” modes, and communicates with [PortfolioRepository] to
  * persist changes.
  */
-class AddEditAssetViewModel(
+@HiltViewModel
+class AddEditAssetViewModel @Inject constructor(
     private val repository: PortfolioRepository,
-    assetIdArg: String?
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     /** navArgument key used in NavGraph */
@@ -48,8 +51,8 @@ class AddEditAssetViewModel(
     private val _unitValueInput = MutableStateFlow("")
     val unitValueInput: StateFlow<String> = _unitValueInput.asStateFlow()
 
-    /** id == null means we are adding a new asset */
-    private var editingAssetId: UUID? = assetIdArg?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    /** id == null means we are adding a new asset. Expose for UI to check mode. */
+    val editingAssetId: UUID? = savedStateHandle.get<String>(ARG_ASSET_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
 
     init {
         // If editing existing asset, load it from repository

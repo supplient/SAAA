@@ -10,12 +10,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDateTime
 import java.util.UUID
+import javax.inject.Inject
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 /**
  * 投资组合ViewModel
  * 负责管理投资组合的数据状态和业务逻辑
  */
-class PortfolioViewModel(
+@HiltViewModel
+class PortfolioViewModel @Inject constructor(
     private val repository: com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
 ) : ViewModel() {
 

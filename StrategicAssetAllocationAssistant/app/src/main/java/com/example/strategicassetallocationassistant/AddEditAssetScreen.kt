@@ -28,6 +28,7 @@ import androidx.navigation.NavController
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
@@ -45,23 +46,10 @@ import androidx.compose.material3.ButtonDefaults
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditAssetScreen(
-    navController: NavController,
-    assetId: String?
+    navController: NavController
 ) {
-    val context = LocalContext.current
-    // Provide repository
-    val repository = remember {
-        val db = AppDatabase.getDatabase(context)
-        PortfolioRepository(db.assetDao(), db.portfolioDao())
-    }
-
-    // Create ViewModel with custom factory supplying repository and assetId
-    val viewModel: AddEditAssetViewModel = viewModel(factory = object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            return AddEditAssetViewModel(repository, assetId) as T
-        }
-    })
+    // Create ViewModel with Hilt
+    val viewModel: AddEditAssetViewModel = hiltViewModel()
 
     // Collect UI state from ViewModel
     val name by viewModel.name.collectAsState()
@@ -77,14 +65,16 @@ fun AddEditAssetScreen(
     // 删除确认对话框状态
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    val isEditing = viewModel.editingAssetId != null
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(text = if (assetId.isNullOrBlank()) "添加资产" else "编辑资产")
+                    Text(text = if (isEditing) "编辑资产" else "添加资产")
                 },
                 actions = {
-                    if (!assetId.isNullOrBlank()) {
+                    if (isEditing) {
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(
                                 imageVector = Icons.Filled.Delete,
