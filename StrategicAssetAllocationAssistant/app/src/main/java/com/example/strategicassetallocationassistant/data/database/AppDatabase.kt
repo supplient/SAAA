@@ -30,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 4,
+    version = 1,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -56,7 +56,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "strategic_asset_allocation_database"
                 )
-                    .fallbackToDestructiveMigration() // 开发阶段使用，生产环境需要实现Migration
                     .addCallback(PrepopulateCallback(context.applicationContext))
                     .build()
                 INSTANCE = instance

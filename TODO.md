@@ -190,39 +190,40 @@
 
 **目标:** 实现一个系统，能够根据预设规则自动检测交易机会，并通过系统通知提醒用户。
 
-- [ ] **9.1. 定义数据模型与数据库:**
-    - [ ] 创建 `TradingOpportunity` domain 对象和对应的 `TradingOpportunityEntity`。
-    - [ ] 设计 `TradingOpportunity` 表结构，它包含以下信息：
+- [x] **9.1. 定义数据模型与数据库:**
+    - [x] 创建 `TradingOpportunity` domain 对象和对应的 `TradingOpportunityEntity`。
+    - [x] 设计 `TradingOpportunity` 表结构，它包含以下信息：
         * 交易记录里有的所有信息
         * 触发理由，这是个字符串，是用来给用户看的
-    - [ ] 创建 `TradingOpportunityDao` 并更新 `AppDatabase`。
-- [ ] **9.2. 设计和实现交易规则引擎:**
-    - [ ] 创建一个 `CheckTradingOpportunitiesUseCase`，用于封装检查逻辑：目前固定生成一条对第一个资产的交易机会即可
-- [ ] **9.3. 创建交易机会界面:**
-    - [ ] 创建 `TradingOpportunityViewModel` 和 `TradingOpportunityListScreen`。
-    - [ ] 在 `AssetListScreen` 添加一个入口导航至新界面。
-    - [ ] `TradingOpportunityListScreen` 负责从数据库中读取并展示所有交易机会。
-    - [ ] 界面上应提供“手动检查”和“一键清空”按钮。
-- [ ] **9.4. 将机会转化为交易:**
-    - [ ] 在每个交易机会旁边提供一个“执行”或“转换为交易”的按钮。
-    - [ ] 点击后，导航至 `AddEditTransactionScreen`，并根据交易机会的数据预先填好表单。
+    - [x] 创建 `TradingOpportunityDao` 并更新 `AppDatabase`。
+- [x] **9.2. 设计和实现交易规则引擎:**
+    - [x] 创建一个 `CheckTradingOpportunitiesUseCase`，用于封装检查逻辑：目前固定生成一条对第一个资产的交易机会即可
+- [x] **9.3. 创建交易机会界面:**
+    - [x] 创建 `TradingOpportunityViewModel` 和 `TradingOpportunityListScreen`。
+    - [x] 在 `AssetListScreen` 添加一个入口导航至新界面。
+    - [x] `TradingOpportunityListScreen` 负责从数据库中读取并展示所有交易机会。
+    - [x] 界面上应提供“手动检查”和“一键清空”按钮。
+- [x] **9.4. 将机会转化为交易:**
+    - [x] 在每个交易机会旁边提供一个“执行”或“转换为交易”的按钮。
+    - [x] 点击后，导航至 `AddEditTransactionScreen`，并根据交易机会的数据预先填好表单。
     - [x] 成功创建交易后，对应的交易机会应被删除。
-- [ ] **9.5. 实现后台检查与系统通知:**
-    - [ ] 重构现有的`MarketDataSyncWorker`，让它多出来发现交易机会的功能
-    - [ ] 当后台任务发现新的交易机会时，向数据库中插入这些机会，并触发一个系统通知。
-    - [ ] 点击通知后应能跳转到 `TradingOpportunityListScreen`。
+- [x] **9.5. 实现后台检查与系统通知:**
+    - [x] 重构现有的`MarketDataSyncWorker`，让它多出来发现交易机会的功能
+    - [x] 当后台任务发现新的交易机会时，向数据库中插入这些机会，并触发一个系统通知。
+    - [x] 点击通知后应能跳转到 `TradingOpportunityListScreen`。
 
 
 
-### 后续里程碑 (高级功能)
+### 里程碑 10：实际使用与打包
 
-在完成上述核心功能后，后续的里程碑将逐步添加更复杂的功能，每个里程碑依然是一个可独立测试的版本。
+* [x] 处理好数据库迁移
+* [ ] 打包安装到我的手机上
+* [ ] 通过直接点选资产来开始创建一条新的交易
+    * 编辑资产的功能则改为右滑资产card后会出现的选项
 
-- [ ] 里程碑 10: 最终润色与发布: 进行全面的 UI/UX 优化、测试并准备发布。
-    - [ ] 重写AssetListScreen的显示，让它呈一个表格的样子，行是各类资产，列是资产信息，然后最左边的一列（资产名称）在屏幕中固定不动，剩余列可以横向滚动，从而适应竖屏
-    - [ ] 增加图标显示
-    - [ ] 处理好数据库迁移
-    - [ ] 通过直接点选资产来开始创建一条新的交易
-        - 编辑资产的功能则改为右滑资产card后会出现的选项
-    - [ ] 后台任务似乎依然无效，再研究研究
-        * 记得调试完后台任务以后还要处理交易机会发现的通知
+## 后续开发计划
+
+* [ ] 重写AssetListScreen的显示，让它呈一个表格的样子，行是各类资产，列是资产信息，然后最左边的一列（资产名称）在屏幕中固定不动，剩余列可以横向滚动，从而适应竖屏
+* [ ] 增加图标显示
+* [ ] 后台任务似乎依然无效，再研究研究
+    * 记得调试完后台任务以后还要处理交易机会发现的通知
