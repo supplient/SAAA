@@ -35,6 +35,12 @@ import com.example.strategicassetallocationassistant.data.database.AppDatabase
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,12 +74,25 @@ fun AddEditAssetScreen(
     var typeExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // 删除确认对话框状态
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(text = if (assetId.isNullOrBlank()) "添加资产" else "编辑资产")
                 },
+                actions = {
+                    if (!assetId.isNullOrBlank()) {
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "删除资产"
+                            )
+                        }
+                    }
+                }
             )
         },
         bottomBar = {
@@ -81,11 +100,15 @@ fun AddEditAssetScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // 左侧：取消按钮始终存在
                 OutlinedButton(onClick = { navController.navigateUp() }) {
                     Text("取消")
                 }
+
+                // 右侧：保存
                 Button(onClick = {
                     coroutineScope.launch {
                         if (viewModel.save()) {
@@ -192,5 +215,33 @@ fun AddEditAssetScreen(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+
+    // 删除确认对话框
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("确认删除") },
+            text = { Text("确定要删除该资产吗？此操作无法撤销。") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteDialog = false
+                        coroutineScope.launch {
+                            viewModel.delete()
+                            navController.navigateUp()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors()
+                ) {
+                    Text("删除")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDeleteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }

@@ -58,7 +58,7 @@ class AddEditAssetViewModel(
                 repository.getAssetById(id)?.let { asset ->
                     _name.value = asset.name
                     _type.value = asset.type
-                    _targetWeightInput.value = asset.targetWeight.toString()
+                    _targetWeightInput.value = (asset.targetWeight * 100).toString()
                     _code.value = asset.code ?: ""
                     _sharesInput.value = asset.shares?.toString() ?: ""
                     _unitValueInput.value = asset.unitValue?.toString() ?: ""
