@@ -8,4 +8,5 @@ sealed class NavRoutes(val route: String) {
         const val ARG_ASSET_ID = "assetId"
         fun createRoute(assetId: String): String = "edit_asset/$assetId"
     }
+    object ApiTest : NavRoutes("api_test")
 }

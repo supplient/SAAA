@@ -112,17 +112,25 @@
 
 **目标:** 引入网络功能，通过手动操作从远程 API 获取数据并更新资产市值。
 
-- [ ] **4.1. 集成 Retrofit:** 添加 Retrofit 和 Kotlinx.serialization 依赖，并配置网络客户端。
+- [x] **4.1. 集成 Retrofit:** 添加 Retrofit 和 Kotlinx.serialization 依赖，并配置网络客户端。
     - [x] 添加依赖
-    - [ ] 创建 Hilt 网络模块 (NetworkModule)
-    - [ ] 在 NetworkModule 中配置并提供 OkHttpClient 实例 (用于日志记录等)
-    - [ ] 在 NetworkModule 中配置并提供 Retrofit 实例 (设置基础URL和序列化转换器)
-- [ ] **4.2. 定义API接口:** 选择一个金融数据 API，并为其创建一个简单的 Retrofit 接口（例如，根据资产代码查询价格）。
-- [ ] **4.3. 添加刷新按钮:** 在主屏幕上添加一个“手动刷新”按钮。
-- [ ] **4.4. 实现刷新逻辑:**
-    - [ ] 创建 `UpdateMarketDataUseCase`。
-    - [ ] 当点击刷新按钮时，遍历数据库中的所有资产，调用 API 获取最新价格，然后更新数据库中对应资产的市值。
-- [ ] **4.5. 运行与验证:** 运行应用，点击刷新按钮，观察资产市值是否成功更新。
+    - [x] 创建 Hilt 网络模块 (NetworkModule)
+    - [x] 在 NetworkModule 中配置并提供 OkHttpClient 实例 (用于日志记录等)
+    - [x] 在 NetworkModule 中配置并提供 Retrofit 实例 (设置基础URL和序列化转换器)
+- [x] **4.2. 定义空的API接口:** 假想有一个金融数据API，为其创建一个简单的 Retrofit 接口（例如，根据资产代码查询价格）。
+- [x] **4.3. 添加刷新按钮:** 在主屏幕上添加一个“手动刷新”按钮。
+- [x] **4.4. 实现刷新逻辑:**
+    - [x] 创建 `UpdateMarketDataUseCase`。
+    - [x] 当点击刷新按钮时，遍历数据库中的所有资产，调用 API 获取最新价格，然后更新数据库中对应资产的市值。
+- [ ] **4.5. 实现金融数据API:**
+    - [x] 调研适合A股的金融数据API
+        * AShare：底层爬的新浪和腾讯的接口
+            * 先试试这个
+        * Tushare：得掏钱
+    - [ ] 增加一个用于测试API连通性的界面，它让用户手动输入要输给API的参数，然后把api返回的内容原原本本地打印到屏幕上
+        * 该界面的入口在AssetListScreen的左上角小按钮
+    - [ ] 正确实现`UpdateMarketDataUseCase`
+- [ ] **4.6. 运行与验证:** 运行应用，点击刷新按钮，观察资产市值是否成功更新。
 
 ### 后续里程碑 (高级功能)
 

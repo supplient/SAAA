@@ -84,44 +84,24 @@ abstract class AppDatabase : RoomDatabase() {
                     val sampleAssets = listOf(
                         AssetEntity.create(
                             id = UUID.randomUUID(),
-                            name = "腾讯控股",
+                            name = "贵州茅台",
                             type = AssetType.STOCK,
-                            targetWeight = 0.15,
-                            code = "00700",
-                            shares = 200.0,
-                            unitValue = 380.0,
-                            lastUpdateTime = now.minusHours(1)
-                        ),
-                        AssetEntity.create(
-                            id = UUID.randomUUID(),
-                            name = "阿里巴巴",
-                            type = AssetType.STOCK,
-                            targetWeight = 0.15,
-                            code = "09988",
-                            shares = 300.0,
-                            unitValue = 85.0,
-                            lastUpdateTime = now.minusHours(1)
-                        ),
-                        AssetEntity.create(
-                            id = UUID.randomUUID(),
-                            name = "易方达蓝筹精选混合",
-                            type = AssetType.OFFSHORE_FUND,
-                            targetWeight = 0.30,
-                            code = "005827",
-                            shares = 1000.0,
-                            unitValue = 2.15,
-                            lastUpdateTime = now.minusDays(1)
-                        ),
-                        AssetEntity.create(
-                            id = UUID.randomUUID(),
-                            name = "余额宝货币基金",
-                            type = AssetType.MONEY_FUND,
-                            targetWeight = 0.10,
-                            code = "000198",
-                            shares = 50000.0,
+                            targetWeight = 0.5,
+                            code = "sh600519",
+                            shares = 100.0,
                             unitValue = 1.0,
-                            lastUpdateTime = now.minusDays(1)
-                        )
+                            lastUpdateTime = now.minusHours(1)
+                        ),
+                        AssetEntity.create(
+                            id = UUID.randomUUID(),
+                            name = "标普500ETF",
+                            type = AssetType.STOCK,
+                            targetWeight = 0.5,
+                            code = "sh513500",
+                            shares = 100.0,
+                            unitValue = 1.0,
+                            lastUpdateTime = now.minusHours(1)
+                        ),
                     )
 
                     assetDao.insertAssets(sampleAssets)

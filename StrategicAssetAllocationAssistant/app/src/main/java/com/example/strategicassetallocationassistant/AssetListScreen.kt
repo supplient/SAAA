@@ -1,3 +1,4 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 package com.example.strategicassetallocationassistant
 
 import androidx.compose.foundation.layout.Arrangement
@@ -13,12 +14,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -122,25 +126,34 @@ fun AssetListScreen(
     viewModel: PortfolioViewModel,
     modifier: Modifier = Modifier,
     onAddAsset: () -> Unit = {},
-    onEditAsset: (java.util.UUID) -> Unit = {}
+    onEditAsset: (java.util.UUID) -> Unit = {},
+    onOpenApiTest: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
     val assetId2Value by viewModel.assetId2Value.collectAsState() // 获取市值映射表
 
     Box(modifier = modifier.fillMaxSize()) {
+        // TopAppBar with Refresh
+        androidx.compose.material3.TopAppBar(
+            title = { Text("战略资产配置助手") },
+            navigationIcon = {
+                IconButton(onClick = onOpenApiTest) {
+                    Icon(Icons.Default.BugReport, contentDescription = "API 测试")
+                }
+            },
+            actions = {
+                IconButton(onClick = { viewModel.refreshMarketData() }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                }
+            }
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // 标题
-            Text(
-                text = "战略资产配置助手",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Spacer(modifier = Modifier.height(56.dp)) // space for top bar
 
             // 显示总现金
             Card(

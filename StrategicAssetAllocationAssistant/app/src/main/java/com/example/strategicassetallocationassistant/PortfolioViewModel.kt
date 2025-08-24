@@ -12,6 +12,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 
 /**
  * 投资组合ViewModel
@@ -20,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 @HiltViewModel
 class PortfolioViewModel @Inject constructor(
     private val repository: com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
+    , private val updateMarketData: com.example.strategicassetallocationassistant.domain.UpdateMarketDataUseCase
 ) : ViewModel() {
 
     /**
@@ -51,4 +53,11 @@ class PortfolioViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyMap()
     )
+
+    /** 手动刷新市场数据 */
+    fun refreshMarketData() {
+        viewModelScope.launch {
+            updateMarketData()
+        }
+    }
 }

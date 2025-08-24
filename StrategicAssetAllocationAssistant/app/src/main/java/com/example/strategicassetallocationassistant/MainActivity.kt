@@ -49,6 +49,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onEditAsset = { id ->
                                     navController.navigate(NavRoutes.EditAsset.createRoute(id.toString()))
+                                },
+                                onOpenApiTest = {
+                                    navController.navigate(NavRoutes.ApiTest.route)
                                 }
                             )
                         }
@@ -64,6 +67,10 @@ class MainActivity : ComponentActivity() {
                             })
                         ) {
                             AddEditAssetScreen(navController)
+                        }
+
+                        composable(NavRoutes.ApiTest.route) {
+                            ApiTestScreen(navController = navController)
                         }
                     }
                 }
