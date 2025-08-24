@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 package com.example.strategicassetallocationassistant
 
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -38,17 +39,19 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 
 // 显示单个资产的组件
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun AssetItem(
     analysis: PortfolioViewModel.AssetAnalysis,
-    onClick: () -> Unit,
+    onAddTransaction: () -> Unit,
+    onEditAsset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .combinedClickable(onClick = onAddTransaction, onLongClick = onEditAsset),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -165,6 +168,7 @@ fun AssetListScreen(
     modifier: Modifier = Modifier,
     onAddAsset: () -> Unit = {},
     onEditAsset: (java.util.UUID) -> Unit = {},
+    onAddTransactionForAsset: (java.util.UUID) -> Unit = {},
     onOpenApiTest: () -> Unit = {},
     onOpenTransactions: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
@@ -245,7 +249,8 @@ fun AssetListScreen(
                 items(analyses) { analysis ->
                     AssetItem(
                         analysis = analysis,
-                        onClick = { onEditAsset(analysis.asset.id) },
+                        onAddTransaction = { onAddTransactionForAsset(analysis.asset.id) },
+                        onEditAsset = { onEditAsset(analysis.asset.id) },
                         modifier = Modifier,
                     )
                 }

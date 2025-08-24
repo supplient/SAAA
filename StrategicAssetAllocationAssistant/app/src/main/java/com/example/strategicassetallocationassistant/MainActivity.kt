@@ -64,6 +64,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenOpportunities = {
                                     navController.navigate(NavRoutes.TradingOpportunities.route)
+                                },
+                                onAddTransactionForAsset = { assetId ->
+                                    navController.navigate(NavRoutes.AddTransactionForAsset.createRoute(assetId.toString()))
                                 }
                             )
                         }
@@ -119,6 +122,13 @@ class MainActivity : ComponentActivity() {
                         composable(
                             route = NavRoutes.AddTransactionFromOpportunity.route,
                             arguments = listOf(navArgument(NavRoutes.AddTransactionFromOpportunity.ARG_OP_ID) { type = NavType.StringType })
+                        ) {
+                            AddEditTransactionScreen(navController = navController)
+                        }
+
+                        composable(
+                            route = NavRoutes.AddTransactionForAsset.route,
+                            arguments = listOf(navArgument(NavRoutes.AddTransactionForAsset.ARG_ASSET_ID) { type = NavType.StringType })
                         ) {
                             AddEditTransactionScreen(navController = navController)
                         }

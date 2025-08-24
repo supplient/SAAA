@@ -27,6 +27,7 @@ class AddEditTransactionViewModel @Inject constructor(
     companion object {
         const val ARG_TRANSACTION_ID = "transactionId"
         const val ARG_OPPORTUNITY_ID = "opId"
+        const val ARG_ASSET_ID = "assetId"
     }
 
     /* --------------------------  State  -------------------------- */
@@ -57,6 +58,7 @@ class AddEditTransactionViewModel @Inject constructor(
 
     private val editingTxId: UUID? = savedStateHandle.get<String>(ARG_TRANSACTION_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     private val fromOpportunityId: UUID? = savedStateHandle.get<String>(ARG_OPPORTUNITY_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    private val initialAssetId: UUID? = savedStateHandle.get<String>(ARG_ASSET_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     val isEditing: Boolean get() = editingTxId != null
 
     init {
@@ -84,6 +86,12 @@ class AddEditTransactionViewModel @Inject constructor(
                     _feeInput.value = op.fee.toString()
                 }
             }
+        }
+
+        // If launched directly from an asset
+        initialAssetId?.let { aid ->
+            _selectedAssetId.value = aid
+            _assetIdInput.value = aid.toString()
         }
     }
 

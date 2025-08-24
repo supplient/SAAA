@@ -19,6 +19,10 @@ sealed class NavRoutes(val route: String) {
         const val ARG_OP_ID = "opId"
         fun createRoute(opId: String): String = "add_tx_from_op/$opId"
     }
+    object AddTransactionForAsset : NavRoutes("add_tx_for_asset/{assetId}") {
+        const val ARG_ASSET_ID = "assetId"
+        fun createRoute(assetId: String): String = "add_tx_for_asset/$assetId"
+    }
     object Settings : NavRoutes("settings")
     object TradingOpportunities : NavRoutes("trading_opportunities")
 }
