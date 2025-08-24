@@ -15,4 +15,5 @@ sealed class NavRoutes(val route: String) {
         const val ARG_TX_ID = "transactionId"
         fun createRoute(txId: String): String = "edit_transaction/$txId"
     }
+    object Settings : NavRoutes("settings")
 }

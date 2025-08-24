@@ -2,12 +2,14 @@ package com.example.strategicassetallocationassistant.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * 投资组合表实体类
  * 对应 portfolio 表：cash(Double)
  * 使用单例模式，表中只有一条记录
  */
+@Serializable
 @Entity(tableName = "portfolio")
 data class PortfolioEntity(
     @PrimaryKey

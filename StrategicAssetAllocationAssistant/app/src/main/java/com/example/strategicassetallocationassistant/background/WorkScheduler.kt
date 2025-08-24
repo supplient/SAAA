@@ -11,11 +11,11 @@ import java.util.concurrent.TimeUnit
 object WorkScheduler {
     private const val UNIQUE_NAME = "MarketDataSync"
 
-    fun schedule(context: Context) {
+    fun schedule(context: Context, intervalMinutes: Long) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-        val request = PeriodicWorkRequestBuilder<MarketDataSyncWorker>(15, TimeUnit.MINUTES)
+        val request = PeriodicWorkRequestBuilder<MarketDataSyncWorker>(intervalMinutes, TimeUnit.MINUTES)
             .setConstraints(constraints)
             .build()
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -23,5 +23,12 @@ object WorkScheduler {
             ExistingPeriodicWorkPolicy.UPDATE,
             request
         )
+    }
+
+    /**
+     * Cancel the existing periodic work.
+     */
+    fun cancel(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_NAME)
     }
 }

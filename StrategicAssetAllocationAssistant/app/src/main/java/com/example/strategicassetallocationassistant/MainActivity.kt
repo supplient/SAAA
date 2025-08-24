@@ -25,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.strategicassetallocationassistant.TransactionListScreen
 import com.example.strategicassetallocationassistant.AddEditTransactionScreen
+import com.example.strategicassetallocationassistant.settings.SettingsScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -57,6 +58,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenTransactions = {
                                     navController.navigate(NavRoutes.TransactionList.route)
+                                },
+                                onOpenSettings = {
+                                    navController.navigate(NavRoutes.Settings.route)
                                 }
                             )
                         }
@@ -94,6 +98,10 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument(NavRoutes.EditTransaction.ARG_TX_ID) { type = NavType.StringType })
                         ) {
                             AddEditTransactionScreen(navController = navController)
+                        }
+                        // Add Settings composable
+                        composable(NavRoutes.Settings.route) {
+                            SettingsScreen(navController = navController)
                         }
                     }
                 }

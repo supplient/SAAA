@@ -6,11 +6,14 @@ import com.example.strategicassetallocationassistant.AssetType
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlinx.serialization.Serializable
+import com.example.strategicassetallocationassistant.data.network.LocalDateTimeSerializer
 
 /**
  * 资产表实体类
  * 对应 assets 表：id(UUID), name, type, targetWeight
  */
+@Serializable
 @Entity(tableName = "assets")
 data class AssetEntity(
     @PrimaryKey
@@ -23,6 +26,7 @@ data class AssetEntity(
     val code: String?,
     val shares: Double?,
     val unitValue: Double?,
+    @Serializable(with = LocalDateTimeSerializer::class)
     val lastUpdateTime: java.time.LocalDateTime?
 ) {
     companion object {

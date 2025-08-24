@@ -19,6 +19,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.room.withTransaction
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
 
 /**
  * Repository responsible for interacting with Room database and converting
@@ -34,6 +38,32 @@ class PortfolioRepository @Inject constructor(
     private val transactionDao: TransactionDao,
     private val db: com.example.strategicassetallocationassistant.data.database.AppDatabase
 ) {
+
+    /* ---------------------------- 导入/导出 ---------------------------- */
+
+    @Serializable
+    private data class PortfolioBackup(
+        val portfolio: PortfolioEntity,
+        val assets: List<AssetEntity>
+    )
+
+    suspend fun exportDataToJson(): String {
+        val portfolio = portfolioDao.getPortfolioSuspend() ?: return ""
+        val assets = assetDao.getAllAssets().first()
+        val backupData = PortfolioBackup(portfolio, assets)
+        return Json.encodeToString(backupData)
+    }
+
+    suspend fun importDataFromJson(json: String) {
+        val backupData = Json.decodeFromString<PortfolioBackup>(json)
+        db.withTransaction {
+            assetDao.deleteAllAssets()
+            portfolioDao.deletePortfolio()
+            assetDao.insertAssets(backupData.assets)
+            portfolioDao.insertPortfolio(backupData.portfolio)
+        }
+    }
+
 
     /* ---------------------------- 读取数据 ---------------------------- */
 

@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -164,7 +165,8 @@ fun AssetListScreen(
     onAddAsset: () -> Unit = {},
     onEditAsset: (java.util.UUID) -> Unit = {},
     onOpenApiTest: () -> Unit = {},
-    onOpenTransactions: () -> Unit = {}
+    onOpenTransactions: () -> Unit = {},
+    onOpenSettings: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
     val analyses by viewModel.assetAnalyses.collectAsState()
@@ -186,6 +188,9 @@ fun AssetListScreen(
                 }
                 IconButton(onClick = { viewModel.refreshMarketData() }) {
                     Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                }
+                IconButton(onClick = onOpenSettings) {
+                    Icon(Icons.Default.Settings, contentDescription = "设置")
                 }
             }
         )
