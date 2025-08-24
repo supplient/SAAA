@@ -3,6 +3,7 @@ package com.example.strategicassetallocationassistant.data.database
 import android.content.Context
 import com.example.strategicassetallocationassistant.data.database.dao.AssetDao
 import com.example.strategicassetallocationassistant.data.database.dao.PortfolioDao
+import com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,14 +32,23 @@ object DatabaseModule {
     }
 
     @Provides
+    fun provideTransactionDao(appDatabase: AppDatabase): TransactionDao {
+        return appDatabase.transactionDao()
+    }
+
+    @Provides
     @Singleton
     fun providePortfolioRepository(
+        appDatabase: AppDatabase,
         assetDao: AssetDao,
-        portfolioDao: PortfolioDao
+        portfolioDao: PortfolioDao,
+        transactionDao: TransactionDao
     ): com.example.strategicassetallocationassistant.data.repository.PortfolioRepository {
         return com.example.strategicassetallocationassistant.data.repository.PortfolioRepository(
             assetDao,
-            portfolioDao
+            portfolioDao,
+            transactionDao,
+            appDatabase
         )
     }
 }

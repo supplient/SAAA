@@ -23,6 +23,8 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.strategicassetallocationassistant.TransactionListScreen
+import com.example.strategicassetallocationassistant.AddEditTransactionScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -52,6 +54,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenApiTest = {
                                     navController.navigate(NavRoutes.ApiTest.route)
+                                },
+                                onOpenTransactions = {
+                                    navController.navigate(NavRoutes.TransactionList.route)
                                 }
                             )
                         }
@@ -71,6 +76,24 @@ class MainActivity : ComponentActivity() {
 
                         composable(NavRoutes.ApiTest.route) {
                             ApiTestScreen(navController = navController)
+                        }
+
+                        composable(NavRoutes.TransactionList.route) {
+                            TransactionListScreen(
+                                navToAdd = { navController.navigate(NavRoutes.AddTransaction.route) },
+                                navToEdit = { navController.navigate(NavRoutes.EditTransaction.createRoute(it.toString())) }
+                            )
+                        }
+
+                        composable(NavRoutes.AddTransaction.route) {
+                            AddEditTransactionScreen(navController = navController)
+                        }
+
+                        composable(
+                            route = NavRoutes.EditTransaction.route,
+                            arguments = listOf(navArgument(NavRoutes.EditTransaction.ARG_TX_ID) { type = NavType.StringType })
+                        ) {
+                            AddEditTransactionScreen(navController = navController)
                         }
                     }
                 }

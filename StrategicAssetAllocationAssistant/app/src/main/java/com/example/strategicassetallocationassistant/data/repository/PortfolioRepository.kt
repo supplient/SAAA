@@ -4,8 +4,12 @@ import com.example.strategicassetallocationassistant.Asset
 import com.example.strategicassetallocationassistant.Portfolio
 import com.example.strategicassetallocationassistant.data.database.dao.AssetDao
 import com.example.strategicassetallocationassistant.data.database.dao.PortfolioDao
+import com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
 import com.example.strategicassetallocationassistant.data.database.entities.AssetEntity
 import com.example.strategicassetallocationassistant.data.database.entities.PortfolioEntity
+import com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity
+import com.example.strategicassetallocationassistant.Transaction
+import com.example.strategicassetallocationassistant.TradeType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -13,6 +17,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.room.withTransaction
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Repository responsible for interacting with Room database and converting
@@ -24,7 +30,9 @@ import javax.inject.Singleton
 @Singleton
 class PortfolioRepository @Inject constructor(
     private val assetDao: AssetDao,
-    private val portfolioDao: PortfolioDao
+    private val portfolioDao: PortfolioDao,
+    private val transactionDao: TransactionDao,
+    private val db: com.example.strategicassetallocationassistant.data.database.AppDatabase
 ) {
 
     /* ---------------------------- 读取数据 ---------------------------- */
@@ -41,6 +49,13 @@ class PortfolioRepository @Inject constructor(
      * Observe the full [Portfolio] (assets + cash) in one convenient stream.
      */
     val portfolioFlow: Flow<Portfolio> = assetsFlow.combineCashFlow()
+
+    /**
+     * Observe all [Transaction]s in the database.
+     */
+    val transactionsFlow: Flow<List<Transaction>> = transactionDao.getAllTransactions().map { list ->
+        list.map { it.toDomain() }
+    }
 
     /**
      * Suspended version that returns the latest [Portfolio] once.
@@ -79,6 +94,94 @@ class PortfolioRepository @Inject constructor(
         }
     }
 
+    /**
+     * 添加一条交易记录，同时原子更新资产份额和现金。
+     */
+    suspend fun addTransaction(tx: Transaction) {
+        db.withTransaction {
+            // 插入交易
+            transactionDao.insertTransaction(tx.toEntity())
+
+            // 更新资产 shares
+            tx.assetId?.let { aid ->
+                val asset = assetDao.getAssetById(aid.toString()) ?: return@withTransaction
+                val currentShares = asset.shares ?: 0.0
+                val deltaShares = if (tx.type == TradeType.BUY) tx.shares else -tx.shares
+                val updated = asset.copy(shares = currentShares + deltaShares)
+                assetDao.updateAsset(updated)
+            }
+
+            // 更新现金
+            val cashDelta = if (tx.type == TradeType.BUY) -tx.amount else tx.amount
+            val currentPortfolio = portfolioDao.getPortfolioSuspend()
+            if (currentPortfolio == null) {
+                portfolioDao.insertPortfolio(PortfolioEntity(cash = cashDelta))
+            } else {
+                portfolioDao.updateCash(currentPortfolio.cash + cashDelta)
+            }
+        }
+    }
+
+    suspend fun getTransactionById(id: java.util.UUID): Transaction? {
+        return transactionDao.getAllTransactions().first().firstOrNull { java.util.UUID.fromString(it.id) == id }?.toDomain()
+    }
+
+    suspend fun deleteTransaction(tx: Transaction) {
+        db.withTransaction {
+            // 先获取数据库中的最新交易记录，以免调用方传入的是过时对象
+            val entity = transactionDao.getTransactionById(tx.id.toString()) ?: return@withTransaction
+
+            // 还原资产 shares
+            entity.assetId?.let { aid ->
+                val asset = assetDao.getAssetById(aid) ?: return@withTransaction
+                val currentShares = asset.shares ?: 0.0
+                val deltaShares = if (entity.type == TradeType.BUY) -entity.shares else entity.shares
+                assetDao.updateAsset(asset.copy(shares = currentShares + deltaShares))
+            }
+
+            // 还原现金
+            val cashDelta = if (entity.type == TradeType.BUY) entity.amount else -entity.amount
+            val portfolio = portfolioDao.getPortfolioSuspend()
+            if (portfolio != null) {
+                portfolioDao.updateCash(portfolio.cash + cashDelta)
+            }
+
+            // 删除交易
+            transactionDao.deleteById(entity.id)
+        }
+    }
+
+    suspend fun updateTransaction(tx: Transaction) {
+        db.withTransaction {
+            val old = transactionDao.getTransactionById(tx.id.toString())
+            if (old != null) {
+                // 先回滚旧交易
+                old.assetId?.let { aid ->
+                    val asset = assetDao.getAssetById(aid) ?: return@withTransaction
+                    val currentShares = asset.shares ?: 0.0
+                    val deltaShares = if (old.type == TradeType.BUY) -old.shares else old.shares
+                    assetDao.updateAsset(asset.copy(shares = currentShares + deltaShares))
+                }
+
+                val cashDeltaRollback = if (old.type == TradeType.BUY) old.amount else -old.amount
+                portfolioDao.getPortfolioSuspend()?.let { portfolioDao.updateCash(it.cash + cashDeltaRollback) }
+            }
+
+            // 应用新交易
+            transactionDao.updateTransaction(tx.toEntity())
+
+            tx.assetId?.let { aid ->
+                val asset = assetDao.getAssetById(aid.toString()) ?: return@withTransaction
+                val currentShares = asset.shares ?: 0.0
+                val deltaShares = if (tx.type == TradeType.BUY) tx.shares else -tx.shares
+                assetDao.updateAsset(asset.copy(shares = currentShares + deltaShares))
+            }
+
+            val cashDeltaApply = if (tx.type == TradeType.BUY) -tx.amount else tx.amount
+            portfolioDao.getPortfolioSuspend()?.let { portfolioDao.updateCash(it.cash + cashDeltaApply) }
+        }
+    }
+
     /* ---------------------------- 私有扩展 ---------------------------- */
 
     private fun AssetEntity.toDomain(): Asset = Asset(
@@ -112,6 +215,29 @@ class PortfolioRepository @Inject constructor(
             Portfolio(assets, cash ?: 0.0)
         }
     }
+
+    /* ---------------------------- 转换 ---------------------------- */
+    private fun TransactionEntity.toDomain(): Transaction = Transaction(
+        id = java.util.UUID.fromString(id),
+        assetId = assetId?.let { java.util.UUID.fromString(it) },
+        type = type,
+        shares = shares,
+        price = price,
+        fee = fee,
+        amount = amount,
+        time = time
+    )
+
+    private fun Transaction.toEntity(): TransactionEntity = TransactionEntity.create(
+        id = id,
+        assetId = assetId,
+        type = type,
+        shares = shares,
+        price = price,
+        fee = fee,
+        amount = amount,
+        time = time
+    )
 }
 
 

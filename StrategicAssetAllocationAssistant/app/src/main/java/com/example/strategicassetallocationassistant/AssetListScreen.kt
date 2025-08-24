@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.work.WorkManager
+import androidx.compose.material.icons.filled.List
 
 // 显示单个资产的组件
 @Composable
@@ -165,7 +166,8 @@ fun AssetListScreen(
     modifier: Modifier = Modifier,
     onAddAsset: () -> Unit = {},
     onEditAsset: (java.util.UUID) -> Unit = {},
-    onOpenApiTest: () -> Unit = {}
+    onOpenApiTest: () -> Unit = {},
+    onOpenTransactions: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
     val analyses by viewModel.assetAnalyses.collectAsState()
@@ -182,6 +184,9 @@ fun AssetListScreen(
                 }
             },
             actions = {
+                IconButton(onClick = onOpenTransactions) {
+                    Icon(imageVector = Icons.Default.List, contentDescription = "交易")
+                }
                 val context = androidx.compose.ui.platform.LocalContext.current
                 val isAutoRefreshEnabled = rememberSaveable { mutableStateOf(true) }
                 Checkbox(

@@ -1,0 +1,28 @@
+package com.example.strategicassetallocationassistant
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
+
+/**
+ * ViewModel that exposes all transaction records for UI.
+ */
+@HiltViewModel
+class TransactionViewModel @Inject constructor(
+    private val repository: com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
+) : ViewModel() {
+
+    val transactionsState: StateFlow<List<Transaction>> = repository.transactionsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    suspend fun deleteTransaction(tx: Transaction) {
+        repository.deleteTransaction(tx)
+    }
+}

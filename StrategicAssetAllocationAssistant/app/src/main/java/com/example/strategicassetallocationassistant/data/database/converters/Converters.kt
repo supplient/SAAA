@@ -38,4 +38,17 @@ class Converters {
     fun toAssetType(assetTypeString: String): AssetType {
         return AssetType.valueOf(assetTypeString)
     }
+
+    /**
+     * TradeType枚举转换器
+     */
+    @TypeConverter
+    fun fromTradeType(tradeType: com.example.strategicassetallocationassistant.TradeType): String {
+        return tradeType.name
+    }
+
+    @TypeConverter
+    fun toTradeType(tradeTypeString: String): com.example.strategicassetallocationassistant.TradeType {
+        return com.example.strategicassetallocationassistant.TradeType.valueOf(tradeTypeString)
+    }
 }

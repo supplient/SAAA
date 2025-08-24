@@ -61,6 +61,12 @@ enum class AssetType {
     STOCK            // 场内股票
 }
 
+// 新增交易类型枚举
+enum class TradeType {
+    BUY,  // 买入
+    SELL  // 卖出
+}
+
 // 资产数据模型
 @Serializable
 data class Asset(
@@ -86,4 +92,17 @@ data class Asset(
 data class Portfolio(
     val assets: List<Asset>,
     val cash: Double
+)
+
+// 交易记录
+@Serializable
+data class Transaction(
+    @Contextual val id: UUID,
+    @Contextual val assetId: UUID?,
+    val type: TradeType,
+    val shares: Double,
+    val price: Double,
+    val fee: Double,
+    val amount: Double,
+    @Contextual val time: LocalDateTime
 )

@@ -156,19 +156,19 @@
 - [ ] 6.4. 验证: 使用 Android Studio 的 `App Inspection` 或 `Logcat` 来验证后台任务是否按预期执行和完成。
 
 ### 里程碑 7: 交易管理: 实现交易记录的查看和手动添加功能。
-- [ ] 7.1. 创建交易数据库:
-    - [ ] 设计并创建 `TransactionEntity` 用于存储交易记录 (包括资产ID、交易类型、份额、价格、费用、时间等)。
-    - [ ] 创建对应的 `TransactionDao`。
-    - [ ] 在 `AppDatabase` 中注册新表，并处理好数据库迁移 (Migration)。
-- [ ] 7.2. 创建交易的界面:
-    - [ ] 创建 `TransactionViewModel` 管理交易列表界面的状态和业务逻辑。
-    - [ ] 创建 `TransactionListScreen`，用于显示所有历史交易记录。
-    - [ ] 创建 `AddEditTransactionViewModel` 管理编辑交易界面的状态和业务逻辑。
-    - [ ] 创建 `AddEditTransactionScreen`，正确建立和`TransactionListScreen`之间的导航
+- [x] 7.1. 创建交易数据库:
+    - [x] 设计并创建 `TransactionEntity` 用于存储交易记录 (包括资产ID、交易类型、份额、价格、费用、时间等)。
+    - [x] 创建对应的 `TransactionDao`。
+    - [x] 在 `AppDatabase` 中注册新表
+- [x] 7.2. 创建交易的界面:
+    - [x] 创建 `TransactionViewModel` 管理交易列表界面的状态和业务逻辑。
+    - [x] 创建 `TransactionListScreen`，用于显示所有历史交易记录。
+    - [x] 创建 `AddEditTransactionViewModel` 管理编辑交易界面的状态和业务逻辑。
+    - [x] 创建 `AddEditTransactionScreen`，正确建立和`TransactionListScreen`之间的导航
         * 它与`AddEditAssetScreen`应该类似
-    - [ ] 填充`AddEditTransactionScreen`，提供表单让用户可以手动录入一笔新的交易或编辑已有交易或删除现有交易。
-- [ ] 7.3. 将交易和资产关联起来，实现业务逻辑:
-    - [ ] 扩展 `PortfolioRepository`，添加 `addTransaction` 等方法。在该方法内，需要以原子方式（数据库事务）完成以下操作：插入一条新的交易、更新对应资产的持有份额、更新投资组合的现金数量。
+    - [x] 填充`AddEditTransactionScreen`，提供表单让用户可以手动录入一笔新的交易或编辑已有交易或删除现有交易。
+- [x] 7.3. 将交易和资产关联起来，实现业务逻辑:
+    - [x] 扩展 `PortfolioRepository`，添加 `addTransaction` 等方法。在该方法内，需要以原子方式（数据库事务）完成以下操作：插入一条新的交易、更新对应资产的持有份额、更新投资组合的现金数量。
         * 编辑交易可以被视作删除一条现有交易，再新增一条交易
 
 ### 里程碑 8: 导入/导出与设置: 实现 JSON 导入/导出功能和应用设置界面。
@@ -196,3 +196,6 @@
 - [ ] 里程碑 10: 最终润色与发布: 进行全面的 UI/UX 优化、测试并准备发布。
     - [ ] 重写AssetListScreen的显示，让它呈一个表格的样子，行是各类资产，列是资产信息，然后最左边的一列（资产名称）在屏幕中固定不动，剩余列可以横向滚动，从而适应竖屏
     - [ ] 增加图标显示
+    - [ ] 处理好数据库迁移
+    - [ ] 通过直接点选资产来开始创建一条新的交易
+        - 编辑资产的功能则改为右滑资产card后会出现的选项
