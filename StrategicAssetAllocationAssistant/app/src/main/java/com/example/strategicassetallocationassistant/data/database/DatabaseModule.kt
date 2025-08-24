@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.strategicassetallocationassistant.data.database.dao.AssetDao
 import com.example.strategicassetallocationassistant.data.database.dao.PortfolioDao
 import com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
+// TradingOpportunityDao is accessed via AppDatabase inside the repository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,6 +36,8 @@ object DatabaseModule {
     fun provideTransactionDao(appDatabase: AppDatabase): TransactionDao {
         return appDatabase.transactionDao()
     }
+
+    // Repository will access TradingOpportunityDao via AppDatabase directly
 
     @Provides
     @Singleton

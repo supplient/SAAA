@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 
 // 显示单个资产的组件
 @Composable
@@ -166,7 +167,8 @@ fun AssetListScreen(
     onEditAsset: (java.util.UUID) -> Unit = {},
     onOpenApiTest: () -> Unit = {},
     onOpenTransactions: () -> Unit = {},
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    onOpenOpportunities: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
     val analyses by viewModel.assetAnalyses.collectAsState()
@@ -186,12 +188,17 @@ fun AssetListScreen(
                 IconButton(onClick = onOpenTransactions) {
                     Icon(imageVector = Icons.Default.List, contentDescription = "交易")
                 }
+                IconButton(onClick = onOpenOpportunities) {
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = "交易机会")
+                }
                 IconButton(onClick = { viewModel.refreshMarketData() }) {
                     Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                 }
                 IconButton(onClick = onOpenSettings) {
                     Icon(Icons.Default.Settings, contentDescription = "设置")
                 }
+                // 临时：长按“交易”按钮打开交易机会列表
+                // 或者再加一个入口
             }
         )
 

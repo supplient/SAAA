@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.UUID
@@ -25,6 +26,7 @@ class AddEditTransactionViewModel @Inject constructor(
 
     companion object {
         const val ARG_TRANSACTION_ID = "transactionId"
+        const val ARG_OPPORTUNITY_ID = "opId"
     }
 
     /* --------------------------  State  -------------------------- */
@@ -54,6 +56,7 @@ class AddEditTransactionViewModel @Inject constructor(
     val feeInput: StateFlow<String> = _feeInput.asStateFlow()
 
     private val editingTxId: UUID? = savedStateHandle.get<String>(ARG_TRANSACTION_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+    private val fromOpportunityId: UUID? = savedStateHandle.get<String>(ARG_OPPORTUNITY_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     val isEditing: Boolean get() = editingTxId != null
 
     init {
@@ -65,6 +68,20 @@ class AddEditTransactionViewModel @Inject constructor(
                     _sharesInput.value = tx.shares.toString()
                     _priceInput.value = tx.price.toString()
                     _feeInput.value = tx.fee.toString()
+                }
+            }
+        }
+
+        fromOpportunityId?.let { opId ->
+            viewModelScope.launch {
+                // 简化：直接从仓库的流里取当前列表并匹配
+                repository.tradingOpportunitiesFlow.firstOrNull()?.firstOrNull { it.id == opId }?.let { op ->
+                    _type.value = op.type
+                    _selectedAssetId.value = op.assetId
+                    _assetIdInput.value = op.assetId?.toString().orEmpty()
+                    _sharesInput.value = op.shares.toString()
+                    _priceInput.value = op.price.toString()
+                    _feeInput.value = op.fee.toString()
                 }
             }
         }
@@ -87,6 +104,10 @@ class AddEditTransactionViewModel @Inject constructor(
         val tx = buildTransaction() ?: return false
         if (editingTxId == null) {
             repository.addTransaction(tx)
+            // 如果是从交易机会转换来的，删除对应的交易机会
+            fromOpportunityId?.let { opId ->
+                repository.deleteTradingOpportunity(opId)
+            }
         } else {
             repository.updateTransaction(tx)
         }

@@ -27,9 +27,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         AssetEntity::class,
         PortfolioEntity::class,
-        com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class
+        com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
+        com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -39,6 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun assetDao(): AssetDao
     abstract fun portfolioDao(): PortfolioDao
     abstract fun transactionDao(): com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
+    abstract fun tradingOpportunityDao(): com.example.strategicassetallocationassistant.data.database.dao.TradingOpportunityDao
     
     companion object {
         @Volatile

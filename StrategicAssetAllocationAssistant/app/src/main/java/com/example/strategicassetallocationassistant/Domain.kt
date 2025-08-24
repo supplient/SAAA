@@ -106,3 +106,17 @@ data class Transaction(
     val amount: Double,
     @Contextual val time: LocalDateTime
 )
+
+// 交易机会（和 Transaction 字段一致，额外包含触发理由）
+@Serializable
+data class TradingOpportunity(
+    @Contextual val id: UUID,
+    @Contextual val assetId: UUID?,
+    val type: TradeType,
+    val shares: Double,
+    val price: Double,
+    val fee: Double,
+    val amount: Double,
+    @Contextual val time: LocalDateTime,
+    val reason: String
+)

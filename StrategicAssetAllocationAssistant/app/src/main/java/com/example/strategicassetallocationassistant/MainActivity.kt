@@ -61,6 +61,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenSettings = {
                                     navController.navigate(NavRoutes.Settings.route)
+                                },
+                                onOpenOpportunities = {
+                                    navController.navigate(NavRoutes.TradingOpportunities.route)
                                 }
                             )
                         }
@@ -102,6 +105,22 @@ class MainActivity : ComponentActivity() {
                         // Add Settings composable
                         composable(NavRoutes.Settings.route) {
                             SettingsScreen(navController = navController)
+                        }
+
+                        composable(NavRoutes.TradingOpportunities.route) {
+                            TradingOpportunityListScreen(
+                                navController = navController,
+                                onExecute = { op ->
+                                    navController.navigate(NavRoutes.AddTransactionFromOpportunity.createRoute(op.id.toString()))
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = NavRoutes.AddTransactionFromOpportunity.route,
+                            arguments = listOf(navArgument(NavRoutes.AddTransactionFromOpportunity.ARG_OP_ID) { type = NavType.StringType })
+                        ) {
+                            AddEditTransactionScreen(navController = navController)
                         }
                     }
                 }

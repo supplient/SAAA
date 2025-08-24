@@ -1,24 +1,27 @@
 package com.example.strategicassetallocationassistant.data.repository
 
+import androidx.room.withTransaction
 import com.example.strategicassetallocationassistant.Asset
 import com.example.strategicassetallocationassistant.Portfolio
+import com.example.strategicassetallocationassistant.TradeType
+import com.example.strategicassetallocationassistant.TradingOpportunity
+import com.example.strategicassetallocationassistant.Transaction
+import com.example.strategicassetallocationassistant.data.database.AppDatabase
 import com.example.strategicassetallocationassistant.data.database.dao.AssetDao
 import com.example.strategicassetallocationassistant.data.database.dao.PortfolioDao
+import com.example.strategicassetallocationassistant.data.database.dao.TradingOpportunityDao
 import com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
 import com.example.strategicassetallocationassistant.data.database.entities.AssetEntity
 import com.example.strategicassetallocationassistant.data.database.entities.PortfolioEntity
+import com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity
 import com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity
-import com.example.strategicassetallocationassistant.Transaction
-import com.example.strategicassetallocationassistant.TradeType
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.room.withTransaction
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -27,17 +30,15 @@ import kotlinx.serialization.json.Json
 /**
  * Repository responsible for interacting with Room database and converting
  * entities into domain models that the rest of the application can use.
- *
- * NOTE: 生产环境下应当通过依赖注入 (Hilt) 获取 DAO 对象；此处直接在构造函数中传入，
- * 以便在不使用 DI 的情况下保持简单。
  */
 @Singleton
 class PortfolioRepository @Inject constructor(
     private val assetDao: AssetDao,
     private val portfolioDao: PortfolioDao,
     private val transactionDao: TransactionDao,
-    private val db: com.example.strategicassetallocationassistant.data.database.AppDatabase
+    private val db: AppDatabase
 ) {
+    private val tradingOpportunityDao: TradingOpportunityDao = db.tradingOpportunityDao()
 
     /* ---------------------------- 导入/导出 ---------------------------- */
 
@@ -86,6 +87,12 @@ class PortfolioRepository @Inject constructor(
     val transactionsFlow: Flow<List<Transaction>> = transactionDao.getAllTransactions().map { list ->
         list.map { it.toDomain() }
     }
+
+    /**
+     * Observe all TradingOpportunities.
+     */
+    val tradingOpportunitiesFlow: Flow<List<com.example.strategicassetallocationassistant.TradingOpportunity>> =
+        tradingOpportunityDao.getAll().map { list -> list.map { it.toDomain() } }
 
     /**
      * Suspended version that returns the latest [Portfolio] once.
@@ -212,6 +219,19 @@ class PortfolioRepository @Inject constructor(
         }
     }
 
+    /* ---------------------------- 交易机会 CRUD ---------------------------- */
+    suspend fun insertTradingOpportunities(items: List<com.example.strategicassetallocationassistant.TradingOpportunity>) {
+        tradingOpportunityDao.insertAll(items.map { it.toEntity() })
+    }
+
+    suspend fun clearTradingOpportunities() {
+        tradingOpportunityDao.deleteAll()
+    }
+
+    suspend fun deleteTradingOpportunity(id: UUID) {
+        tradingOpportunityDao.deleteById(id.toString())
+    }
+
     /* ---------------------------- 私有扩展 ---------------------------- */
 
     private fun AssetEntity.toDomain(): Asset = Asset(
@@ -268,6 +288,32 @@ class PortfolioRepository @Inject constructor(
         amount = amount,
         time = time
     )
+
+    private fun TradingOpportunityEntity.toDomain(): com.example.strategicassetallocationassistant.TradingOpportunity =
+        com.example.strategicassetallocationassistant.TradingOpportunity(
+            id = UUID.fromString(id),
+            assetId = assetId?.let { UUID.fromString(it) },
+            type = type,
+            shares = shares,
+            price = price,
+            fee = fee,
+            amount = amount,
+            time = time,
+            reason = reason
+        )
+
+    private fun com.example.strategicassetallocationassistant.TradingOpportunity.toEntity(): TradingOpportunityEntity =
+        TradingOpportunityEntity.create(
+            id = id,
+            assetId = assetId,
+            type = type,
+            shares = shares,
+            price = price,
+            fee = fee,
+            amount = amount,
+            time = time,
+            reason = reason
+        )
 }
 
 
