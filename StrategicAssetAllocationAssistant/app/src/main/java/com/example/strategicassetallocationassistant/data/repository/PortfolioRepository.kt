@@ -62,6 +62,10 @@ class PortfolioRepository(
         assetDao.deleteAssetById(asset.id.toString())
     }
 
+    suspend fun getAssetById(id: java.util.UUID): Asset? {
+        return assetDao.getAssetById(id.toString())?.toDomain()
+    }
+
     suspend fun updateCash(cash: Double) {
         val current = portfolioDao.getPortfolioSuspend()
         if (current == null) {

@@ -51,6 +51,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    // Compose Material Icons
+    implementation("androidx.compose.material:material-icons-extended")
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     
     // Kotlinx Serialization
