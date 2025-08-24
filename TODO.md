@@ -147,23 +147,29 @@
 
 
 ### 里程碑 6: 后台自动刷新: 使用 `WorkManager` 实现后台定时更新市场数据。
-- [ ] 6.1. 集成 WorkManager: 添加 `WorkManager` 依赖。
-- [ ] 6.2. 创建后台任务: 实现一个 `MarketDataSyncWorker`，该 Worker 复用 `UpdateMarketDataUseCase` 来在后台执行数据更新逻辑。
-- [ ] 6.3. 调度任务: 在 `MainApplication` 中，配置并调度一个周期性的 `PeriodicWorkRequest`，使其在满足特定条件（如网络连接时）定期执行。
+- [x] 6.1. 集成 WorkManager: 添加 `WorkManager` 依赖。
+- [x] 6.2. 创建后台任务: 实现一个 `MarketDataSyncWorker`，该 Worker 复用 `UpdateMarketDataUseCase` 来在后台执行数据更新逻辑。
+- [x] 6.3. 调度任务
+    - [x] 在 `MainApplication` 中，配置并调度一个周期性的 `PeriodicWorkRequest`
+    - [x] 在AssetListScreen右上角（刷新按钮的左边）增加一个临时的checkbox，用来控制是否开启自动刷新
+    - 目前先让它每隔15分钟执行一次
 - [ ] 6.4. 验证: 使用 Android Studio 的 `App Inspection` 或 `Logcat` 来验证后台任务是否按预期执行和完成。
 
 ### 里程碑 7: 交易管理: 实现交易记录的查看和手动添加功能。
-- [ ] 7.1. 更新数据库:
+- [ ] 7.1. 创建交易数据库:
     - [ ] 设计并创建 `TransactionEntity` 用于存储交易记录 (包括资产ID、交易类型、份额、价格、费用、时间等)。
     - [ ] 创建对应的 `TransactionDao`。
     - [ ] 在 `AppDatabase` 中注册新表，并处理好数据库迁移 (Migration)。
-- [ ] 7.2. 创建交易界面:
+- [ ] 7.2. 创建交易的界面:
+    - [ ] 创建 `TransactionViewModel` 管理交易列表界面的状态和业务逻辑。
     - [ ] 创建 `TransactionListScreen`，用于显示所有历史交易记录。
-    - [ ] 创建 `AddEditTransactionScreen`，提供表单让用户可以手动录入一笔新的交易。
-    - [ ] 设置好它们之间的导航。
-- [ ] 7.3. 实现业务逻辑:
-    - [ ] 创建 `TransactionViewModel` 来管理交易界面的状态和业务逻辑。
-    - [ ] 扩展 `PortfolioRepository`，添加 `addTransaction` 等方法。在该方法内，需要以原子方式（数据库事务）完成以下操作：插入一条新的交易记录、更新对应资产的持有份额、更新投资组合的现金数量。
+    - [ ] 创建 `AddEditTransactionViewModel` 管理编辑交易界面的状态和业务逻辑。
+    - [ ] 创建 `AddEditTransactionScreen`，正确建立和`TransactionListScreen`之间的导航
+        * 它与`AddEditAssetScreen`应该类似
+    - [ ] 填充`AddEditTransactionScreen`，提供表单让用户可以手动录入一笔新的交易或编辑已有交易或删除现有交易。
+- [ ] 7.3. 将交易和资产关联起来，实现业务逻辑:
+    - [ ] 扩展 `PortfolioRepository`，添加 `addTransaction` 等方法。在该方法内，需要以原子方式（数据库事务）完成以下操作：插入一条新的交易、更新对应资产的持有份额、更新投资组合的现金数量。
+        * 编辑交易可以被视作删除一条现有交易，再新增一条交易
 
 ### 里程碑 8: 导入/导出与设置: 实现 JSON 导入/导出功能和应用设置界面。
 - [ ] 8.1. 创建设置界面:

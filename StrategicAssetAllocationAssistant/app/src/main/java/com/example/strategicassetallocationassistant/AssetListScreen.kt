@@ -31,6 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.material3.Checkbox
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.work.WorkManager
 
 // 显示单个资产的组件
 @Composable
@@ -177,6 +182,20 @@ fun AssetListScreen(
                 }
             },
             actions = {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val isAutoRefreshEnabled = rememberSaveable { mutableStateOf(true) }
+                Checkbox(
+                    checked = isAutoRefreshEnabled.value,
+                    onCheckedChange = { checked ->
+                        isAutoRefreshEnabled.value = checked
+                        if (checked) {
+                            // schedule
+                            com.example.strategicassetallocationassistant.background.WorkScheduler.schedule(context)
+                        } else {
+                            WorkManager.getInstance(context).cancelUniqueWork("MarketDataSync")
+                        }
+                    }
+                )
                 IconButton(onClick = { viewModel.refreshMarketData() }) {
                     Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                 }
