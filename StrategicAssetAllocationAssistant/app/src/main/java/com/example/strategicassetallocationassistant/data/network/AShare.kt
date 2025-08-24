@@ -58,20 +58,24 @@ data class TxDayDataContainer(
 // endregion
 
 // region Retrofit Service
-interface AShareService {
+interface SinaApiService {
     @GET
     suspend fun getSinaPrice(@Url url: String): List<SinaStockData>
+}
 
-    @GET("http://web.ifzq.gtimg.cn/appstock/app/fqkline/get")
+interface TencentApiService {
+    @GET("appstock/app/fqkline/get")
     suspend fun getTxDayPrice(@Query("param") param: String): TxDayResponse
 
-    @GET("http://ifzq.gtimg.cn/appstock/app/kline/mkline")
+    @GET("appstock/app/kline/mkline")
     suspend fun getTxMinPrice(@Query("param") param: String): ResponseBody
 }
 // endregion
 
 object AShare {
     private const val SINA_BASE_URL = "http://money.finance.sina.com.cn/"
+    private const val TX_DAY_BASE_URL = "http://web.ifzq.gtimg.cn/"
+    private const val TX_MIN_BASE_URL = "http://ifzq.gtimg.cn/"
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -80,14 +84,18 @@ object AShare {
 
     private val okHttpClient = OkHttpClient.Builder().build()
 
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl(SINA_BASE_URL)
-        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-        .client(okHttpClient)
-        .build()
+    private fun <T> createRetrofitService(baseUrl: String, service: Class<T>): T {
+        return Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .client(okHttpClient)
+            .build()
+            .create(service)
+    }
 
-
-    private val service: AShareService = retrofit.create(AShareService::class.java)
+    private val sinaService: SinaApiService = createRetrofitService(SINA_BASE_URL, SinaApiService::class.java)
+    private val txDayService: TencentApiService = createRetrofitService(TX_DAY_BASE_URL, TencentApiService::class.java)
+    private val txMinService: TencentApiService = createRetrofitService(TX_MIN_BASE_URL, TencentApiService::class.java)
 
     suspend fun getPrice(
         code: String,
@@ -133,7 +141,7 @@ object AShare {
         }
         val end = if (endDate.isNotEmpty() && endDate != LocalDate.now().toString()) endDate else ""
         val param = "$code,$unit,,$end,$count,qfq"
-        val response = service.getTxDayPrice(param)
+        val response = txDayService.getTxDayPrice(param)
         val dataContainer = response.data[code] ?: return emptyList()
 
         val series = when (unit) {
@@ -162,7 +170,7 @@ object AShare {
     ): List<StockData> {
         val ts = frequency.removeSuffix("m").toIntOrNull() ?: 1
         val param = "$code,m$ts,,$count"
-        val responseBody = service.getTxMinPrice(param)
+        val responseBody = txMinService.getTxMinPrice(param)
         val responseString = responseBody.string()
 
         val jsonObject = Json.parseToJsonElement(responseString).jsonObject
@@ -230,7 +238,7 @@ object AShare {
         }
 
         val url = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=$code&scale=$ts&ma=5&datalen=$dataLen"
-        val response = service.getSinaPrice(url)
+        val response = sinaService.getSinaPrice(url)
 
         val mapped = response.map {
             StockData(
