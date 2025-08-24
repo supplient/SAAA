@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
@@ -52,6 +53,42 @@ class PortfolioViewModel @Inject constructor(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyMap()
+    )
+
+    /**
+     * Asset level analytics calculated based on current market value and target weight.
+     */
+    data class AssetAnalysis(
+        val asset: Asset,
+        val marketValue: Double,
+        val currentWeight: Double,          // 当前占比 (0-1)
+        val deviationPct: Double,           // 与目标占比的偏离 (正:+ 负:-)
+        val targetMarketValue: Double,      // 目标市值
+        val deviationValue: Double          // 与目标市值的偏离 (正:超出 负:不足)
+    )
+
+    /** AssetAnalysis 列表 Flow */
+    val assetAnalyses: StateFlow<List<AssetAnalysis>> = assets.map { assetList ->
+        val totalMarketValue = assetList.sumOf { it.currentMarketValue }
+        assetList.map { asset ->
+            val value = asset.currentMarketValue
+            val weight = if (totalMarketValue > 0) value / totalMarketValue else 0.0
+            val deviationPct = weight - asset.targetWeight
+            val targetValue = totalMarketValue * asset.targetWeight
+            val deviationValue = value - targetValue
+            AssetAnalysis(
+                asset = asset,
+                marketValue = value,
+                currentWeight = weight,
+                deviationPct = deviationPct,
+                targetMarketValue = targetValue,
+                deviationValue = deviationValue
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
     )
 
     /** 手动刷新市场数据 */

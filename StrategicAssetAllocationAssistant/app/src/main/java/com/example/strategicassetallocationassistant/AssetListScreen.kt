@@ -35,8 +35,7 @@ import androidx.compose.ui.unit.sp
 // 显示单个资产的组件
 @Composable
 fun AssetItem(
-    asset: Asset,
-    marketValue: Double, // 直接接收预先计算好的市值
+    analysis: PortfolioViewModel.AssetAnalysis,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -59,13 +58,13 @@ fun AssetItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = asset.name,
+                    text = analysis.asset.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = when (asset.type) {
+                    text = when (analysis.asset.type) {
                         AssetType.MONEY_FUND -> "货币基金"
                         AssetType.OFFSHORE_FUND -> "场外基金"
                         AssetType.STOCK -> "股票"
@@ -78,22 +77,22 @@ fun AssetItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             // 持仓信息显示
-            asset.code?.let {
+            analysis.asset.code?.let {
                 Text("资产代码: $it", style = MaterialTheme.typography.bodyMedium)
             }
-            asset.shares?.let {
+            analysis.asset.shares?.let {
                 Text("份额: $it", style = MaterialTheme.typography.bodyMedium)
             }
-            when (asset.type) {
-                AssetType.STOCK -> asset.unitValue?.let {
+            when (analysis.asset.type) {
+                AssetType.STOCK -> analysis.asset.unitValue?.let {
                     Text("每股价格: ¥$it", style = MaterialTheme.typography.bodyMedium)
                 }
-                AssetType.OFFSHORE_FUND -> asset.unitValue?.let {
+                AssetType.OFFSHORE_FUND -> analysis.asset.unitValue?.let {
                     Text("净值: $it", style = MaterialTheme.typography.bodyMedium)
                 }
                 else -> {}
             }
-            asset.lastUpdateTime?.let {
+            analysis.asset.lastUpdateTime?.let {
                 Text("更新时间: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
@@ -105,15 +104,49 @@ fun AssetItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "目标占比: ${(asset.targetWeight * 100).toInt()}%",
+                    text = "目标占比: ${(analysis.asset.targetWeight * 100).toInt()}%",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "市值: ¥${String.format("%.2f", marketValue)}", // 使用传入的市值
+                    text = "市值: ¥${String.format("%.2f", analysis.marketValue)}", // 使用分析中的市值
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            // 当前占比和偏离度
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "当前占比: ${(analysis.currentWeight * 100).let { String.format("%.2f", it) }}%",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "偏离: ${(analysis.deviationPct * 100).let { String.format("%.2f", it) }}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            // 目标市值与偏离市值
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "目标市值: ¥${String.format("%.2f", analysis.targetMarketValue)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "偏离市值: ¥${String.format("%.2f", analysis.deviationValue)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -130,7 +163,9 @@ fun AssetListScreen(
     onOpenApiTest: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
-    val assetId2Value by viewModel.assetId2Value.collectAsState() // 获取市值映射表
+    val analyses by viewModel.assetAnalyses.collectAsState()
+
+    // 旧 assetId2Value 不再需要
 
     Box(modifier = modifier.fillMaxSize()) {
         // TopAppBar with Refresh
@@ -188,13 +223,10 @@ fun AssetListScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(portfolio.assets) { asset -> // 使用从Portfolio中解构出的assets列表
-                    // 从映射表中查找当前资产的市值，如果找不到则默认为0.0
-                    val value = assetId2Value[asset.id] ?: 0.0
+                items(analyses) { analysis ->
                     AssetItem(
-                        asset = asset,
-                        marketValue = value,
-                        onClick = { onEditAsset(asset.id) },
+                        analysis = analysis,
+                        onClick = { onEditAsset(analysis.asset.id) },
                         modifier = Modifier,
                     )
                 }
