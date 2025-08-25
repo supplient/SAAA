@@ -29,6 +29,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +44,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = hiltViewModel()) {
     val interval by viewModel.intervalMinutes.collectAsState()
-    val options = listOf(15L, 30L, 60L, 120L)
+    val options = listOf(0L, 15L, 30L, 60L, 120L)
     var showImportDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -84,14 +87,37 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text("后台刷新频率 (分钟):")
-            options.forEach { option ->
-                Column {
-                    RadioButton(
-                        selected = option == interval,
-                        onClick = { viewModel.onIntervalSelected(option) }
-                    )
-                    Text(text = "$option 分钟")
+
+            // 下拉菜单选择后台刷新频率
+            var expanded by remember { mutableStateOf(false) }
+            val labels = options.map { if (it == 0L) "关闭" else "${it} 分钟" }
+
+            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = labels[options.indexOf(interval)],
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("后台刷新频率") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                androidx.compose.material3.DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    options.forEachIndexed { idx, option ->
+                        DropdownMenuItem(
+                            text = { Text(labels[idx]) },
+                            onClick = {
+                                viewModel.onIntervalSelected(option)
+                                expanded = false
+                            }
+                        )
+                    }
                 }
             }
 

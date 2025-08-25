@@ -12,6 +12,13 @@ object WorkScheduler {
     private const val UNIQUE_NAME = "MarketDataSync"
 
     fun schedule(context: Context, intervalMinutes: Long) {
+        // If the user chooses to disable background refresh (interval <= 0),
+        // cancel any previously scheduled work and exit early.
+        if (intervalMinutes <= 0) {
+            cancel(context)
+            return
+        }
+
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
