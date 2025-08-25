@@ -32,10 +32,20 @@ fun TradingOpportunityListScreen(
             CenterAlignedTopAppBar(
                 title = { Text("交易机会") },
                 actions = {
-                    IconButton(onClick = { viewModel.checkNow() }) { Text("检查") }
                     IconButton(onClick = { viewModel.clearAll() }) { Icon(Icons.Default.DeleteSweep, contentDescription = "清空") }
                 }
             )
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = { viewModel.checkBuy() }) { Text("检查买") }
+                Button(onClick = { viewModel.checkSell() }) { Text("检查卖") }
+            }
         }
     ) { inner ->
         if (items.isEmpty()) {

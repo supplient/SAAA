@@ -56,12 +56,13 @@ class MarketDataSyncWorker @AssistedInject constructor(
             val stats = updateMarketData()
             // 通知用户市场数据已刷新
             NotificationHelper.notifyMarketDataUpdated(applicationContext, stats.success, stats.fail)
+            // DEBUG 暂时先禁用自动交易机会检查
             // 检查交易机会并保存
-            val ops = checkTradingOpportunities()
-            if (ops.isNotEmpty()) {
-                repository.insertTradingOpportunities(ops)
-                NotificationHelper.notifyNewOpportunities(applicationContext, ops.size)
-            }
+            // val ops = checkTradingOpportunities()
+            // if (ops.isNotEmpty()) {
+            //     repository.insertTradingOpportunities(ops)
+            //     NotificationHelper.notifyNewOpportunities(applicationContext, ops.size)
+            // }
             Result.success()
         } catch (e: Exception) {
             Result.retry()

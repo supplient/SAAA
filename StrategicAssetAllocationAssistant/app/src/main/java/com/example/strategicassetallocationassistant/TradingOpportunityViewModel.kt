@@ -3,7 +3,8 @@ package com.example.strategicassetallocationassistant
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
-import com.example.strategicassetallocationassistant.domain.CheckTradingOpportunitiesUseCase
+import com.example.strategicassetallocationassistant.domain.BuyOpportunityCalculator
+import com.example.strategicassetallocationassistant.domain.SellOpportunityCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TradingOpportunityViewModel @Inject constructor(
     private val repository: PortfolioRepository,
-    private val checkTradingOpportunities: CheckTradingOpportunitiesUseCase
+    private val sellCalculator: SellOpportunityCalculator,
+    private val buyCalculator: BuyOpportunityCalculator
 ) : ViewModel() {
 
     val opportunities: StateFlow<List<TradingOpportunity>> =
@@ -25,9 +27,18 @@ class TradingOpportunityViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    fun checkNow() {
+    fun checkSell() {
         viewModelScope.launch {
-            val items = checkTradingOpportunities()
+            val portfolio = repository.getPortfolioOnce()
+            val items = sellCalculator.calculate(portfolio)
+            if (items.isNotEmpty()) repository.insertTradingOpportunities(items)
+        }
+    }
+
+    fun checkBuy() {
+        viewModelScope.launch {
+            val portfolio = repository.getPortfolioOnce()
+            val items = buyCalculator.calculate(portfolio)
             if (items.isNotEmpty()) repository.insertTradingOpportunities(items)
         }
     }
