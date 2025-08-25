@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'v*.*.*' # Triggers on tags like v1.0.0
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The tag to create for the release (e.g., v0.0.2-test)'
+        required: true
 
 jobs:
   build-and-release:
@@ -11,6 +16,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Determine Tag Name
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -22,7 +36,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+        run: chmod +x gradlew
+        working-directory: ./StrategicAssetAllocationAssistant
 
       - name: Decode Keystore
         id: decode_keystore
@@ -32,26 +47,29 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
-          echo $SIGNING_KEY_JKS_BASE64 | base64 --decode > ${{ github.workspace }}/keystore.jks
-          echo "storeFile=${{ github.workspace }}/keystore.jks" > ${{ github.workspace }}/keystore.properties
-          echo "storePassword=$SIGNING_STORE_PASSWORD" >> ${{ github.workspace }}/keystore.properties
-          echo "keyAlias=$SIGNING_KEY_ALIAS" >> ${{ github.workspace }}/keystore.properties
-          echo "keyPassword=$SIGNING_KEY_PASSWORD" >> ${{ github.workspace }}/keystore.properties
+          KEYSTORE_DIR=${{ github.workspace }}/StrategicAssetAllocationAssistant
+          echo $SIGNING_KEY_JKS_BASE64 | base64 --decode > $KEYSTORE_DIR/keystore.jks
+          echo "storeFile=keystore.jks" > $KEYSTORE_DIR/keystore.properties
+          echo "storePassword=$SIGNING_STORE_PASSWORD" >> $KEYSTORE_DIR/keystore.properties
+          echo "keyAlias=$SIGNING_KEY_ALIAS" >> $KEYSTORE_DIR/keystore.properties
+          echo "keyPassword=$SIGNING_KEY_PASSWORD" >> $KEYSTORE_DIR/keystore.properties
 
       - name: Build Release APK
         run: ./gradlew :app:assembleRelease
+        working-directory: ./StrategicAssetAllocationAssistant
 
       - name: Find APK
         id: find_apk
         run: |
-          apk_path=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          apk_path=$(find StrategicAssetAllocationAssistant/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ steps.find_apk.outputs.apk_path }}
-          tag_name: ${{ github.ref_name }}
-          name: "Release ${{ github.ref_name }}"
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: "Release ${{ steps.get_tag.outputs.tag }}"
+          prerelease: ${{ github.event_name == 'workflow_dispatch' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
