@@ -58,6 +58,16 @@ android {
     buildFeatures {
         compose = true
     }
+
+    androidComponents {
+        onVariants(selector().withBuildType("release")) { variant ->
+            variant.outputs.forEach { output ->
+                if (output is com.android.build.api.variant.ApkVariantOutput) {
+                    output.outputFileName.set("SAAA.apk")
+                }
+            }
+        }
+    }
 }
 
 dependencies {
