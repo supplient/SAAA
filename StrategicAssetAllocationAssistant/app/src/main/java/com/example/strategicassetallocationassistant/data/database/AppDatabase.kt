@@ -30,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 4,
+    version = 1,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -57,7 +57,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "strategic_asset_allocation_database"
                 )
                     .addCallback(PrepopulateCallback(context.applicationContext))
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
@@ -113,27 +113,6 @@ abstract class AppDatabase : RoomDatabase() {
                     // 初始化现金记录
                     portfolioDao.insertPortfolio(PortfolioEntity(cash = 10000.0))
                 }
-            }
-        }
-
-        // --- Migrations ---
-        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE assets ADD COLUMN note TEXT")
-                db.execSQL("ALTER TABLE transactions ADD COLUMN reason TEXT")
-                db.execSQL("ALTER TABLE portfolio ADD COLUMN note TEXT")
-            }
-        }
-
-        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE portfolio ADD COLUMN lastBuyOpportunityCheck TEXT")
-            }
-        }
-
-        val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE portfolio ADD COLUMN isBuyOpportunityPostponed INTEGER NOT NULL DEFAULT 0")
             }
         }
     }
