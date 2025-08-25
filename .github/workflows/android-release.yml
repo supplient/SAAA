@@ -13,6 +13,8 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -65,7 +67,7 @@ jobs:
           echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.find_apk.outputs.apk_path }}
           tag_name: ${{ steps.get_tag.outputs.tag }}
