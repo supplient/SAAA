@@ -1,3 +1,4 @@
+import com.android.build.api.variant.ApkVariantOutput
 import java.util.Properties
 
 plugins {
@@ -62,7 +63,7 @@ android {
     androidComponents {
         onVariants(selector().withBuildType("release")) { variant ->
             variant.outputs.forEach { output ->
-                if (output is com.android.build.api.variant.ApkVariantOutput) {
+                if (output is ApkVariantOutput) {
                     output.outputFileName.set("SAAA.apk")
                 }
             }
