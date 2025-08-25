@@ -19,6 +19,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// From AShare(https://github.com/mpquant/Ashare)
+
 // region Data Models
 @Serializable
 data class StockData(
