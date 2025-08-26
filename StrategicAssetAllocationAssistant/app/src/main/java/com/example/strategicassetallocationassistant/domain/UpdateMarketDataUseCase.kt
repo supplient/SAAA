@@ -5,13 +5,19 @@ import com.example.strategicassetallocationassistant.data.repository.PortfolioRe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.inject.Inject
 
-data class MarketDataUpdateStats(val success: Int, val fail: Int)
+data class MarketDataUpdateStats(
+    val success: Int, 
+    val fail: Int,
+    val failedAssetIds: List<UUID> = emptyList()
+)
 
 /**
  * UseCase：遍历数据库资产并更新市场数据。
  * 直接使用 AShare 获取实时市场数据。
+ * 不刷新货币基金类型的资产。
  */
 class UpdateMarketDataUseCase @Inject constructor(
     private val repository: PortfolioRepository
@@ -23,15 +29,25 @@ class UpdateMarketDataUseCase @Inject constructor(
 
             var success = 0
             var fail = 0
+            val failedAssetIds = mutableListOf<UUID>()
 
             portfolio.assets.forEach { asset ->
+                // 跳过货币基金类型，不进行刷新
+                if (asset.type == com.example.strategicassetallocationassistant.AssetType.MONEY_FUND) {
+                    return@forEach
+                }
+                
                 // 如果没有代码，计入失败
-                val code = asset.code ?: run { fail++; return@forEach }
+                val code = asset.code ?: run { 
+                    fail++
+                    failedAssetIds.add(asset.id)
+                    return@forEach 
+                }
 
                 // 根据资产类型选择合适的频率
                 val frequency = when (asset.type) {
                     com.example.strategicassetallocationassistant.AssetType.STOCK -> "5m"
-                    else -> "1d" // MONEY_FUND / OFFSHORE_FUND 使用日频即可
+                    else -> "1d" // OFFSHORE_FUND 使用日频即可
                 }
 
                 val latest = runCatching {
@@ -48,10 +64,15 @@ class UpdateMarketDataUseCase @Inject constructor(
                     success++
                 } else {
                     fail++
+                    failedAssetIds.add(asset.id)
                 }
             }
 
-            MarketDataUpdateStats(success = success, fail = fail)
+            MarketDataUpdateStats(
+                success = success, 
+                fail = fail,
+                failedAssetIds = failedAssetIds
+            )
         }
     }
 }
