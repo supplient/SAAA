@@ -321,8 +321,7 @@ fun AssetListScreen(
                         onClick = {
                             val newCash = cashInputValue.toDoubleOrNull()
                             if (newCash != null && newCash >= 0) {
-                                // TODO: 这里需要调用ViewModel的方法来更新现金
-                                // viewModel.updateCash(newCash)
+                                viewModel.updateCash(newCash)
                             }
                             showCashEditDialog = false
                         }

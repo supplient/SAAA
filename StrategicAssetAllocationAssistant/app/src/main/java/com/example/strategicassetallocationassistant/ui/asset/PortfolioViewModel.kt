@@ -107,4 +107,11 @@ class PortfolioViewModel @Inject constructor(
             _failedRefreshAssetIds.value = result.failedAssetIds.toSet()
         }
     }
+
+    /** 更新可用现金 */
+    fun updateCash(newCash: Double) {
+        viewModelScope.launch {
+            repository.updateCash(newCash)
+        }
+    }
 }
