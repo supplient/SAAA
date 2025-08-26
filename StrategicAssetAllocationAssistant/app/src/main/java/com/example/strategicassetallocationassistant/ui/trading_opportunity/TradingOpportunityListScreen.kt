@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.*
@@ -26,6 +28,7 @@ fun TradingOpportunityListScreen(
     onExecute: (TradingOpportunity) -> Unit
 ) {
     val items by viewModel.opportunities.collectAsState()
+    val reasoningLog by viewModel.reasoningLog.collectAsState()
 
     Scaffold(
         topBar = {
@@ -48,6 +51,21 @@ fun TradingOpportunityListScreen(
             }
         }
     ) { inner ->
+        // 弹出算法思考过程对话框
+        if (reasoningLog != null) {
+            AlertDialog(
+                onDismissRequest = { viewModel.clearReasoningLog() },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.clearReasoningLog() }) { Text("确定") }
+                },
+                title = { Text("算法思考过程") },
+                text = {
+                    Box(Modifier.heightIn(min = 100.dp, max = 400.dp).verticalScroll(rememberScrollState())) {
+                        Text(reasoningLog ?: "")
+                    }
+                }
+            )
+        }
         if (items.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(inner), contentAlignment = Alignment.Center) {
                 Text("暂无交易机会")

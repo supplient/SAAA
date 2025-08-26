@@ -20,6 +20,10 @@ class TradingOpportunityViewModel @Inject constructor(
     private val buyCalculator: BuyOpportunityCalculator
 ) : ViewModel() {
 
+    // 用于在 UI 中展示算法思考过程
+    private val _reasoningLog = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val reasoningLog: kotlinx.coroutines.flow.StateFlow<String?> = _reasoningLog
+
     val opportunities: StateFlow<List<TradingOpportunity>> =
         repository.tradingOpportunitiesFlow.stateIn(
             scope = viewModelScope,
@@ -32,6 +36,7 @@ class TradingOpportunityViewModel @Inject constructor(
             val portfolio = repository.getPortfolioOnce()
             val items = sellCalculator.calculate(portfolio)
             if (items.isNotEmpty()) repository.insertTradingOpportunities(items)
+            _reasoningLog.value = sellCalculator.lastLog
         }
     }
 
@@ -40,6 +45,7 @@ class TradingOpportunityViewModel @Inject constructor(
             val portfolio = repository.getPortfolioOnce()
             val items = buyCalculator.calculate(portfolio)
             if (items.isNotEmpty()) repository.insertTradingOpportunities(items)
+            _reasoningLog.value = buyCalculator.lastLog
         }
     }
 
@@ -50,6 +56,9 @@ class TradingOpportunityViewModel @Inject constructor(
     fun deleteOne(id: UUID) {
         viewModelScope.launch { repository.deleteTradingOpportunity(id) }
     }
+
+    // 在展示完毕后调用以清除日志
+    fun clearReasoningLog() { _reasoningLog.value = null }
 }
 
 

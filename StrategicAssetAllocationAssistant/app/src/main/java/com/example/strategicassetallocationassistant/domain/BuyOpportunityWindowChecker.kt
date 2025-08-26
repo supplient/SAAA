@@ -52,13 +52,13 @@ class BuyOpportunityWindowChecker @Inject constructor(
         // 14:00 之后才可能触发
         if (now.toLocalTime().isBefore(LocalTime.of(14, 0))) return false
 
+        // 已顺延
         var postponed = repository.isBuyOpportunityPostponed()
-
         if (postponed) {
             // 顺延阶段：今天是交易日即可触发
             if (!isTradingDay(now.toLocalDate())) return false
 
-            // 触发后复位并允许（不考虑同周限制）
+            // 触发后复位
             repository.setBuyOpportunityPostponed(false)
             return true
         }
