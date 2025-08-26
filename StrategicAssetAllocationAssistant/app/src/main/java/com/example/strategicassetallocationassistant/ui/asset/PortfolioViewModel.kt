@@ -55,6 +55,10 @@ class PortfolioViewModel @Inject constructor(
         initialValue = emptyMap()
     )
 
+    // 刷新失败的资产ID列表
+    private val _failedRefreshAssetIds = MutableStateFlow<Set<UUID>>(emptySet())
+    val failedRefreshAssetIds: StateFlow<Set<UUID>> = _failedRefreshAssetIds.asStateFlow()
+
     /**
      * Asset level analytics calculated based on current market value and target weight.
      */
@@ -64,11 +68,15 @@ class PortfolioViewModel @Inject constructor(
         val currentWeight: Double,          // 当前占比 (0-1)
         val deviationPct: Double,           // 与目标占比的偏离 (正:+ 负:-)
         val targetMarketValue: Double,      // 目标市值
-        val deviationValue: Double          // 与目标市值的偏离 (正:超出 负:不足)
+        val deviationValue: Double,         // 与目标市值的偏离 (正:超出 负:不足)
+        val isRefreshFailed: Boolean        // 是否刷新失败
     )
 
     /** AssetAnalysis 列表 Flow */
-    val assetAnalyses: StateFlow<List<AssetAnalysis>> = assets.map { assetList ->
+    val assetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
+        assets,
+        failedRefreshAssetIds
+    ) { assetList, failedIds ->
         val totalMarketValue = assetList.sumOf { it.currentMarketValue }
         assetList.map { asset ->
             val value = asset.currentMarketValue
@@ -82,7 +90,8 @@ class PortfolioViewModel @Inject constructor(
                 currentWeight = weight,
                 deviationPct = deviationPct,
                 targetMarketValue = targetValue,
-                deviationValue = deviationValue
+                deviationValue = deviationValue,
+                isRefreshFailed = failedIds.contains(asset.id)
             )
         }
     }.stateIn(
@@ -94,7 +103,15 @@ class PortfolioViewModel @Inject constructor(
     /** 手动刷新市场数据 */
     fun refreshMarketData() {
         viewModelScope.launch {
-            updateMarketData()
+            val result = updateMarketData()
+            _failedRefreshAssetIds.value = result.failedAssetIds.toSet()
+        }
+    }
+
+    /** 更新可用现金 */
+    fun updateCash(newCash: Double) {
+        viewModelScope.launch {
+            repository.updateCash(newCash)
         }
     }
 }

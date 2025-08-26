@@ -29,9 +29,9 @@ class SellOpportunityCalculator @Inject constructor() {
         // 如果总资产小于等于0，则返回空列表
         if (total <= 0) return emptyList()
 
-        // 遍历所有资产，计算每个资产的当前权重和目标权重之间的偏差
+        // 遍历所有资产（跳过货币基金和场外基金），计算每个资产的当前权重和目标权重之间的偏差
         val list = mutableListOf<TradingOpportunity>()
-        for (asset in portfolio.assets) {
+        for (asset in portfolio.assets.filter { it.type != AssetType.MONEY_FUND && it.type != AssetType.OFFSHORE_FUND }) {
             // 计算当前权重=资产市值/总资产
             val currentWeight = asset.currentMarketValue / total
             // 计算偏差=当前权重-目标权重
