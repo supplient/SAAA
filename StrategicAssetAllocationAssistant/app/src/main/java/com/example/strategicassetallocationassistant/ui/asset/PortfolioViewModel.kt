@@ -33,7 +33,7 @@ class PortfolioViewModel @Inject constructor(
         repository.portfolioFlow.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Portfolio(emptyList(), 0.0)
+            initialValue = Portfolio(emptyList(), 0.0, null)
         )
 
     // 从顶层 Portfolio Flow 中派生资产列表 Flow
@@ -112,6 +112,13 @@ class PortfolioViewModel @Inject constructor(
     fun updateCash(newCash: Double) {
         viewModelScope.launch {
             repository.updateCash(newCash)
+        }
+    }
+
+    /** 更新投资组合备注 */
+    fun updateNote(note: String?) {
+        viewModelScope.launch {
+            repository.updateNote(note)
         }
     }
 }

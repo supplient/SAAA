@@ -41,6 +41,10 @@ interface PortfolioDao {
     @Query("UPDATE portfolio SET cash = :cash WHERE id = 1")
     suspend fun updateCash(cash: Double)
 
+    /** 更新整体资产配置备注 */
+    @Query("UPDATE portfolio SET note = :note WHERE id = 1")
+    suspend fun updateNote(note: String?)
+
     /** 更新是否顺延标记 */
     @Query("UPDATE portfolio SET isBuyOpportunityPostponed = :flag WHERE id = 1")
     suspend fun updateBuyOpportunityPostponed(flag: Boolean)

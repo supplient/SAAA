@@ -1,44 +1,21 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 package com.example.strategicassetallocationassistant
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -47,156 +24,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 
-// 显示单个资产的组件
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Composable
-fun AssetItem(
-    analysis: PortfolioViewModel.AssetAnalysis,
-    onAddTransaction: () -> Unit,
-    onEditAsset: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .combinedClickable(onClick = onAddTransaction, onLongClick = onEditAsset),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (analysis.isRefreshFailed) 
-                MaterialTheme.colorScheme.errorContainer 
-            else 
-                MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-            // 资产名称和类型
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = analysis.asset.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    if (analysis.isRefreshFailed) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "刷新失败",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                Text(
-                    text = when (analysis.asset.type) {
-                        AssetType.MONEY_FUND -> "货币基金"
-                        AssetType.OFFSHORE_FUND -> "场外基金"
-                        AssetType.STOCK -> "股票"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 持仓信息显示
-            analysis.asset.code?.let {
-                Text("资产代码: $it", style = MaterialTheme.typography.bodyMedium)
-            }
-            analysis.asset.shares?.let {
-                Text("份额: $it", style = MaterialTheme.typography.bodyMedium)
-            }
-            when (analysis.asset.type) {
-                AssetType.STOCK -> analysis.asset.unitValue?.let {
-                    Text("每股价格: ¥$it", style = MaterialTheme.typography.bodyMedium)
-                }
-                AssetType.OFFSHORE_FUND -> analysis.asset.unitValue?.let {
-                    Text("净值: $it", style = MaterialTheme.typography.bodyMedium)
-                }
-                else -> {}
-            }
-            analysis.asset.lastUpdateTime?.let {
-                Text("更新时间: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 目标占比和市场价值
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "目标占比: ${(analysis.asset.targetWeight * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "市值: ¥${String.format("%.2f", analysis.marketValue)}", // 使用分析中的市值
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-            // 当前占比和偏离度
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "当前占比: ${(analysis.currentWeight * 100).let { String.format("%.2f", it) }}%",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "偏离: ${(analysis.deviationPct * 100).let { String.format("%.2f", it) }}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-            // 目标市值与偏离市值
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "目标市值: ¥${String.format("%.2f", analysis.targetMarketValue)}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "偏离市值: ¥${String.format("%.2f", analysis.deviationValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                )
-            }
-
-            // 备注
-            analysis.asset.note?.takeIf { it.isNotBlank() }?.let {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "备注: $it", style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-}
-
-// 主屏幕组件
+/**
+ * 主屏幕组件
+ * 重构后的资产列表界面，支持侧边栏、资产配置总体信息栏和表格化资产列表
+ */
 @Composable
 fun AssetListScreen(
     viewModel: PortfolioViewModel,
@@ -207,149 +42,183 @@ fun AssetListScreen(
     onOpenApiTest: () -> Unit = {},
     onOpenTransactions: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
-    onOpenOpportunities: () -> Unit = {}
+    onOpenOpportunities: () -> Unit = {},
+    onOpenConfigNote: () -> Unit = {}
 ) {
-    val portfolio by viewModel.portfolioState.collectAsState() // 观察顶层Portfolio状态
+    val portfolio by viewModel.portfolioState.collectAsState()
     val analyses by viewModel.assetAnalyses.collectAsState()
-
+    
+    // 侧边栏和消息状态
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    
     // 现金编辑状态
     var showCashEditDialog by remember { mutableStateOf(false) }
     var cashInputValue by remember { mutableStateOf("") }
+    
+    // 计算总资产
+    val totalAssets = portfolio.cash + analyses.sumOf { it.marketValue }
 
-    // 旧 assetId2Value 不再需要
-
-    Box(modifier = modifier.fillMaxSize()) {
-        // TopAppBar with Refresh
-        androidx.compose.material3.TopAppBar(
-            title = { },
-            navigationIcon = {
-                IconButton(onClick = onOpenApiTest) {
-                    Icon(Icons.Default.BugReport, contentDescription = "API 测试")
-                }
-            },
-            actions = {
-                IconButton(onClick = onOpenTransactions) {
-                    Icon(imageVector = Icons.Default.List, contentDescription = "交易")
-                }
-                IconButton(onClick = onOpenOpportunities) {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = "交易机会")
-                }
-                IconButton(onClick = { viewModel.refreshMarketData() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                }
-                IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Default.Settings, contentDescription = "设置")
-                }
-                // 临时：长按“交易”按钮打开交易机会列表
-                // 或者再加一个入口
-            }
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(56.dp)) // space for top bar
-
-            // 显示总现金
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .clickable {
-                        cashInputValue = String.format("%.2f", portfolio.cash)
-                        showCashEditDialog = true
-                    },
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "可用现金",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "¥${String.format("%.2f", portfolio.cash)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-
-            // 资产列表
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(analyses) { analysis ->
-                    AssetItem(
-                        analysis = analysis,
-                        onAddTransaction = { onAddTransactionForAsset(analysis.asset.id) },
-                        onEditAsset = { onEditAsset(analysis.asset.id) },
-                        modifier = Modifier,
-                    )
-                }
-            }
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            AppDrawer(
+                onClose = { scope.launch { drawerState.close() } },
+                onNavigateToConfigNote = onOpenConfigNote,
+                onNavigateToApiTest = onOpenApiTest,
+                onNavigateToSettings = onOpenSettings
+            )
         }
-
-        // 现金编辑对话框
-        if (showCashEditDialog) {
-            AlertDialog(
-                onDismissRequest = { showCashEditDialog = false },
-                title = { Text("编辑可用现金") },
-                text = {
-                    OutlinedTextField(
-                        value = cashInputValue,
-                        onValueChange = { cashInputValue = it },
-                        label = { Text("可用现金金额") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        SummaryBar(
+                            totalAssets = totalAssets,
+                            availableCash = portfolio.cash,
+                            onClick = {
+                                cashInputValue = String.format("%.2f", portfolio.cash)
+                                showCashEditDialog = true
+                            }
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "菜单")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = onOpenTransactions) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.List, contentDescription = "交易")
+                        }
+                        IconButton(onClick = onOpenOpportunities) {
+                            Icon(imageVector = Icons.Default.Notifications, contentDescription = "交易机会")
+                        }
+                        IconButton(onClick = { viewModel.refreshMarketData() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                        }
+                    }
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { innerPadding ->
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // 顶部已集成资产概览栏，横屏下不再需要占用额外竖向空间
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // 资产列表表格
+                AssetTable(
+                    analyses = analyses,
+                    onAddTransaction = onAddTransactionForAsset,
+                    onEditAsset = onEditAsset,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            
+            // 现金编辑对话框
+            if (showCashEditDialog) {
+                AlertDialog(
+                    onDismissRequest = { showCashEditDialog = false },
+                    title = { Text("编辑可用现金") },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            // 总资产展示（只读）
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "总资产", style = MaterialTheme.typography.bodyMedium)
+                                Text(text = "¥${String.format("%.2f", totalAssets)}", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            // 可用现金编辑
+                            OutlinedTextField(
+                                value = cashInputValue,
+                                onValueChange = { cashInputValue = it },
+                                label = { Text("可用现金") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showCashEditDialog = false }) {
+                            Text("取消")
+                        }
+                    },
+                    confirmButton = {
+                        Button(onClick = {
                             val newCash = cashInputValue.toDoubleOrNull()
                             if (newCash != null && newCash >= 0) {
                                 viewModel.updateCash(newCash)
                             }
                             showCashEditDialog = false
+                        }) {
+                            Text("保存")
                         }
-                    ) {
-                        Text("确认")
                     }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showCashEditDialog = false }
-                    ) {
-                        Text("取消")
-                    }
-                }
-            )
+                )
+            }
+            
+            // FloatingActionButton
+            FloatingActionButton(
+                onClick = onAddAsset,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "添加资产"
+                )
+            }
         }
+        }
+    }
+}
 
-        // FloatingActionButton
-        FloatingActionButton(
-            onClick = onAddAsset,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = "Add Asset"
-            )
-        }
+// 顶部紧凑型资产概览栏，可点击弹出明细/编辑对话框
+@Composable
+private fun SummaryBar(
+    totalAssets: Double,
+    availableCash: Double,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "¥${String.format("%.2f", availableCash)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+        Text("/")
+        Text(
+            text = "¥${String.format("%.2f", totalAssets)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

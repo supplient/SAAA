@@ -79,7 +79,16 @@ class PortfolioRepository @Inject constructor(
     /**
      * Observe the full [Portfolio] (assets + cash) in one convenient stream.
      */
-    val portfolioFlow: Flow<Portfolio> = assetsFlow.combineCashFlow()
+    val portfolioFlow: Flow<Portfolio> = kotlinx.coroutines.flow.combine(
+        portfolioDao.getPortfolio(),
+        assetsFlow
+    ) { entity, assets ->
+        Portfolio(
+            assets = assets,
+            cash = entity?.cash ?: 0.0,
+            note = entity?.note
+        )
+    }
 
     /**
      * Observe all [Transaction]s in the database.
@@ -99,8 +108,10 @@ class PortfolioRepository @Inject constructor(
      */
     suspend fun getPortfolioOnce(): Portfolio {
         val assets = assetDao.getAllAssets().first()
-        val cash = portfolioDao.getCash() ?: 0.0
-        return Portfolio(assets.map { it.toDomain() }, cash)
+        val entity = portfolioDao.getPortfolioSuspend()
+        val cash = entity?.cash ?: 0.0
+        val note = entity?.note
+        return Portfolio(assets.map { it.toDomain() }, cash, note)
     }
 
     /* ---------------------------- 写入数据 ---------------------------- */
@@ -128,6 +139,16 @@ class PortfolioRepository @Inject constructor(
             portfolioDao.insertPortfolio(PortfolioEntity(cash = cash))
         } else {
             portfolioDao.updateCash(cash)
+        }
+    }
+
+    suspend fun updateNote(note: String?) {
+        val current = portfolioDao.getPortfolioSuspend()
+        if (current == null) {
+            // insert new record with note
+            portfolioDao.insertPortfolio(PortfolioEntity(cash = 0.0, note = note))
+        } else {
+            portfolioDao.updateNote(note)
         }
     }
 
@@ -276,15 +297,7 @@ class PortfolioRepository @Inject constructor(
         note = note
     )
 
-    /**
-     * Combine assetsFlow with cash Flow to produce Portfolio objects
-     */
-    private fun Flow<List<Asset>>.combineCashFlow(): Flow<Portfolio> {
-        val cashFlow = portfolioDao.getCashFlow()
-        return kotlinx.coroutines.flow.combine(this, cashFlow) { assets, cash ->
-            Portfolio(assets, cash ?: 0.0)
-        }
-    }
+    // no longer used combineCashFlow
 
     /* ---------------------------- 转换 ---------------------------- */
     private fun TransactionEntity.toDomain(): Transaction = Transaction(

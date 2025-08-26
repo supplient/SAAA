@@ -92,7 +92,8 @@ data class Asset(
 @Serializable
 data class Portfolio(
     val assets: List<Asset>,
-    val cash: Double
+    val cash: Double,
+    val note: String? = null
 )
 
 // 交易记录

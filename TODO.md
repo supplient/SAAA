@@ -34,27 +34,82 @@ v0.1.0的目标是让各种功能都切实可用。
         * [x] 算法检查过程最好有完整的思考过程展示出来方便我调试
 * [x] 点选可用现金时应当弹出一个输入框，允许我输入新的可用现金值。输入框下部有两个按钮，左边是取消，右边是确认，默认值为当前可用现金。
 * [x] 当资产单位价格刷新失败时，修改一下对应资产的样式，让用户知道哪些刷新失败了。
-* [x] 不刷新货币基金类型的资产。
+* [x] 不刷新货币基金和场外基金类型的资产，暂时只刷新股票类型的资产
 * [x] 改进交易机会界面的显示，在每个交易机会上写上资产名称，交易份额，交易金额
-* [x] 和货币基金一样，暂时在刷新时先跳过场外基金，也就是说刷新时只刷新股票类型的资产
 * [x] 资产列表界面不需要标题"战略资产配置助手"，顶部全是按钮就行了
 * [x] 在计算卖出买入机会时跳过场外基金，也就是只考虑股票类型的资产
+
+
+### v0.0.3：重构资产列表界面
+* 重构资产列表界面：
+    * 顶部右侧的按钮移除“设置”按钮，只留下“交易记录”、“交易机会”、“刷新”
+    * 顶部左侧的按钮不再是“API测试”，而改为唤出侧边栏
+    * 侧边栏：
+        * 侧边栏右上角为关闭侧边栏的按钮
+        * 侧边栏主体为一个从上到下的按钮列表，依次为：
+            * 配置备注：点开后跳转到编辑资产配置备注的界面
+            * API测试：和原来的API测试按钮一样，跳转到API测试界面
+            * 设置：和原来的设置按钮一样，跳转到设置界面
+    * 在按钮行下方为资产配置总体信息栏：
+        * 这是个可以展开/折叠的栏
+        * 折叠后仅为短短的一行，仅显示数字，不显示文字：最左为“可用现金”，最右为“总资产”。
+        * 展开后是每行一个条目：
+            * 总资产
+            * 可用现金
+        * 注意展开后的效果是悬浮在资产列表主体上，而非把它整个往下挤压
+    * 重构资产列表主体：
+        * 从现在的卡片列表改为一个表格的样式
+        * 为了适配竖屏显示：
+            * 表格的第一列（资产名称）固定不动
+            * 表格的剩余列可以横向滚动
+            * 从而能在竖屏上实现表格信息的完整显示
+        * 表格的每一列就是资产的一种信息
+* 开发方案：
+    * 界面结构调整(`AssetListScreen.kt`):
+        * 在 `AssetListScreen` Composable 外层包裹 `Scaffold`，以支持侧边栏(`Navigation Drawer`)。
+        * 创建一个新的 Composable `AppDrawer` 用于定义侧边栏内容。
+    * 顶部应用栏(Top App Bar)修改(`AssetListScreen.kt`):
+        * 修改 `TopAppBar` 的 `navigationIcon`，将其图标改为菜单图标，`onClick` 事件改为打开侧边栏(需要使用 `ScaffoldState` 中的 `drawerState.open()`)。
+        * 从 `TopAppBar` 的 `actions` 中移除 `Settings` 按钮对应的 `IconButton`。
+    * 侧边栏(Navigation Drawer)实现(建议新建 `AppDrawer.kt`):
+        * 在 `AppDrawer` Composable 中，使用 `ModalDrawerSheet` 和 `NavigationDrawerItem` 来构建菜单项。
+        * 菜单项包括：“配置备注”、“API测试”、“设置”。
+        * 实现从侧边栏到各个界面的导航逻辑。这需要修改 `MainActivity.kt` 中的 `NavHost`，并为“配置备注”功能创建一个新的 `Screen` 和 `Composable`。
+    * 资产配置总体信息栏(建议新建 `PortfolioSummary.kt`):
+        * 创建新的 Composable `PortfolioSummaryCard`。
+        * 使用 `remember { mutableStateOf(false) }` 来管理展开/折叠状态。
+        * 使用 `AnimatedVisibility` 实现平滑的展开/折叠动画。
+        * 折叠视图: 使用一个 `Row`，通过 `Arrangement.SpaceBetween` 将“可用现金”和“总资产”的数值分布在两端。
+        * 展开视图: 使用 `Column` 展示“总资产”和“可用现金”的详细条目。
+        * 为实现悬浮效果，可以将 `PortfolioSummaryCard` 放置在 `AssetListScreen` 的 `Box` 布局中，位于资产列表上方，通过 `Modifier.zIndex()` 控制层级。
+        * 所需数据可直接从 `PortfolioViewModel` 的 `portfolioState` 中获取。
+    * 资产列表表格化(建议新建 `AssetTable.kt`):
+        * 创建 `AssetTable` Composable 来替代 `LazyColumn`。
+        * 表头: 创建 `AssetTableHeader` Composable。它是一个 `Row`，首列固定，剩余列包裹在一个可水平滚动的 `Row` 中。
+        * 数据行: 创建 `AssetTableRow` Composable。结构与表头类似，首列是资产名称（固定），剩余列是其他资产信息（可水平滚动）。
+        * 滚动同步: 为了同步所有行的水平滚动，可以将 `scrollState` 提升到 `AssetTable` Composable 的级别，并将其同时传递给 `AssetTableHeader` 和每一个 `AssetTableRow`。
+        * `AssetTable` 的主体是一个 `LazyColumn`，列表项是 `AssetTableRow`。
+    * ViewModel 和导航(`PortfolioViewModel.kt`, `MainActivity.kt`):
+        * `PortfolioViewModel` 目前的数据结构(`portfolioState` 和 `assetAnalyses`) 足以支持新界面，暂时无需大改。
+        * 在应用的导航图(如 `MainActivity.kt` 内的 `NavHost`)中，为“配置备注”界面添加新路由。
+        * 更新 `AssetListScreen` 的函数签名，以便接收和处理来自侧边栏的导航事件回调。
+
 
 
 # 后续再做
 * [ ] 后台任务似乎依然无效，再研究研究
     * 记得调试完后台任务以后还要处理交易机会发现的通知
     * 发现可能只是avd无效？试试实机调试
+* [ ] notification无效？
 * [ ] 重写AssetListScreen的显示，让它呈一个表格的样子，行是各类资产，列是资产信息，然后最左边的一列（资产名称）在屏幕中固定不动，剩余列可以横向滚动，从而适应竖屏
-* [ ] 新增一个侧边栏，整理一下UI
 * [ ] 为资产配置的备注制作UI
 * [ ] 在编辑交易时，增加一个按钮，按下后会根据输入的份额和当前净值、交易费用自动计算交易金额
     * 注意交易金额实质上就等于现金变化量
 * [ ] 把买入机会的检查从后台任务里独立出来，专门做成一个每天两点进行的alarm
 * [ ] 货币基金的刷新的逻辑是不一样的，可能无法刷新
     * 或许可以使用天天基金网的接口
-* [ ] 当资产代码不正确时要报错，最好就是直接在资产卡片上标注出来
 * [ ] 交易机会界面显示卖出份额和总金额，最好再显示一下各项数值的前后变化
 * [ ] 优化交易机会发现
     * [ ] 编写单元测试
     * [ ] 修正买入机会窗口判断
+* [ ] 当所有资产合计占比不为100%时，要告知用户

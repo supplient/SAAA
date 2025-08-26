@@ -67,6 +67,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAddTransactionForAsset = { assetId ->
                                     navController.navigate(NavRoutes.AddTransactionForAsset.createRoute(assetId.toString()))
+                                },
+                                onOpenConfigNote = {
+                                    navController.navigate(NavRoutes.ConfigNote.route)
                                 }
                             )
                         }
@@ -131,6 +134,15 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument(NavRoutes.AddTransactionForAsset.ARG_ASSET_ID) { type = NavType.StringType })
                         ) {
                             AddEditTransactionScreen(navController = navController)
+                        }
+                        
+                        // 配置备注界面
+                        composable(NavRoutes.ConfigNote.route) {
+                            val viewModel: PortfolioViewModel = hiltViewModel()
+                            ConfigNoteScreen(
+                                navController = navController,
+                                viewModel = viewModel
+                            )
                         }
                     }
                 }
