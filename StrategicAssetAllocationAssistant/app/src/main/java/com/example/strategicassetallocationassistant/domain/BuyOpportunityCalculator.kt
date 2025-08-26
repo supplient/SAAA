@@ -30,8 +30,8 @@ class BuyOpportunityCalculator @Inject constructor() {
         // 如果总资产小于等于0，则返回空列表
         if (total <= 0) return emptyList()
 
-        // 找到除货币基金外距离目标占比最远的资产
-        val eligibleAssets = portfolio.assets.filter { it.type != AssetType.MONEY_FUND }
+        // 找到除货币基金和场外基金外距离目标占比最远的资产
+        val eligibleAssets = portfolio.assets.filter { it.type != AssetType.MONEY_FUND && it.type != AssetType.OFFSHORE_FUND }
         val targetAsset = eligibleAssets.minByOrNull { asset ->
             val currentWeight = asset.currentMarketValue / total
             currentWeight - asset.targetWeight

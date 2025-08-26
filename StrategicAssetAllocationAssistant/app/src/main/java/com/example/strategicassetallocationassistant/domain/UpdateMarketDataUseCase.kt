@@ -32,8 +32,9 @@ class UpdateMarketDataUseCase @Inject constructor(
             val failedAssetIds = mutableListOf<UUID>()
 
             portfolio.assets.forEach { asset ->
-                // 跳过货币基金类型，不进行刷新
-                if (asset.type == com.example.strategicassetallocationassistant.AssetType.MONEY_FUND) {
+                // 跳过货币基金和场外基金类型，不进行刷新
+                if (asset.type == com.example.strategicassetallocationassistant.AssetType.MONEY_FUND || 
+                    asset.type == com.example.strategicassetallocationassistant.AssetType.OFFSHORE_FUND) {
                     return@forEach
                 }
                 

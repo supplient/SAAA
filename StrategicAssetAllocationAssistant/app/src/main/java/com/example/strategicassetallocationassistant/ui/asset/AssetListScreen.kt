@@ -221,7 +221,7 @@ fun AssetListScreen(
     Box(modifier = modifier.fillMaxSize()) {
         // TopAppBar with Refresh
         androidx.compose.material3.TopAppBar(
-            title = { Text("战略资产配置助手") },
+            title = { },
             navigationIcon = {
                 IconButton(onClick = onOpenApiTest) {
                     Icon(Icons.Default.BugReport, contentDescription = "API 测试")
