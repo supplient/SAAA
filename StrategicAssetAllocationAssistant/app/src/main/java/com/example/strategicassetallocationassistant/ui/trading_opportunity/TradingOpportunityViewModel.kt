@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -30,6 +31,41 @@ class TradingOpportunityViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    // 获取资产信息，用于显示资产名称
+    val portfolio: StateFlow<Portfolio> =
+        repository.portfolioFlow.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = Portfolio(emptyList(), 0.0)
+        )
+
+    // 组合交易机会和资产信息，用于UI显示
+    data class TradingOpportunityWithAsset(
+        val opportunity: TradingOpportunity,
+        val assetName: String?,
+        val assetType: AssetType?
+    )
+
+    val opportunitiesWithAssets: StateFlow<List<TradingOpportunityWithAsset>> = combine(
+        opportunities,
+        portfolio
+    ) { opps, portfolio ->
+        opps.map { opp ->
+            val asset = opp.assetId?.let { assetId ->
+                portfolio.assets.find { it.id == assetId }
+            }
+            TradingOpportunityWithAsset(
+                opportunity = opp,
+                assetName = asset?.name,
+                assetType = asset?.type
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     fun checkSell() {
         viewModelScope.launch {

@@ -27,7 +27,7 @@ fun TradingOpportunityListScreen(
     viewModel: TradingOpportunityViewModel = hiltViewModel(),
     onExecute: (TradingOpportunity) -> Unit
 ) {
-    val items by viewModel.opportunities.collectAsState()
+    val itemsWithAssets by viewModel.opportunitiesWithAssets.collectAsState()
     val reasoningLog by viewModel.reasoningLog.collectAsState()
 
     Scaffold(
@@ -66,14 +66,18 @@ fun TradingOpportunityListScreen(
                 }
             )
         }
-        if (items.isEmpty()) {
+        if (itemsWithAssets.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(inner), contentAlignment = Alignment.Center) {
                 Text("暂无交易机会")
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(inner)) {
-                items(items) { op ->
-                    OpportunityRow(op, onExecute = { onExecute(op) }, onDelete = { viewModel.deleteOne(op.id) })
+                items(itemsWithAssets) { itemWithAsset ->
+                    OpportunityRow(
+                        itemWithAsset = itemWithAsset, 
+                        onExecute = { onExecute(itemWithAsset.opportunity) }, 
+                        onDelete = { viewModel.deleteOne(itemWithAsset.opportunity.id) }
+                    )
                 }
             }
         }
@@ -81,8 +85,14 @@ fun TradingOpportunityListScreen(
 }
 
 @Composable
-private fun OpportunityRow(op: TradingOpportunity, onExecute: () -> Unit, onDelete: () -> Unit) {
+private fun OpportunityRow(
+    itemWithAsset: TradingOpportunityViewModel.TradingOpportunityWithAsset, 
+    onExecute: () -> Unit, 
+    onDelete: () -> Unit
+) {
+    val op = itemWithAsset.opportunity
     val dateStr = op.time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,6 +100,7 @@ private fun OpportunityRow(op: TradingOpportunity, onExecute: () -> Unit, onDele
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
+            // 交易类型和时间
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = if (op.type == TradeType.BUY) "买入" else "卖出",
@@ -98,14 +109,82 @@ private fun OpportunityRow(op: TradingOpportunity, onExecute: () -> Unit, onDele
                 )
                 Text(dateStr, style = MaterialTheme.typography.bodySmall)
             }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // 资产信息
+            itemWithAsset.assetName?.let { assetName ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "资产名称: $assetName",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                    )
+                    itemWithAsset.assetType?.let { assetType ->
+                        Text(
+                            text = when (assetType) {
+                                AssetType.MONEY_FUND -> "货币基金"
+                                AssetType.OFFSHORE_FUND -> "场外基金"
+                                AssetType.STOCK -> "股票"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
             Spacer(Modifier.height(4.dp))
+            
+            // 交易份额和金额
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "交易份额: ${String.format("%.2f", op.shares)}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "交易金额: ¥${String.format("%.2f", op.amount)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                )
+            }
+            
+            Spacer(Modifier.height(4.dp))
+            
+            // 交易价格和费用
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "交易价格: ¥${String.format("%.2f", op.price)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "交易费用: ¥${String.format("%.2f", op.fee)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // 交易理由
             Text(
-                text = op.reason,
+                text = "交易理由: ${op.reason}",
                 style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(8.dp))
+            
+            Spacer(Modifier.height(12.dp))
+            
+            // 操作按钮
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onDelete) { Text("删除") }
                 Spacer(Modifier.width(8.dp))
