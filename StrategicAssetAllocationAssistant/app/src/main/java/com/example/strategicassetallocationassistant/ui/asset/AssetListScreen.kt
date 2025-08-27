@@ -66,6 +66,7 @@ fun AssetListScreen(
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = false,
         drawerContent = {
             AppDrawer(
                 onClose = { scope.launch { drawerState.close() } },
