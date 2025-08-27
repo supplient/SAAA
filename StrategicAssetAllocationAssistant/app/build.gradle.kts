@@ -11,12 +11,12 @@ plugins {
 
 android {
     namespace = "com.example.strategicassetallocationassistant"
-    compileSdk = 30
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.strategicassetallocationassistant"
-        minSdk = 30
-        targetSdk = 30
+        minSdk = 33
+        targetSdk = 34
         versionCode = 4
         versionName = "0.0.4"
 
