@@ -75,7 +75,7 @@ private fun AssetTableHeader(
         // 第一列 - 资产名称（固定）
         Box(
             modifier = Modifier
-                .width(120.dp)
+                .width(90.dp)
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -205,6 +205,22 @@ private fun AssetTableHeader(
                 )
             }
 
+            // 更新时间
+            Box(
+                modifier = Modifier
+                    .width(140.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "更新时间",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             // 备注
             Box(
                 modifier = Modifier
@@ -250,7 +266,7 @@ private fun AssetTableRow(
         // 第一列 - 资产名称（固定）
         Box(
             modifier = Modifier
-                .width(120.dp)
+                .width(90.dp)
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -384,6 +400,21 @@ private fun AssetTableRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center
+                )
+            }
+
+            // 更新时间
+            Box(
+                modifier = Modifier
+                    .width(140.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = analysis.asset.lastUpdateTime?.let { it.toLocalDate().toString() + " " + it.toLocalTime().withNano(0).toString() } ?: "-",
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
 

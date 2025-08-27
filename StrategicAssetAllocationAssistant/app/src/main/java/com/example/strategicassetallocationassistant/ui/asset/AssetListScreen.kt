@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
 
 /**
  * 主屏幕组件
@@ -47,6 +48,9 @@ fun AssetListScreen(
 ) {
     val portfolio by viewModel.portfolioState.collectAsState()
     val analyses by viewModel.assetAnalyses.collectAsState()
+
+    // 计算目标占比总和
+    val targetWeightSum = analyses.sumOf { it.asset.targetWeight }
     
     // 侧边栏和消息状态
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -78,6 +82,7 @@ fun AssetListScreen(
                         SummaryBar(
                             totalAssets = totalAssets,
                             availableCash = portfolio.cash,
+                            targetWeightSum = targetWeightSum,
                             onClick = {
                                 cashInputValue = String.format("%.2f", portfolio.cash)
                                 showCashEditDialog = true
@@ -112,12 +117,8 @@ fun AssetListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
             ) {
-                // 顶部已集成资产概览栏，横屏下不再需要占用额外竖向空间
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // 资产列表表格
                 AssetTable(
                     analyses = analyses,
@@ -143,6 +144,22 @@ fun AssetListScreen(
                                 Text(text = "总资产", style = MaterialTheme.typography.bodyMedium)
                                 Text(text = "¥${String.format("%.2f", totalAssets)}", style = MaterialTheme.typography.bodyMedium)
                             }
+
+                            // 合计目标占比
+                            val diff = kotlin.math.abs(targetWeightSum - 1.0)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "合计目标占比", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    text = "${String.format("%.2f", targetWeightSum * 100)}%",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (diff > 0.0001) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
                             Spacer(modifier = Modifier.height(8.dp))
                             // 可用现金编辑
                             OutlinedTextField(
@@ -196,6 +213,7 @@ fun AssetListScreen(
 private fun SummaryBar(
     totalAssets: Double,
     availableCash: Double,
+    targetWeightSum: Double,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -203,22 +221,41 @@ private fun SummaryBar(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "¥${String.format("%.2f", availableCash)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
-        Text("/")
-        Text(
-            text = "¥${String.format("%.2f", totalAssets)}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = "¥${String.format("%.2f", availableCash)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Start
+            )
+            Text(
+                text = "¥${String.format("%.2f", totalAssets)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Start
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        val diff = kotlin.math.abs(targetWeightSum - 1.0)
+        if (diff > 0.0001) {
+            Text(
+                text = "Σ ${(targetWeightSum * 100).let { String.format("%.0f", it) }}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.End
+            )
+        }
     }
 }
