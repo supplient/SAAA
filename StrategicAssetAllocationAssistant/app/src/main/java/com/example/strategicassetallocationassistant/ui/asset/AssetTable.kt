@@ -76,7 +76,7 @@ private fun AssetTableHeader(
         // 第一列 - 资产名称（固定）
         Box(
             modifier = Modifier
-                .width(120.dp)
+                .width(80.dp)
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -97,7 +97,7 @@ private fun AssetTableHeader(
             // 占比列（合并目标占比、当前占比、偏离度）
             Box(
                 modifier = Modifier
-                    .width(120.dp)
+                    .width(80.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -113,7 +113,7 @@ private fun AssetTableHeader(
             // 市值列（合并目标市值、当前市值、市值偏离）
             Box(
                 modifier = Modifier
-                    .width(140.dp)
+                    .width(100.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -129,7 +129,7 @@ private fun AssetTableHeader(
             // 单价和份额列
             Box(
                 modifier = Modifier
-                    .width(100.dp)
+                    .width(70.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
