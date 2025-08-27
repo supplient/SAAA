@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import java.time.format.DateTimeFormatter
 
 /**
  * 资产列表表格组件
@@ -75,7 +76,7 @@ private fun AssetTableHeader(
         // 第一列 - 资产名称（固定）
         Box(
             modifier = Modifier
-                .width(90.dp)
+                .width(120.dp)
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -93,15 +94,15 @@ private fun AssetTableHeader(
                 .horizontalScroll(horizontalScrollState)
                 .padding(start = 8.dp)
         ) {
-            // 资产类型
+            // 占比列（合并目标占比、当前占比、偏离度）
             Box(
                 modifier = Modifier
-                    .width(80.dp)
+                    .width(120.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "类型",
+                    text = "占比",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -109,58 +110,10 @@ private fun AssetTableHeader(
                 )
             }
             
-            // 目标占比
+            // 市值列（合并目标市值、当前市值、市值偏离）
             Box(
                 modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "目标占比",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 当前占比
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "当前占比",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 偏离度
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "偏离度",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 市值
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
+                    .width(140.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -173,7 +126,7 @@ private fun AssetTableHeader(
                 )
             }
             
-            // 目标市值
+            // 单价和份额列
             Box(
                 modifier = Modifier
                     .width(100.dp)
@@ -181,23 +134,7 @@ private fun AssetTableHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "目标市值",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 偏离市值
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "偏离市值",
+                    text = "单价/份额",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -208,7 +145,7 @@ private fun AssetTableHeader(
             // 更新时间
             Box(
                 modifier = Modifier
-                    .width(140.dp)
+                    .width(120.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -263,10 +200,10 @@ private fun AssetTableRow(
             .padding(8.dp)
             .combinedClickable(onClick = onAddTransaction, onLongClick = onEditAsset)
     ) {
-        // 第一列 - 资产名称（固定）
+        // 第一列 - 资产名称（固定，包含类型emoji）
         Box(
             modifier = Modifier
-                .width(90.dp)
+                .width(120.dp)
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -279,6 +216,15 @@ private fun AssetTableRow(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
+                )
+                // 根据资产类型显示对应的emoji
+                Text(
+                    text = when (analysis.asset.type) {
+                        AssetType.MONEY_FUND -> "💰"
+                        AssetType.OFFSHORE_FUND -> "🏦"
+                        AssetType.STOCK -> "📈"
+                    },
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 if (analysis.isRefreshFailed) {
                     Icon(
@@ -297,124 +243,115 @@ private fun AssetTableRow(
                 .horizontalScroll(horizontalScrollState)
                 .padding(start = 8.dp)
         ) {
-            // 资产类型
+            // 占比列（显示：当前占比=目标占比±偏离度）
             Box(
                 modifier = Modifier
-                    .width(80.dp)
+                    .width(120.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = when (analysis.asset.type) {
-                        AssetType.MONEY_FUND -> "货币基金"
-                        AssetType.OFFSHORE_FUND -> "场外基金"
-                        AssetType.STOCK -> "股票"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "${String.format("%.2f", analysis.currentWeight * 100)}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "= ${(analysis.asset.targetWeight * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "${if (analysis.deviationPct >= 0) "+" else ""}${String.format("%.2f", analysis.deviationPct * 100)}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
             
-            // 目标占比
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${(analysis.asset.targetWeight * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 当前占比
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${String.format("%.2f", analysis.currentWeight * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 偏离度
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${String.format("%.2f", analysis.deviationPct * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 市值
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "¥${String.format("%.2f", analysis.marketValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 目标市值
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "¥${String.format("%.2f", analysis.targetMarketValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 偏离市值
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "¥${String.format("%.2f", analysis.deviationValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 更新时间
+            // 市值列（显示：当前市值=目标市值±偏离市值）
             Box(
                 modifier = Modifier
                     .width(140.dp)
                     .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.CenterStart
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = analysis.asset.lastUpdateTime?.let { it.toLocalDate().toString() + " " + it.toLocalTime().withNano(0).toString() } ?: "-",
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "¥${String.format("%.2f", analysis.marketValue)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            
+            // 单价和份额列
+            Box(
+                modifier = Modifier
+                    .width(100.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "¥${String.format("%.4f", analysis.asset.unitValue ?: 0.0)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "×${String.format("%.2f", analysis.asset.shares ?: 0.0)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // 更新时间（两行显示：时分秒 + 年月日）
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                analysis.asset.lastUpdateTime?.let { time ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = time.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } ?: Text(
+                    text = "-",
                     style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    textAlign = TextAlign.Center
                 )
             }
 
