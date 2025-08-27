@@ -11,12 +11,12 @@ plugins {
 
 android {
     namespace = "com.example.strategicassetallocationassistant"
-    compileSdk = 36
+    compileSdk = 30
 
     defaultConfig {
         applicationId = "com.example.strategicassetallocationassistant"
-        minSdk = 33
-        targetSdk = 36
+        minSdk = 30
+        targetSdk = 30
         versionCode = 4
         versionName = "0.0.4"
 
@@ -52,11 +52,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true

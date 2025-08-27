@@ -30,6 +30,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun AssetTable(
     analyses: List<PortfolioViewModel.AssetAnalysis>,
+    isHidden: Boolean,
     onAddTransaction: (java.util.UUID) -> Unit,
     onEditAsset: (java.util.UUID) -> Unit,
     modifier: Modifier = Modifier
@@ -39,6 +40,7 @@ fun AssetTable(
     Column(modifier = modifier) {
         // 表头
         AssetTableHeader(
+            isHidden = isHidden,
             horizontalScrollState = horizontalScrollState,
             modifier = Modifier.fillMaxWidth()
         )
@@ -50,6 +52,7 @@ fun AssetTable(
             items(analyses) { analysis ->
                 AssetTableRow(
                     analysis = analysis,
+                    isHidden = isHidden,
                     horizontalScrollState = horizontalScrollState,
                     onAddTransaction = { onAddTransaction(analysis.asset.id) },
                     onEditAsset = { onEditAsset(analysis.asset.id) },
@@ -65,6 +68,7 @@ fun AssetTable(
  */
 @Composable
 private fun AssetTableHeader(
+    isHidden: Boolean,
     horizontalScrollState: androidx.compose.foundation.ScrollState,
     modifier: Modifier = Modifier
 ) {
@@ -184,6 +188,7 @@ private fun AssetTableHeader(
 @OptIn(ExperimentalFoundationApi::class)
 private fun AssetTableRow(
     analysis: PortfolioViewModel.AssetAnalysis,
+    isHidden: Boolean,
     horizontalScrollState: androidx.compose.foundation.ScrollState,
     onAddTransaction: () -> Unit,
     onEditAsset: () -> Unit,
@@ -284,18 +289,18 @@ private fun AssetTableRow(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "¥${String.format("%.2f", analysis.marketValue)}",
+                        text = if (isHidden) "***" else "¥${String.format("%.2f", analysis.marketValue)}",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
+                        text = if (isHidden) "***" else "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
+                        text = if (isHidden) "***" else "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center
@@ -314,12 +319,12 @@ private fun AssetTableRow(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "¥${String.format("%.4f", analysis.asset.unitValue ?: 0.0)}",
+                        text = if (isHidden) "***" else "¥${String.format("%.4f", analysis.asset.unitValue ?: 0.0)}",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        text = "×${String.format("%.2f", analysis.asset.shares ?: 0.0)}",
+                        text = if (isHidden) "***" else "×${String.format("%.2f", analysis.asset.shares ?: 0.0)}",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )
