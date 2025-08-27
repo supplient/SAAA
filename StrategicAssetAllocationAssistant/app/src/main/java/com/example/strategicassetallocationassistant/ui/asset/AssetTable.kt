@@ -203,7 +203,7 @@ private fun AssetTableRow(
         // 第一列 - 资产名称（固定，包含类型emoji）
         Box(
             modifier = Modifier
-                .width(120.dp)
+                .width(80.dp)
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -246,7 +246,7 @@ private fun AssetTableRow(
             // 占比列（显示：当前占比=目标占比±偏离度）
             Box(
                 modifier = Modifier
-                    .width(120.dp)
+                    .width(80.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -276,7 +276,7 @@ private fun AssetTableRow(
             // 市值列（显示：当前市值=目标市值±偏离市值）
             Box(
                 modifier = Modifier
-                    .width(140.dp)
+                    .width(100.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -306,7 +306,7 @@ private fun AssetTableRow(
             // 单价和份额列
             Box(
                 modifier = Modifier
-                    .width(100.dp)
+                    .width(70.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
