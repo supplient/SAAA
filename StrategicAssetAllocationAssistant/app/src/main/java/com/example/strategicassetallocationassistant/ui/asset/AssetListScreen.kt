@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -63,6 +64,9 @@ fun AssetListScreen(
     var showCashEditDialog by remember { mutableStateOf(false) }
     var cashInputValue by remember { mutableStateOf("") }
     
+    // 排序对话框状态
+    var showSortDialog by remember { mutableStateOf(false) }
+    
     // 计算总资产
     val totalAssets = portfolio.cash + analyses.sumOf { it.marketValue }
 
@@ -99,6 +103,10 @@ fun AssetListScreen(
                         }
                     },
                     actions = {
+                        // 排序按钮
+                        IconButton(onClick = { showSortDialog = true }) {
+                            Icon(Icons.Default.Sort, contentDescription = "排序")
+                        }
                         // 隐藏资产数目按钮
                         IconButton(onClick = { viewModel.toggleAssetAmountHidden() }) {
                             val isHidden by viewModel.isAssetAmountHidden.collectAsState()
@@ -133,7 +141,7 @@ fun AssetListScreen(
 
                 // 资产列表表格
                 AssetTable(
-                    analyses = analyses,
+                    analyses = viewModel.sortedAssetAnalyses.collectAsState().value,
                     isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                     onAddTransaction = onAddTransactionForAsset,
                     onEditAsset = onEditAsset,
@@ -204,6 +212,19 @@ fun AssetListScreen(
                 )
             }
             
+            // 排序对话框
+            if (showSortDialog) {
+                SortDialog(
+                    currentSortOption = viewModel.sortOption.collectAsState().value,
+                    isAscending = viewModel.isAscending.collectAsState().value,
+                    onSortOptionSelected = { option ->
+                        viewModel.setSortOption(option)
+                        showSortDialog = false
+                    },
+                    onDismiss = { showSortDialog = false }
+                )
+            }
+            
             // FloatingActionButton
             FloatingActionButton(
                 onClick = onAddAsset,
@@ -219,6 +240,68 @@ fun AssetListScreen(
         }
         }
     }
+}
+
+/**
+ * 排序对话框组件
+ */
+@Composable
+private fun SortDialog(
+    currentSortOption: PortfolioViewModel.SortOption,
+    isAscending: Boolean,
+    onSortOptionSelected: (PortfolioViewModel.SortOption) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("选择排序方案") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                PortfolioViewModel.SortOption.values().forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSortOptionSelected(option) }
+                            .padding(vertical = 8.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = option.displayName,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        
+                        // 显示当前排序方案和升降序指示器
+                        if (option == currentSortOption) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = if (isAscending) "↑" else "↓",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = if (isAscending) "升序" else "降序",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("关闭")
+            }
+        }
+    )
 }
 
 // 顶部紧凑型资产概览栏，可点击弹出明细/编辑对话框

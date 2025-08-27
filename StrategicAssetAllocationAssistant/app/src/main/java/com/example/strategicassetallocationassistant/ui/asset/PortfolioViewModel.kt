@@ -130,4 +130,57 @@ class PortfolioViewModel @Inject constructor(
     fun toggleAssetAmountHidden() {
         _isAssetAmountHidden.value = !_isAssetAmountHidden.value
     }
+
+    /**
+     * 排序方案枚举
+     */
+    enum class SortOption(val displayName: String) {
+        ORIGINAL("原排序"),
+        CURRENT_WEIGHT("当前占比"),
+        TARGET_WEIGHT("目标占比"),
+        WEIGHT_DEVIATION("占比偏差"),
+        CURRENT_MARKET_VALUE("当前市值"),
+        TARGET_MARKET_VALUE("目标市值"),
+        MARKET_VALUE_DEVIATION("市值偏差"),
+        UNIT_PRICE("单价"),
+        SHARES("份额")
+    }
+
+    // 排序状态
+    private val _sortOption = MutableStateFlow(SortOption.ORIGINAL)
+    val sortOption: StateFlow<SortOption> = _sortOption.asStateFlow()
+
+    private val _isAscending = MutableStateFlow(false)
+    val isAscending: StateFlow<Boolean> = _isAscending.asStateFlow()
+
+    /** 设置排序方案 */
+    fun setSortOption(option: SortOption) {
+        if (_sortOption.value == option) {
+            // 如果选择的是当前排序方案，则切换升降序
+            _isAscending.value = !_isAscending.value
+        } else {
+            // 如果选择的是新排序方案，则设置为降序（默认）
+            _sortOption.value = option
+            _isAscending.value = false
+        }
+    }
+
+    /** 排序后的资产分析列表 */
+    val sortedAssetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
+        assetAnalyses,
+        sortOption,
+        isAscending
+    ) { analyses, sort, ascending ->
+        when (sort) {
+            SortOption.ORIGINAL -> analyses
+            SortOption.CURRENT_WEIGHT -> if (ascending) analyses.sortedBy { it.currentWeight } else analyses.sortedByDescending { it.currentWeight }
+            SortOption.TARGET_WEIGHT -> if (ascending) analyses.sortedBy { it.asset.targetWeight } else analyses.sortedByDescending { it.asset.targetWeight }
+            SortOption.WEIGHT_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationPct } else analyses.sortedByDescending { it.deviationPct }
+            SortOption.CURRENT_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.marketValue } else analyses.sortedByDescending { it.marketValue }
+            SortOption.TARGET_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.targetMarketValue } else analyses.sortedByDescending { it.targetMarketValue }
+            SortOption.MARKET_VALUE_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationValue } else analyses.sortedByDescending { it.deviationValue }
+            SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
+            SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
+        }
+    }
 }
