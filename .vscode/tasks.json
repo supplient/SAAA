@@ -223,7 +223,7 @@
             "label": "AVD: Start App on Device",
             "type": "shell",
             "command": "adb",
-            "args": ["shell", "am", "start", "-n", "com.example.strategicassetallocationassistant.debug/.MainActivity"],
+            "args": ["shell", "am", "start", "-n", "com.example.strategicassetallocationassistant.debug/com.example.strategicassetallocationassistant.MainActivity"],
             "group": "build",
             "presentation": {
                 "echo": true,
