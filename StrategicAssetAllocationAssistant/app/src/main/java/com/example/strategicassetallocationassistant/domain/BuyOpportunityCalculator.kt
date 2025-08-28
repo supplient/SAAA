@@ -1,6 +1,5 @@
 package com.example.strategicassetallocationassistant.domain
 
-import com.example.strategicassetallocationassistant.AssetType
 import com.example.strategicassetallocationassistant.TradeType
 import com.example.strategicassetallocationassistant.TradingOpportunity
 import java.time.LocalDateTime
@@ -30,8 +29,8 @@ class BuyOpportunityCalculator @Inject constructor() {
         // 如果总资产小于等于0，则返回空列表
         if (total <= 0) return emptyList()
 
-        // 找到除货币基金和场外基金外距离目标占比最远的资产
-        val eligibleAssets = portfolio.assets.filter { it.type != AssetType.MONEY_FUND && it.type != AssetType.OFFSHORE_FUND }
+        // 找到距离目标占比最远的资产（现所有资产均视为股票）
+        val eligibleAssets = portfolio.assets
         val targetAsset = eligibleAssets.minByOrNull { asset ->
             val currentWeight = asset.currentMarketValue / total
             currentWeight - asset.targetWeight
@@ -46,12 +45,9 @@ class BuyOpportunityCalculator @Inject constructor() {
             return emptyList()
         }
 
-        // 获取所有货币基金的当前金额和目标金额，计算得到待投放金额
-        val moneyMarketFunds = portfolio.assets.filter { it.type == AssetType.MONEY_FUND }
-        val moneyMarketFundsCurrentValue = moneyMarketFunds.sumOf { it.currentMarketValue }
-        val moneyMarketFundsTargetValue = moneyMarketFunds.sumOf { total * it.targetWeight }
-        val pendingAmount = moneyMarketFundsCurrentValue - moneyMarketFundsTargetValue
-        log.appendLine("货币基金待投放金额：$pendingAmount")
+        // 现金即为待投放金额
+        val pendingAmount = portfolio.cash
+        log.appendLine("可用现金待投放金额：$pendingAmount")
 
         // 计算最小单次投放金额
         val minSingleInvestmentAmount = total * minSingleAmountRatio
@@ -100,14 +96,11 @@ class BuyOpportunityCalculator @Inject constructor() {
         val price = asset.unitValue ?: 1.0
         // 计划买入份额=计划买入金额/单价
         var shares = amountPlan / price
-        // 如果资产类型是股票，因为A股是按手交易，所以需要凑整到一手的整数倍份额
-        if (asset.type == AssetType.STOCK) {
-            // 向下取整到一手的整数倍
-            val lots = shares / handSize
-            shares = floor(lots) * handSize
-            // 如果不足一手则向上取整到一手
-            if (shares <= 0) shares = handSize
-        }
+        // A股按手交易，需要凑整到一手的整数倍份额
+        val lots = shares / handSize
+        shares = floor(lots) * handSize
+        // 如果不足一手则向上取整到一手
+        if (shares <= 0) shares = handSize
         val amountFinal = shares * price
         return shares to amountFinal
     }

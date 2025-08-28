@@ -2,7 +2,6 @@ package com.example.strategicassetallocationassistant.data.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.strategicassetallocationassistant.AssetType
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -11,7 +10,7 @@ import com.example.strategicassetallocationassistant.data.network.LocalDateTimeS
 
 /**
  * 资产表实体类
- * 对应 assets 表：id(UUID), name, type, targetWeight
+ * 对应 assets 表：id(UUID), name, targetWeight
  */
 @Serializable
 @Entity(tableName = "assets")
@@ -19,7 +18,6 @@ data class AssetEntity(
     @PrimaryKey
     val id: String,           // UUID转换为String存储
     val name: String,         // 资产名称
-    val type: AssetType,      // 资产类型
     val targetWeight: Double,  // 目标占比
 
     // 持仓信息
@@ -37,7 +35,6 @@ data class AssetEntity(
         fun create(
             id: UUID,
             name: String,
-            type: AssetType,
             targetWeight: Double,
             code: String?,
             shares: Double?,
@@ -48,7 +45,6 @@ data class AssetEntity(
             return AssetEntity(
                 id = id.toString(),
                 name = name,
-                type = type,
                 targetWeight = targetWeight,
                 code = code,
                 shares = shares,

@@ -43,8 +43,7 @@ class TradingOpportunityViewModel @Inject constructor(
     // 组合交易机会和资产信息，用于UI显示
     data class TradingOpportunityWithAsset(
         val opportunity: TradingOpportunity,
-        val assetName: String?,
-        val assetType: AssetType?
+        val assetName: String?
     )
 
     val opportunitiesWithAssets: StateFlow<List<TradingOpportunityWithAsset>> = combine(
@@ -57,8 +56,7 @@ class TradingOpportunityViewModel @Inject constructor(
             }
             TradingOpportunityWithAsset(
                 opportunity = opp,
-                assetName = asset?.name,
-                assetType = asset?.type
+                assetName = asset?.name
             )
         }
     }.stateIn(

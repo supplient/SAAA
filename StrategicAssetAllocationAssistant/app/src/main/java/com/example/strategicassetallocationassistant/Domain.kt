@@ -54,13 +54,6 @@ val json = Json {
     ignoreUnknownKeys = true
 }
 
-// 资产类型枚举
-enum class AssetType {
-    MONEY_FUND,      // 货币基金
-    OFFSHORE_FUND,   // 场外基金
-    STOCK            // 场内股票
-}
-
 // 新增交易类型枚举
 enum class TradeType {
     BUY,  // 买入
@@ -72,7 +65,6 @@ enum class TradeType {
 data class Asset(
     @Contextual val id: UUID,       // 资产ID (UUID)
     val name: String,               // 资产名称
-    val type: AssetType,            // 资产类型
     val targetWeight: Double,       // 目标占比（0.0-1.0）
     val code: String? = null,                       // 资产代码：基金编号或股票编号
     val shares: Double? = null,                    // 份额/股数
@@ -82,10 +74,7 @@ data class Asset(
 ) {
     // 计算当前市场价值
     val currentMarketValue: Double
-        get() = (shares ?: 0.0) * (unitValue ?: when (type) {
-            AssetType.MONEY_FUND -> 1.0
-            else -> 0.0
-        })
+        get() = (shares ?: 0.0) * (unitValue ?: 0.0)
 }
 
 // 资产配置的顶层数据结构，包含所有资产和一个总的现金账户。

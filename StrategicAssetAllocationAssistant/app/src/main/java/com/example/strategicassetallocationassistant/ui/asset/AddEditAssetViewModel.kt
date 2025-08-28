@@ -36,9 +36,6 @@ class AddEditAssetViewModel @Inject constructor(
     private val _name = MutableStateFlow("")
     val name: StateFlow<String> = _name.asStateFlow()
 
-    private val _type = MutableStateFlow(AssetType.MONEY_FUND)
-    val type: StateFlow<AssetType> = _type.asStateFlow()
-
     private val _targetWeightInput = MutableStateFlow("")
     val targetWeightInput: StateFlow<String> = _targetWeightInput.asStateFlow()
 
@@ -63,7 +60,6 @@ class AddEditAssetViewModel @Inject constructor(
             viewModelScope.launch {
                 repository.getAssetById(id)?.let { asset ->
                     _name.value = asset.name
-                    _type.value = asset.type
                     _targetWeightInput.value = (asset.targetWeight * 100).toString()
                     _code.value = asset.code ?: ""
                     _sharesInput.value = asset.shares?.toString() ?: ""
@@ -77,7 +73,6 @@ class AddEditAssetViewModel @Inject constructor(
     /** ---------------------------  User Intents --------------------------- */
 
     fun onNameChange(value: String) { _name.value = value }
-    fun onTypeChange(value: AssetType) { _type.value = value }
     fun onTargetWeightChange(value: String) { _targetWeightInput.value = value }
     fun onCodeChange(value: String) { _code.value = value }
     fun onSharesChange(value: String) { _sharesInput.value = value }
@@ -115,7 +110,6 @@ class AddEditAssetViewModel @Inject constructor(
         return Asset(
             id = editingAssetId ?: UUID.randomUUID(),
             name = _name.value.trim(),
-            type = _type.value,
             targetWeight = targetWeight / 100.0, // UI uses percentage input
             code = _code.value.ifBlank { null },
             shares = shares,

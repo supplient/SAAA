@@ -8,7 +8,6 @@ import android.content.Context
 import com.example.strategicassetallocationassistant.data.database.converters.Converters
 import com.example.strategicassetallocationassistant.data.database.entities.*
 import com.example.strategicassetallocationassistant.data.database.dao.*
-import com.example.strategicassetallocationassistant.AssetType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,7 +29,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -56,6 +55,63 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "strategic_asset_allocation_database"
                 )
+                    .addMigrations(object : androidx.room.migration.Migration(1, 2) {
+                        override fun migrate(db: SupportSQLiteDatabase) {
+                            // 1) 将 MONEY_FUND 合并进 cash
+                            // 读取 MONEY_FUND 的总市值（shares*unitValue; unitValue 为空则按1.0）
+                            db.execSQL("""
+                                CREATE TABLE IF NOT EXISTS assets_tmp_value AS
+                                SELECT id, name, targetWeight, code, shares, unitValue, lastUpdateTime, note,
+                                       (COALESCE(shares,0) * COALESCE(unitValue,1.0)) AS mv,
+                                       (CASE WHEN type='MONEY_FUND' THEN 1 ELSE 0 END) AS is_money
+                                FROM assets
+                            """.trimIndent())
+
+                            val cursor = db.query("SELECT COALESCE(SUM(mv),0) FROM assets_tmp_value WHERE is_money=1")
+                            var addCash = 0.0
+                            if (cursor.moveToFirst()) {
+                                addCash = cursor.getDouble(0)
+                            }
+                            cursor.close()
+
+                            // 更新 portfolio.cash
+                            val cur = db.query("SELECT cash FROM portfolio WHERE id=1")
+                            if (cur.moveToFirst()) {
+                                val cash = cur.getDouble(0)
+                                db.execSQL("UPDATE portfolio SET cash=? WHERE id=1", arrayOf(cash + addCash))
+                            } else {
+                                // 若不存在则插入一条
+                                db.execSQL("INSERT INTO portfolio(id, cash) VALUES(1, ?)", arrayOf(addCash))
+                            }
+                            cur.close()
+
+                            // 2) 删除 MONEY_FUND 资产
+                            db.execSQL("DELETE FROM assets WHERE type='MONEY_FUND'")
+
+                            // 3) 重建 assets 无 type 列
+                            db.execSQL("""
+                                CREATE TABLE IF NOT EXISTS assets_new (
+                                    id TEXT NOT NULL PRIMARY KEY,
+                                    name TEXT NOT NULL,
+                                    targetWeight REAL NOT NULL,
+                                    code TEXT,
+                                    shares REAL,
+                                    unitValue REAL,
+                                    lastUpdateTime TEXT,
+                                    note TEXT
+                                )
+                            """.trimIndent())
+                            db.execSQL("""
+                                INSERT INTO assets_new(id, name, targetWeight, code, shares, unitValue, lastUpdateTime, note)
+                                SELECT id, name, targetWeight, code, shares, unitValue, lastUpdateTime, note
+                                FROM assets
+                                WHERE type!='MONEY_FUND'
+                            """.trimIndent())
+                            db.execSQL("DROP TABLE assets")
+                            db.execSQL("ALTER TABLE assets_new RENAME TO assets")
+                            db.execSQL("DROP TABLE assets_tmp_value")
+                        }
+                    })
                     .addCallback(PrepopulateCallback(context.applicationContext))
                     .fallbackToDestructiveMigration()
                     .build()
@@ -89,7 +145,6 @@ abstract class AppDatabase : RoomDatabase() {
                         AssetEntity.create(
                             id = UUID.randomUUID(),
                             name = "贵州茅台",
-                            type = AssetType.STOCK,
                             targetWeight = 0.5,
                             code = "sh600519",
                             shares = 100.0,
@@ -99,7 +154,6 @@ abstract class AppDatabase : RoomDatabase() {
                         AssetEntity.create(
                             id = UUID.randomUUID(),
                             name = "标普500ETF",
-                            type = AssetType.STOCK,
                             targetWeight = 0.5,
                             code = "sh513500",
                             shares = 100.0,

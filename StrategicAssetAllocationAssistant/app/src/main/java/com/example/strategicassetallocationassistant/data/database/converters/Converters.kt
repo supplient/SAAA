@@ -1,7 +1,6 @@
 package com.example.strategicassetallocationassistant.data.database.converters
 
 import androidx.room.TypeConverter
-import com.example.strategicassetallocationassistant.AssetType
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -26,19 +25,6 @@ class Converters {
         }
     }
     
-    /**
-     * AssetType枚举转换器
-     */
-    @TypeConverter
-    fun fromAssetType(assetType: AssetType): String {
-        return assetType.name
-    }
-    
-    @TypeConverter
-    fun toAssetType(assetTypeString: String): AssetType {
-        return AssetType.valueOf(assetTypeString)
-    }
-
     /**
      * TradeType枚举转换器
      */

@@ -53,13 +53,13 @@ fun AddEditAssetScreen(
 
     // Collect UI state from ViewModel
     val name by viewModel.name.collectAsState()
-    val assetType by viewModel.type.collectAsState()
+    
     val targetWeight by viewModel.targetWeightInput.collectAsState()
     val code by viewModel.code.collectAsState()
     val shares by viewModel.sharesInput.collectAsState()
     val unitValue by viewModel.unitValueInput.collectAsState()
 
-    var typeExpanded by remember { mutableStateOf(false) }
+    
     val coroutineScope = rememberCoroutineScope()
 
     // 删除确认对话框状态
@@ -127,51 +127,7 @@ fun AddEditAssetScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // 资产类型选择
-            ExposedDropdownMenuBox(
-                expanded = typeExpanded,
-                onExpandedChange = { typeExpanded = !typeExpanded }
-            ) {
-                OutlinedTextField(
-                    value = when (assetType) {
-                        AssetType.MONEY_FUND -> "货币基金"
-                        AssetType.OFFSHORE_FUND -> "场外基金"
-                        AssetType.STOCK -> "股票"
-                    },
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("资产类型") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-
-                DropdownMenu(
-                    expanded = typeExpanded,
-                    onDismissRequest = { typeExpanded = false }
-                ) {
-                    AssetType.values().forEach { type ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    when (type) {
-                                        AssetType.MONEY_FUND -> "货币基金"
-                                        AssetType.OFFSHORE_FUND -> "场外基金"
-                                        AssetType.STOCK -> "股票"
-                                    }
-                                )
-                            },
-                            onClick = {
-                                viewModel.onTypeChange(type)
-                                typeExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
+            
 
             // 目标占比
             OutlinedTextField(

@@ -205,7 +205,7 @@ private fun AssetTableRow(
             .padding(8.dp)
             .combinedClickable(onClick = onAddTransaction, onLongClick = onEditAsset)
     ) {
-        // 第一列 - 资产名称（固定，包含类型emoji）
+        // 第一列 - 资产名称（固定）
         Box(
             modifier = Modifier
                 .width(80.dp)
@@ -222,15 +222,7 @@ private fun AssetTableRow(
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                // 根据资产类型显示对应的emoji
-                Text(
-                    text = when (analysis.asset.type) {
-                        AssetType.MONEY_FUND -> "💰"
-                        AssetType.OFFSHORE_FUND -> "🏦"
-                        AssetType.STOCK -> "📈"
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                
                 if (analysis.isRefreshFailed) {
                     Icon(
                         imageVector = Icons.Default.Warning,

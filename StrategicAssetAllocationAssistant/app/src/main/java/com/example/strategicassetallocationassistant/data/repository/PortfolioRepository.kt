@@ -276,7 +276,6 @@ class PortfolioRepository @Inject constructor(
     private fun AssetEntity.toDomain(): Asset = Asset(
         id = UUID.fromString(id),
         name = name,
-        type = type,
         targetWeight = targetWeight,
         code = code,
         shares = shares,
@@ -288,7 +287,6 @@ class PortfolioRepository @Inject constructor(
     private fun Asset.toEntity(): AssetEntity = AssetEntity.create(
         id = id,
         name = name,
-        type = type,
         targetWeight = targetWeight,
         code = code,
         shares = shares,

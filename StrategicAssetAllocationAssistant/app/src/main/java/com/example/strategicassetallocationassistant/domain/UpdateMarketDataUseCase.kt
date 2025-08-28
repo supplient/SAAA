@@ -32,11 +32,6 @@ class UpdateMarketDataUseCase @Inject constructor(
             val failedAssetIds = mutableListOf<UUID>()
 
             portfolio.assets.forEach { asset ->
-                // 跳过货币基金和场外基金类型，不进行刷新
-                if (asset.type == com.example.strategicassetallocationassistant.AssetType.MONEY_FUND || 
-                    asset.type == com.example.strategicassetallocationassistant.AssetType.OFFSHORE_FUND) {
-                    return@forEach
-                }
                 
                 // 如果没有代码，计入失败
                 val code = asset.code ?: run { 
@@ -45,11 +40,8 @@ class UpdateMarketDataUseCase @Inject constructor(
                     return@forEach 
                 }
 
-                // 根据资产类型选择合适的频率
-                val frequency = when (asset.type) {
-                    com.example.strategicassetallocationassistant.AssetType.STOCK -> "5m"
-                    else -> "1d" // OFFSHORE_FUND 使用日频即可
-                }
+                // 统一频率：按股票逻辑
+                val frequency = "5m"
 
                 val latest = runCatching {
                     AShare.getPrice(code = code, count = 1, frequency = frequency)

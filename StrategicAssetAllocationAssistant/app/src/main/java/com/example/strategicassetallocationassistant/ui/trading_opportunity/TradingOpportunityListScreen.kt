@@ -123,17 +123,7 @@ private fun OpportunityRow(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
                     )
-                    itemWithAsset.assetType?.let { assetType ->
-                        Text(
-                            text = when (assetType) {
-                                AssetType.MONEY_FUND -> "货币基金"
-                                AssetType.OFFSHORE_FUND -> "场外基金"
-                                AssetType.STOCK -> "股票"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    
                 }
             }
             

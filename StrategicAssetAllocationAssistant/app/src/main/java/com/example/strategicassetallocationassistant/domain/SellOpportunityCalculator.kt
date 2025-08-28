@@ -1,7 +1,6 @@
 package com.example.strategicassetallocationassistant.domain
 
 import com.example.strategicassetallocationassistant.Asset
-import com.example.strategicassetallocationassistant.AssetType
 import com.example.strategicassetallocationassistant.TradeType
 import com.example.strategicassetallocationassistant.TradingOpportunity
 import java.time.LocalDateTime
@@ -29,9 +28,9 @@ class SellOpportunityCalculator @Inject constructor() {
         // 如果总资产小于等于0，则返回空列表
         if (total <= 0) return emptyList()
 
-        // 遍历所有资产（跳过货币基金和场外基金），计算每个资产的当前权重和目标权重之间的偏差
+        // 遍历所有资产，计算每个资产的当前权重和目标权重之间的偏差
         val list = mutableListOf<TradingOpportunity>()
-        for (asset in portfolio.assets.filter { it.type != AssetType.MONEY_FUND && it.type != AssetType.OFFSHORE_FUND }) {
+        for (asset in portfolio.assets) {
             // 计算当前权重=资产市值/总资产
             val currentWeight = asset.currentMarketValue / total
             // 计算偏差=当前权重-目标权重
@@ -79,9 +78,9 @@ class SellOpportunityCalculator @Inject constructor() {
         val price = asset.unitValue ?: 1.0
         // 计划卖出份额=计划卖出金额/单价
         var shares = amountPlan / price
-        // 如果资产类型是股票，因为A股是按手交易，所以需要凑整到一手的整数倍份额
+        // A股按手交易：需要凑整到一手的整数倍份额
         // 不过如果是卖出所有持股的话，可以不足一手
-        if (asset.type == AssetType.STOCK) {
+        run {
             // 向上取整到一手的整数倍
             val lots = shares / handSize
             shares = ceil(lots) * handSize
