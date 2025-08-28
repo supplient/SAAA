@@ -75,14 +75,19 @@ class PortfolioViewModel @Inject constructor(
     /** AssetAnalysis 列表 Flow */
     val assetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
         assets,
+        portfolioState,
         failedRefreshAssetIds
-    ) { assetList, failedIds ->
+    ) { assetList, portfolio, failedIds ->
         val totalMarketValue = assetList.sumOf { it.currentMarketValue }
+        val totalAssetsValue = totalMarketValue + portfolio.cash // 总资产 = 资产市值 + 可用现金
+        
         assetList.map { asset ->
             val value = asset.currentMarketValue
-            val weight = if (totalMarketValue > 0) value / totalMarketValue else 0.0
+            // 修正：资产当前占比 = 资产当前市值 / (所有资产总市值 + 可用现金)
+            val weight = if (totalAssetsValue > 0) value / totalAssetsValue else 0.0
             val deviationPct = weight - asset.targetWeight
-            val targetValue = totalMarketValue * asset.targetWeight
+            // 修正：目标市值也应该基于总资产计算
+            val targetValue = totalAssetsValue * asset.targetWeight
             val deviationValue = value - targetValue
             AssetAnalysis(
                 asset = asset,
@@ -139,9 +144,11 @@ class PortfolioViewModel @Inject constructor(
         CURRENT_WEIGHT("当前占比"),
         TARGET_WEIGHT("目标占比"),
         WEIGHT_DEVIATION("占比偏差"),
+        WEIGHT_DEVIATION_ABS("占比偏差绝对值"),
         CURRENT_MARKET_VALUE("当前市值"),
         TARGET_MARKET_VALUE("目标市值"),
         MARKET_VALUE_DEVIATION("市值偏差"),
+        MARKET_VALUE_DEVIATION_ABS("市值偏差绝对值"),
         UNIT_PRICE("单价"),
         SHARES("份额")
     }
@@ -176,9 +183,11 @@ class PortfolioViewModel @Inject constructor(
             SortOption.CURRENT_WEIGHT -> if (ascending) analyses.sortedBy { it.currentWeight } else analyses.sortedByDescending { it.currentWeight }
             SortOption.TARGET_WEIGHT -> if (ascending) analyses.sortedBy { it.asset.targetWeight } else analyses.sortedByDescending { it.asset.targetWeight }
             SortOption.WEIGHT_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationPct } else analyses.sortedByDescending { it.deviationPct }
+            SortOption.WEIGHT_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationPct) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationPct) }
             SortOption.CURRENT_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.marketValue } else analyses.sortedByDescending { it.marketValue }
             SortOption.TARGET_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.targetMarketValue } else analyses.sortedByDescending { it.targetMarketValue }
             SortOption.MARKET_VALUE_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationValue } else analyses.sortedByDescending { it.deviationValue }
+            SortOption.MARKET_VALUE_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationValue) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationValue) }
             SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
             SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
         }
