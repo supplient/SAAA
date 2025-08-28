@@ -86,19 +86,7 @@ fun AssetListScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {
-                        SummaryBar(
-                            totalAssets = totalAssets,
-                            availableCash = portfolio.cash,
-                            targetWeightSum = targetWeightSum,
-                            currentWeightSum = analyses.sumOf { it.currentWeight },
-                            isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
-                            onClick = {
-                                cashInputValue = String.format("%.2f", portfolio.cash)
-                                showCashEditDialog = true
-                            }
-                        )
-                    },
+                    title = { Text("资产配置") },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "菜单")
@@ -123,6 +111,10 @@ fun AssetListScreen(
                         IconButton(onClick = { viewModel.refreshMarketData() }) {
                             Icon(Icons.Default.Refresh, contentDescription = "刷新")
                         }
+                        // 新增资产按钮
+                        IconButton(onClick = onAddAsset) {
+                            Icon(Icons.Default.Add, contentDescription = "新增资产")
+                        }
                     }
                 )
             },
@@ -137,14 +129,25 @@ fun AssetListScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-
-                // 资产列表表格
+                // 资产列表表格（使用weight让底部信息栏固定）
                 AssetTable(
                     analyses = viewModel.sortedAssetAnalyses.collectAsState().value,
                     isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                     onAddTransaction = onAddTransactionForAsset,
                     onEditAsset = onEditAsset,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // 底部信息栏
+                BottomInfoBar(
+                    totalAssets = totalAssets,
+                    availableCash = portfolio.cash,
+                    targetWeightSum = targetWeightSum,
+                    isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
+                    onClick = {
+                        cashInputValue = String.format("%.2f", portfolio.cash)
+                        showCashEditDialog = true
+                    }
                 )
             }
             
@@ -237,19 +240,80 @@ fun AssetListScreen(
                 )
             }
             
-            // FloatingActionButton
-            FloatingActionButton(
-                onClick = onAddAsset,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "添加资产"
-                )
-            }
+
         }
+        }
+    }
+}
+
+/**
+ * 底部信息栏组件
+ * 显示可用现金和资产占比信息，固定在下部
+ */
+@Composable
+private fun BottomInfoBar(
+    totalAssets: Double,
+    availableCash: Double,
+    targetWeightSum: Double,
+    isHidden: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 计算除现金外的资产市值和占比
+    val nonCashAssetsValue = totalAssets - availableCash
+    val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
+    val nonCashTargetWeightSum = targetWeightSum
+    val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
+    
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 左侧：可用现金
+            Text(
+                text = if (isHidden) "***" else "¥${String.format("%.2f", availableCash)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+            
+            // 右侧：除现金外资产占比信息
+            if (isHidden) {
+                Text(
+                    text = "***",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
+                if (deviationAbs > 0.0001) {
+                    // 根据实际偏差情况使用+或-符号
+                    val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
+                    Text(
+                        text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Medium
+                    )
+                } else {
+                    Text(
+                        text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
     }
 }
@@ -316,77 +380,4 @@ private fun SortDialog(
     )
 }
 
-// 顶部紧凑型资产概览栏，可点击弹出明细/编辑对话框
-@Composable
-private fun SummaryBar(
-    totalAssets: Double,
-    availableCash: Double,
-    targetWeightSum: Double,
-    currentWeightSum: Double,
-    isHidden: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // 计算除现金外的资产市值和占比
-    val nonCashAssetsValue = totalAssets - availableCash
-    val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
-    val nonCashTargetWeightSum = targetWeightSum
-    val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
-    
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(3.dp)
-    ) {
-        // 第一行：可用现金（不再显示占比）
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (isHidden) "***" else "¥${String.format("%.2f", availableCash)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        
-        // 第二行：除现金外资产占比信息
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (isHidden) {
-                Text(
-                    text = "***",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            } else {
-                val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
-                if (deviationAbs > 0.0001) {
-                                    // 根据实际偏差情况使用+或-符号
-                val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
-                Text(
-                    text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Medium
-                )
-                } else {
-                    Text(
-                        text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-    }
-}
+
