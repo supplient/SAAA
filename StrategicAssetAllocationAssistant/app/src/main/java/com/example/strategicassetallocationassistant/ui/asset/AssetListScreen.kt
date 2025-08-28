@@ -86,13 +86,17 @@ fun AssetListScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("资产配置") },
+                    title = { },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "菜单")
                         }
                     },
                     actions = {
+                        // 新增资产按钮
+                        IconButton(onClick = onAddAsset) {
+                            Icon(Icons.Default.Add, contentDescription = "新增资产")
+                        }
                         // 排序按钮
                         IconButton(onClick = { showSortDialog = true }) {
                             Icon(Icons.Default.Sort, contentDescription = "排序")
@@ -110,10 +114,6 @@ fun AssetListScreen(
                         }
                         IconButton(onClick = { viewModel.refreshMarketData() }) {
                             Icon(Icons.Default.Refresh, contentDescription = "刷新")
-                        }
-                        // 新增资产按钮
-                        IconButton(onClick = onAddAsset) {
-                            Icon(Icons.Default.Add, contentDescription = "新增资产")
                         }
                     }
                 )
@@ -143,7 +143,6 @@ fun AssetListScreen(
                     totalAssets = totalAssets,
                     availableCash = portfolio.cash,
                     targetWeightSum = targetWeightSum,
-                    isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                     onClick = {
                         cashInputValue = String.format("%.2f", portfolio.cash)
                         showCashEditDialog = true
@@ -255,7 +254,6 @@ private fun BottomInfoBar(
     totalAssets: Double,
     availableCash: Double,
     targetWeightSum: Double,
-    isHidden: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -281,38 +279,30 @@ private fun BottomInfoBar(
         ) {
             // 左侧：可用现金
             Text(
-                text = if (isHidden) "***" else "¥${String.format("%.2f", availableCash)}",
+                text = "¥${String.format("%.2f", availableCash)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
             
             // 右侧：除现金外资产占比信息
-            if (isHidden) {
+            val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
+            if (deviationAbs > 0.0001) {
+                // 根据实际偏差情况使用+或-符号
+                val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
                 Text(
-                    text = "***",
+                    text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium
                 )
             } else {
-                val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
-                if (deviationAbs > 0.0001) {
-                    // 根据实际偏差情况使用+或-符号
-                    val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
-                    Text(
-                        text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Medium
-                    )
-                } else {
-                    Text(
-                        text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
