@@ -73,14 +73,15 @@ fun AssetListScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = false,
-        drawerContent = {
-            AppDrawer(
-                onClose = { scope.launch { drawerState.close() } },
-                onNavigateToConfigNote = onOpenConfigNote,
-                onNavigateToApiTest = onOpenApiTest,
-                onNavigateToSettings = onOpenSettings
-            )
-        }
+                    drawerContent = {
+                AppDrawer(
+                    onClose = { scope.launch { drawerState.close() } },
+                    onNavigateToConfigNote = onOpenConfigNote,
+                    onNavigateToApiTest = onOpenApiTest,
+                    onNavigateToTransactions = onOpenTransactions,
+                    onNavigateToSettings = onOpenSettings
+                )
+            }
     ) {
         Scaffold(
             topBar = {
@@ -90,6 +91,7 @@ fun AssetListScreen(
                             totalAssets = totalAssets,
                             availableCash = portfolio.cash,
                             targetWeightSum = targetWeightSum,
+                            currentWeightSum = analyses.sumOf { it.currentWeight },
                             isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                             onClick = {
                                 cashInputValue = String.format("%.2f", portfolio.cash)
@@ -114,9 +116,6 @@ fun AssetListScreen(
                                 imageVector = if (isHidden) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = if (isHidden) "显示资产数目" else "隐藏资产数目"
                             )
-                        }
-                        IconButton(onClick = onOpenTransactions) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.List, contentDescription = "交易")
                         }
                         IconButton(onClick = onOpenOpportunities) {
                             Icon(imageVector = Icons.Default.Notifications, contentDescription = "交易机会")
@@ -310,6 +309,7 @@ private fun SummaryBar(
     totalAssets: Double,
     availableCash: Double,
     targetWeightSum: Double,
+    currentWeightSum: Double,
     isHidden: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -344,15 +344,40 @@ private fun SummaryBar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        val diff = kotlin.math.abs(targetWeightSum - 1.0)
-        if (diff > 0.0001) {
+        // 显示资产占比总和信息：当前总占比=目标总占比-总占比偏差
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            // 当前总占比
             Text(
-                text = "Σ ${(targetWeightSum * 100).let { String.format("%.0f", it) }}%",
+                text = "Σ当前总占比: ${String.format("%.1f", currentWeightSum * 100)}%",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.End
             )
+            
+            // 目标总占比和总占比偏差
+            val weightDeviation = currentWeightSum - targetWeightSum
+            val weightDeviationAbs = kotlin.math.abs(weightDeviation)
+            if (weightDeviationAbs > 0.0001) {
+                Text(
+                    text = "= ${String.format("%.1f", targetWeightSum * 100)}% - ${String.format("%.1f", weightDeviation * 100)}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End
+                )
+            } else {
+                Text(
+                    text = "= ${String.format("%.1f", targetWeightSum * 100)}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.End
+                )
+            }
         }
     }
 }

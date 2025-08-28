@@ -139,9 +139,11 @@ class PortfolioViewModel @Inject constructor(
         CURRENT_WEIGHT("当前占比"),
         TARGET_WEIGHT("目标占比"),
         WEIGHT_DEVIATION("占比偏差"),
+        WEIGHT_DEVIATION_ABS("占比偏差绝对值"),
         CURRENT_MARKET_VALUE("当前市值"),
         TARGET_MARKET_VALUE("目标市值"),
         MARKET_VALUE_DEVIATION("市值偏差"),
+        MARKET_VALUE_DEVIATION_ABS("市值偏差绝对值"),
         UNIT_PRICE("单价"),
         SHARES("份额")
     }
@@ -176,9 +178,11 @@ class PortfolioViewModel @Inject constructor(
             SortOption.CURRENT_WEIGHT -> if (ascending) analyses.sortedBy { it.currentWeight } else analyses.sortedByDescending { it.currentWeight }
             SortOption.TARGET_WEIGHT -> if (ascending) analyses.sortedBy { it.asset.targetWeight } else analyses.sortedByDescending { it.asset.targetWeight }
             SortOption.WEIGHT_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationPct } else analyses.sortedByDescending { it.deviationPct }
+            SortOption.WEIGHT_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationPct) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationPct) }
             SortOption.CURRENT_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.marketValue } else analyses.sortedByDescending { it.marketValue }
             SortOption.TARGET_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.targetMarketValue } else analyses.sortedByDescending { it.targetMarketValue }
             SortOption.MARKET_VALUE_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationValue } else analyses.sortedByDescending { it.deviationValue }
+            SortOption.MARKET_VALUE_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationValue) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationValue) }
             SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
             SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
         }
