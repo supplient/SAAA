@@ -341,10 +341,10 @@ private fun SummaryBar(
             .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        // 第一行：可用现金和占比
+        // 第一行：可用现金（不再显示占比）
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -353,32 +353,9 @@ private fun SummaryBar(
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
-            if (!isHidden && totalAssets > 0) {
-                val cashRatio = (availableCash / totalAssets) * 100
-                Text(
-                    text = "${String.format("%.1f", cashRatio)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-            }
         }
         
-        // 第二行：总资产市值
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = if (isHidden) "***" else "∑${String.format("%.2f", totalAssets)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        
-        // 第三行：除现金外资产占比信息
+        // 第二行：除现金外资产占比信息
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start,
@@ -393,8 +370,10 @@ private fun SummaryBar(
             } else {
                 val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
                 if (deviationAbs > 0.0001) {
+                    // 根据实际偏差情况使用+或-符号
+                    val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
                     Text(
-                        text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% ± ${String.format("%.1f", deviationAbs * 100)}%",
+                        text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Medium
