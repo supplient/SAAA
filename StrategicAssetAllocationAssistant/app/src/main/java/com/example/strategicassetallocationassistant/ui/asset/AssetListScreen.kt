@@ -370,17 +370,17 @@ private fun SummaryBar(
             } else {
                 val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
                 if (deviationAbs > 0.0001) {
-                    // 根据实际偏差情况使用+或-符号
-                    val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
-                    Text(
-                        text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Medium
-                    )
+                                    // 根据实际偏差情况使用+或-符号
+                val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
+                Text(
+                    text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium
+                )
                 } else {
                     Text(
-                        text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
+                        text = "∑${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Medium
