@@ -165,19 +165,32 @@ fun AssetListScreen(
                                 Text(text = "¥${String.format("%.2f", totalAssets)}", style = MaterialTheme.typography.bodyMedium)
                             }
 
-                            // 合计目标占比
-                            val diff = kotlin.math.abs(targetWeightSum - 1.0)
+                            // 除现金外占比
+                            val nonCashAssetsValue = totalAssets - portfolio.cash
+                            val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
+                            val nonCashTargetWeightSum = targetWeightSum
+                            val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
+                            val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
+                            
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "合计目标占比", style = MaterialTheme.typography.bodyMedium)
-                                Text(
-                                    text = "${String.format("%.2f", targetWeightSum * 100)}%",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (diff > 0.0001) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                                )
+                                Text(text = "除现金外占比", style = MaterialTheme.typography.bodyMedium)
+                                if (deviationAbs > 0.0001) {
+                                    Text(
+                                        text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% ± ${String.format("%.1f", deviationAbs * 100)}%",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                } else {
+                                    Text(
+                                        text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -314,69 +327,86 @@ private fun SummaryBar(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    // 计算除现金外的资产市值和占比
+    val nonCashAssetsValue = totalAssets - availableCash
+    val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
+    val nonCashTargetWeightSum = targetWeightSum
+    val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
+    
+    Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
             .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            horizontalAlignment = Alignment.Start
+        // 第一行：可用现金和占比
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = if (isHidden) "***" else "¥${String.format("%.2f", availableCash)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Start
+                fontWeight = FontWeight.Bold
             )
+            if (!isHidden && totalAssets > 0) {
+                val cashRatio = (availableCash / totalAssets) * 100
+                Text(
+                    text = "${String.format("%.1f", cashRatio)}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        
+        // 第二行：总资产市值
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = if (isHidden) "***" else "¥${String.format("%.2f", totalAssets)}",
+                text = if (isHidden) "***" else "∑${String.format("%.2f", totalAssets)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Start
+                fontWeight = FontWeight.Bold
             )
         }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // 显示资产占比总和信息：当前总占比=目标总占比-总占比偏差
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+        
+        // 第三行：除现金外资产占比信息
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 当前总占比
-            Text(
-                text = "Σ当前总占比: ${String.format("%.1f", currentWeightSum * 100)}%",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.End
-            )
-            
-            // 目标总占比和总占比偏差
-            val weightDeviation = currentWeightSum - targetWeightSum
-            val weightDeviationAbs = kotlin.math.abs(weightDeviation)
-            if (weightDeviationAbs > 0.0001) {
+            if (isHidden) {
                 Text(
-                    text = "= ${String.format("%.1f", targetWeightSum * 100)}% - ${String.format("%.1f", weightDeviation * 100)}%",
+                    text = "***",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.End
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             } else {
-                Text(
-                    text = "= ${String.format("%.1f", targetWeightSum * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.End
-                )
+                val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
+                if (deviationAbs > 0.0001) {
+                    Text(
+                        text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% ± ${String.format("%.1f", deviationAbs * 100)}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Medium
+                    )
+                } else {
+                    Text(
+                        text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
