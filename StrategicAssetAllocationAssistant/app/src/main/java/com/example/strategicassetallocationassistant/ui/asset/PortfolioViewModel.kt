@@ -75,14 +75,19 @@ class PortfolioViewModel @Inject constructor(
     /** AssetAnalysis 列表 Flow */
     val assetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
         assets,
+        portfolioState,
         failedRefreshAssetIds
-    ) { assetList, failedIds ->
+    ) { assetList, portfolio, failedIds ->
         val totalMarketValue = assetList.sumOf { it.currentMarketValue }
+        val totalAssetsValue = totalMarketValue + portfolio.cash // 总资产 = 资产市值 + 可用现金
+        
         assetList.map { asset ->
             val value = asset.currentMarketValue
-            val weight = if (totalMarketValue > 0) value / totalMarketValue else 0.0
+            // 修正：资产当前占比 = 资产当前市值 / (所有资产总市值 + 可用现金)
+            val weight = if (totalAssetsValue > 0) value / totalAssetsValue else 0.0
             val deviationPct = weight - asset.targetWeight
-            val targetValue = totalMarketValue * asset.targetWeight
+            // 修正：目标市值也应该基于总资产计算
+            val targetValue = totalAssetsValue * asset.targetWeight
             val deviationValue = value - targetValue
             AssetAnalysis(
                 asset = asset,
