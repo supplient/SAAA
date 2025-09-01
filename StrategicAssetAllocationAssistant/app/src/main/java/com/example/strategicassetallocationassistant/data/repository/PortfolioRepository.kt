@@ -281,7 +281,8 @@ class PortfolioRepository @Inject constructor(
         shares = shares,
         unitValue = unitValue,
         lastUpdateTime = lastUpdateTime,
-        note = note
+        note = note,
+        volatility = volatility
     )
 
     private fun Asset.toEntity(): AssetEntity = AssetEntity.create(
@@ -292,7 +293,8 @@ class PortfolioRepository @Inject constructor(
         shares = shares,
         unitValue = unitValue,
         lastUpdateTime = lastUpdateTime,
-        note = note
+        note = note,
+        volatility = volatility
     )
 
     // no longer used combineCashFlow

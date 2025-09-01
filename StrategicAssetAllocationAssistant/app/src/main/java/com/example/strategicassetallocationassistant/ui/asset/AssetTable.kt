@@ -146,6 +146,22 @@ private fun AssetTableHeader(
                 )
             }
 
+            // 波动率
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "波动率",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             // 更新时间
             Box(
                 modifier = Modifier
@@ -321,6 +337,20 @@ private fun AssetTableRow(
                         textAlign = TextAlign.Center
                     )
                 }
+            }
+
+            // 波动率值
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = analysis.asset.volatility?.let { String.format("%.2f%%", it * 100) } ?: "-",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center
+                )
             }
 
             // 更新时间（两行显示：时分秒 + 年月日）

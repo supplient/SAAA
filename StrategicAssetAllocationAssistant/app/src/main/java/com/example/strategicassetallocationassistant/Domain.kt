@@ -70,7 +70,8 @@ data class Asset(
     val shares: Double? = null,                    // 份额/股数
     val unitValue: Double? = null,                 // 单位价格：货币基金恒为1，股票为每股价格，基金为净值
     @Contextual val lastUpdateTime: LocalDateTime? = null,  // 数据最后更新时间
-    val note: String? = null                      // 备注
+    val note: String? = null,                     // 备注
+    val volatility: Double? = null               // 90日每日收益率标准差
 ) {
     // 计算当前市场价值
     val currentMarketValue: Double

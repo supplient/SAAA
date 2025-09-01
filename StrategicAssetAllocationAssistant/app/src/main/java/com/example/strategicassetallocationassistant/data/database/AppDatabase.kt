@@ -29,7 +29,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -110,6 +110,12 @@ abstract class AppDatabase : RoomDatabase() {
                             db.execSQL("DROP TABLE assets")
                             db.execSQL("ALTER TABLE assets_new RENAME TO assets")
                             db.execSQL("DROP TABLE assets_tmp_value")
+                        }
+                    })
+                    .addMigrations(object : androidx.room.migration.Migration(2, 3) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            // Add volatility column with nullable REAL
+                            db.execSQL("ALTER TABLE assets ADD COLUMN volatility REAL")
                         }
                     })
                     .addCallback(PrepopulateCallback(context.applicationContext))

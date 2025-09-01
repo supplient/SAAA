@@ -26,7 +26,8 @@ data class AssetEntity(
     val unitValue: Double?,
     @Serializable(with = LocalDateTimeSerializer::class)
     val lastUpdateTime: java.time.LocalDateTime?,
-    val note: String? = null
+    val note: String? = null,
+    val volatility: Double? = null
 ) {
     companion object {
         /**
@@ -40,7 +41,8 @@ data class AssetEntity(
             shares: Double?,
             unitValue: Double?,
             lastUpdateTime: LocalDateTime?,
-            note: String? = null
+            note: String? = null,
+            volatility: Double? = null
         ): AssetEntity {
             return AssetEntity(
                 id = id.toString(),
@@ -50,7 +52,8 @@ data class AssetEntity(
                 shares = shares,
                 unitValue = unitValue,
                 lastUpdateTime = lastUpdateTime,
-                note = note
+                note = note,
+                volatility = volatility
             )
         }
     }

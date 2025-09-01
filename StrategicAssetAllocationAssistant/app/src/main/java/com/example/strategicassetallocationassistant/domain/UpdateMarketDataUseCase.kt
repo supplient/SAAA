@@ -49,9 +49,11 @@ class UpdateMarketDataUseCase @Inject constructor(
                 }.getOrNull()
 
                 if (latest != null && latest.close > 0f) {
+                    val volatility = AShare.getVolatility(code)
                     val updated = asset.copy(
                         unitValue = latest.close.toDouble(),
-                        lastUpdateTime = LocalDateTime.now()
+                        lastUpdateTime = LocalDateTime.now(),
+                        volatility = volatility
                     )
                     repository.updateAsset(updated)
                     success++
