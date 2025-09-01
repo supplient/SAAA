@@ -178,6 +178,22 @@ private fun AssetTableHeader(
                 )
             }
 
+            // 卖出阈值
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "卖出阈值",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             // 更新时间
             Box(
                 modifier = Modifier
@@ -378,6 +394,20 @@ private fun AssetTableRow(
             ) {
                 Text(
                     text = analysis.asset.buyFactor?.let { String.format("%.2f%%", it * 100) } ?: "-",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 卖出阈值值
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = analysis.asset.sellThreshold?.let { String.format("%.2f%%", it * 100) } ?: "-",
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )

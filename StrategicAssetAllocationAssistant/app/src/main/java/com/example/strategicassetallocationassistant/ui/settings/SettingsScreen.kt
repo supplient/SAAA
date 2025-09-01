@@ -164,6 +164,35 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // 卖出阈值参数
+            val baseSell by viewModel.baseSell.collectAsState()
+            val halfRisk by viewModel.halfRisk.collectAsState()
+
+            var baseSellInput by remember { mutableStateOf(baseSell.toInputString()) }
+            var halfRiskInput by remember { mutableStateOf(halfRisk.toInputString()) }
+
+            Text("卖出阈值参数", modifier = Modifier.padding(top = 16.dp))
+
+            OutlinedTextField(
+                value = baseSellInput,
+                onValueChange = {
+                    baseSellInput = it
+                    it.toDoubleOrNull()?.let { v -> viewModel.onBaseSellChanged(v) }
+                },
+                label = { Text("基础卖出阈值 S (0-1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = halfRiskInput,
+                onValueChange = {
+                    halfRiskInput = it
+                    it.toDoubleOrNull()?.let { v -> viewModel.onHalfRiskChanged(v) }
+                },
+                label = { Text("半饱和总体风险 f̃") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Button(onClick = { viewModel.exportData() }, contentPadding = PaddingValues(8.dp)) {
                 Text("导出数据到剪贴板")
             }

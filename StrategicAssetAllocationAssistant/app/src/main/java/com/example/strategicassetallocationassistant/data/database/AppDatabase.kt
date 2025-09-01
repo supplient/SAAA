@@ -29,7 +29,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -128,6 +128,16 @@ abstract class AppDatabase : RoomDatabase() {
                             db.execSQL("ALTER TABLE assets ADD COLUMN offsetFactor REAL")
                             db.execSQL("ALTER TABLE assets ADD COLUMN drawdownFactor REAL")
                             db.execSQL("ALTER TABLE assets ADD COLUMN buyFactor REAL")
+                        }
+                    })
+                    .addMigrations(object : androidx.room.migration.Migration(5, 6) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            db.execSQL("ALTER TABLE assets ADD COLUMN sellThreshold REAL")
+                        }
+                    })
+                    .addMigrations(object : androidx.room.migration.Migration(6, 7) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            db.execSQL("ALTER TABLE portfolio ADD COLUMN overallRiskFactor REAL")
                         }
                     })
                     .addCallback(PrepopulateCallback(context.applicationContext))

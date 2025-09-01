@@ -19,5 +19,6 @@ data class PortfolioEntity(
     ,val isBuyOpportunityPostponed: Boolean = false
     ,@Serializable(with = com.example.strategicassetallocationassistant.LocalDateTimeSerializer::class)
     val lastBuyOpportunityCheck: java.time.LocalDateTime? = null,
-    val pendingBuyOpportunity: Boolean = false
+    val pendingBuyOpportunity: Boolean = false,
+    val overallRiskFactor: Double? = null
 )

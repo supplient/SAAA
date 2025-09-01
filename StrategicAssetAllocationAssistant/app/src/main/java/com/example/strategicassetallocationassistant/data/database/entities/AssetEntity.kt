@@ -31,7 +31,8 @@ data class AssetEntity(
     val sevenDayReturn: Double? = null,
     val offsetFactor: Double? = null,
     val drawdownFactor: Double? = null,
-    val buyFactor: Double? = null
+    val buyFactor: Double? = null,
+    val sellThreshold: Double? = null
 ) {
     companion object {
         /**
@@ -50,7 +51,8 @@ data class AssetEntity(
             sevenDayReturn: Double? = null,
             offsetFactor: Double? = null,
             drawdownFactor: Double? = null,
-            buyFactor: Double? = null
+            buyFactor: Double? = null,
+            sellThreshold: Double? = null
         ): AssetEntity {
             return AssetEntity(
                 id = id.toString(),
@@ -65,7 +67,8 @@ data class AssetEntity(
                 sevenDayReturn = sevenDayReturn,
                 offsetFactor = offsetFactor,
                 drawdownFactor = drawdownFactor,
-                buyFactor = buyFactor
+                buyFactor = buyFactor,
+                sellThreshold = sellThreshold
             )
         }
     }

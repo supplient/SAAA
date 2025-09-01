@@ -4,6 +4,7 @@ import com.example.strategicassetallocationassistant.data.network.AShare
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
 import com.example.strategicassetallocationassistant.data.preferences.PreferencesRepository
 import com.example.strategicassetallocationassistant.domain.BuyFactorCalculator
+import com.example.strategicassetallocationassistant.domain.SellThresholdCalculator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
@@ -37,6 +38,10 @@ class UpdateMarketDataUseCase @Inject constructor(
 
             val calculator = BuyFactorCalculator(rTilde, dTilde, alpha)
 
+            val baseSell = prefs.baseSellThreshold.first()
+            val halfRisk = prefs.halfTotalRisk.first()
+            val sellCalc = SellThresholdCalculator(baseSell, halfRisk)
+
             var success = 0
             var fail = 0
             val failedAssetIds = mutableListOf<UUID>()
@@ -66,7 +71,8 @@ class UpdateMarketDataUseCase @Inject constructor(
                         lastUpdateTime = LocalDateTime.now(),
                         offsetFactor = factors.offsetFactor,
                         drawdownFactor = factors.drawdownFactor,
-                        buyFactor = factors.buyFactor
+                        buyFactor = factors.buyFactor,
+                        sellThreshold = 0.0 // placeholder
                     )
                     repository.updateAsset(updated)
                     success++
@@ -75,6 +81,15 @@ class UpdateMarketDataUseCase @Inject constructor(
                     failedAssetIds.add(asset.id)
                 }
             }
+
+            // 计算并写入卖出阈值一次性
+            val thresholds = sellCalc.calculate(portfolio.assets, portfolio.cash)
+            thresholds.forEachIndexed { idx, th ->
+                val asset = portfolio.assets[idx].copy(sellThreshold = th)
+                repository.updateAsset(asset)
+            }
+
+            repository.updateOverallRiskFactor(sellCalc.lastRiskFactor)
 
             MarketDataUpdateStats(
                 success = success, 

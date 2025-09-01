@@ -151,7 +151,8 @@ class PortfolioViewModel @Inject constructor(
         MARKET_VALUE_DEVIATION_ABS("市值偏差绝对值"),
         UNIT_PRICE("单价"),
         SHARES("份额"),
-        BUY_FACTOR("买入因子")
+        BUY_FACTOR("买入因子"),
+        SELL_THRESHOLD("卖出阈值")
     }
 
     // 排序状态
@@ -192,6 +193,7 @@ class PortfolioViewModel @Inject constructor(
             SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
             SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
             SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.asset.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.asset.buyFactor ?: 0.0 }
+            SortOption.SELL_THRESHOLD -> if (ascending) analyses.sortedBy { it.asset.sellThreshold ?: 0.0 } else analyses.sortedByDescending { it.asset.sellThreshold ?: 0.0 }
         }
     }.stateIn(
         scope = viewModelScope,

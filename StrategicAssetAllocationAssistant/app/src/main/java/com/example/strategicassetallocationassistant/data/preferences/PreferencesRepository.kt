@@ -24,9 +24,16 @@ class PreferencesRepository @Inject constructor(
         private val KEY_HALF_SATURATION_D = androidx.datastore.preferences.core.doublePreferencesKey("half_saturation_drawdown")
         private val KEY_ALPHA = androidx.datastore.preferences.core.doublePreferencesKey("offset_weight_alpha")
 
+        // Sell threshold params
+        private val KEY_BASE_SELL_THRESHOLD = androidx.datastore.preferences.core.doublePreferencesKey("base_sell_threshold")
+        private val KEY_HALF_TOTAL_RISK = androidx.datastore.preferences.core.doublePreferencesKey("half_total_risk")
+
         const val DEFAULT_HALF_SATURATION_R = 0.10
         const val DEFAULT_HALF_SATURATION_D = 0.05
         const val DEFAULT_ALPHA = 0.8
+
+        const val DEFAULT_BASE_SELL_THRESHOLD = 0.30
+        const val DEFAULT_HALF_TOTAL_RISK = 0.00035
     }
 
     val refreshIntervalMinutes: Flow<Long> = context.dataStore.data.map { prefs ->
@@ -36,6 +43,9 @@ class PreferencesRepository @Inject constructor(
     val halfSaturationR: Flow<Double> = context.dataStore.data.map { it[KEY_HALF_SATURATION_R] ?: DEFAULT_HALF_SATURATION_R }
     val halfSaturationD: Flow<Double> = context.dataStore.data.map { it[KEY_HALF_SATURATION_D] ?: DEFAULT_HALF_SATURATION_D }
     val alpha: Flow<Double> = context.dataStore.data.map { it[KEY_ALPHA] ?: DEFAULT_ALPHA }
+
+    val baseSellThreshold: Flow<Double> = context.dataStore.data.map { it[KEY_BASE_SELL_THRESHOLD] ?: DEFAULT_BASE_SELL_THRESHOLD }
+    val halfTotalRisk: Flow<Double> = context.dataStore.data.map { it[KEY_HALF_TOTAL_RISK] ?: DEFAULT_HALF_TOTAL_RISK }
 
     suspend fun setRefreshIntervalMinutes(minutes: Long) {
         context.dataStore.edit { prefs ->
@@ -53,5 +63,13 @@ class PreferencesRepository @Inject constructor(
 
     suspend fun setAlpha(value: Double) {
         context.dataStore.edit { it[KEY_ALPHA] = value }
+    }
+
+    suspend fun setBaseSellThreshold(value: Double) {
+        context.dataStore.edit { it[KEY_BASE_SELL_THRESHOLD] = value }
+    }
+
+    suspend fun setHalfTotalRisk(value: Double) {
+        context.dataStore.edit { it[KEY_HALF_TOTAL_RISK] = value }
     }
 }

@@ -69,6 +69,10 @@ fun AssetListScreen(
     
     // 计算总资产
     val totalAssets = portfolio.cash + analyses.sumOf { it.marketValue }
+    val assetsValue = analyses.sumOf { it.marketValue }
+    val assetWeightPct = if (totalAssets > 0) assetsValue / totalAssets else 0.0
+    val targetWeightPct = targetWeightSum
+    val deviationPct = assetWeightPct - targetWeightPct
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -139,14 +143,13 @@ fun AssetListScreen(
                 )
                 
                 // 底部信息栏
-                BottomInfoBar(
-                    totalAssets = totalAssets,
+                PortfolioSummary(
+                    currentWeight = assetWeightPct,
+                    targetWeight = targetWeightPct,
+                    deviation = deviationPct,
                     availableCash = portfolio.cash,
-                    targetWeightSum = targetWeightSum,
-                    onClick = {
-                        cashInputValue = String.format("%.2f", portfolio.cash)
-                        showCashEditDialog = true
-                    }
+                    riskFactor = portfolio.overallRiskFactor,
+                    onCashClick = { showCashEditDialog = true }
                 )
             }
             

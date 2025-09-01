@@ -82,4 +82,8 @@ interface PortfolioDao {
      */
     @Query("SELECT cash FROM portfolio WHERE id = 1")
     fun getCashFlow(): Flow<Double?>
+
+    // 更新总体风险因子
+    @Query("UPDATE portfolio SET overallRiskFactor = :f WHERE id = 1")
+    suspend fun updateOverallRiskFactor(f: Double)
 }

@@ -78,6 +78,8 @@ data class Asset(
     val offsetFactor: Double? = null,           // E
     val drawdownFactor: Double? = null,         // D
     val buyFactor: Double? = null               // B
+    ,
+    val sellThreshold: Double? = null           // S
 ) {
     // 计算当前市场价值
     val currentMarketValue: Double
@@ -89,7 +91,8 @@ data class Asset(
 data class Portfolio(
     val assets: List<Asset>,
     val cash: Double,
-    val note: String? = null
+    val note: String? = null,
+    val overallRiskFactor: Double? = null
 )
 
 // 交易记录

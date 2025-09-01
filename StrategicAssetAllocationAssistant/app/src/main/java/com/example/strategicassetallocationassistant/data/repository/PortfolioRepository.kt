@@ -86,7 +86,8 @@ class PortfolioRepository @Inject constructor(
         Portfolio(
             assets = assets,
             cash = entity?.cash ?: 0.0,
-            note = entity?.note
+            note = entity?.note,
+            overallRiskFactor = entity?.overallRiskFactor
         )
     }
 
@@ -150,6 +151,11 @@ class PortfolioRepository @Inject constructor(
         } else {
             portfolioDao.updateNote(note)
         }
+    }
+
+    /* --------------------- Overall Risk Factor --------------------- */
+    suspend fun updateOverallRiskFactor(f: Double) {
+        portfolioDao.updateOverallRiskFactor(f)
     }
 
     /**
@@ -286,7 +292,8 @@ class PortfolioRepository @Inject constructor(
         sevenDayReturn = sevenDayReturn,
         offsetFactor = offsetFactor,
         drawdownFactor = drawdownFactor,
-        buyFactor = buyFactor
+        buyFactor = buyFactor,
+        sellThreshold = sellThreshold
     )
 
     private fun Asset.toEntity(): AssetEntity = AssetEntity.create(
@@ -302,7 +309,8 @@ class PortfolioRepository @Inject constructor(
         sevenDayReturn = sevenDayReturn,
         offsetFactor = offsetFactor,
         drawdownFactor = drawdownFactor,
-        buyFactor = buyFactor
+        buyFactor = buyFactor,
+        sellThreshold = sellThreshold
     )
 
     // no longer used combineCashFlow

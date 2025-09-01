@@ -33,6 +33,12 @@ class SettingsViewModel @Inject constructor(
     private val _alpha = MutableStateFlow(PreferencesRepository.DEFAULT_ALPHA)
     val alpha: StateFlow<Double> = _alpha
 
+    private val _baseSell = MutableStateFlow(PreferencesRepository.DEFAULT_BASE_SELL_THRESHOLD)
+    val baseSell: StateFlow<Double> = _baseSell
+
+    private val _halfRisk = MutableStateFlow(PreferencesRepository.DEFAULT_HALF_TOTAL_RISK)
+    val halfRisk: StateFlow<Double> = _halfRisk
+
     private val _events = MutableSharedFlow<Event>()
     val events: SharedFlow<Event> = _events
 
@@ -43,6 +49,9 @@ class SettingsViewModel @Inject constructor(
             _halfSatR.value = prefs.halfSaturationR.first()
             _halfSatD.value = prefs.halfSaturationD.first()
             _alpha.value = prefs.alpha.first()
+
+            _baseSell.value = prefs.baseSellThreshold.first()
+            _halfRisk.value = prefs.halfTotalRisk.first()
         }
     }
 
@@ -71,6 +80,20 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             prefs.setAlpha(value)
             _alpha.value = value
+        }
+    }
+
+    fun onBaseSellChanged(value: Double) {
+        viewModelScope.launch {
+            prefs.setBaseSellThreshold(value)
+            _baseSell.value = value
+        }
+    }
+
+    fun onHalfRiskChanged(value: Double) {
+        viewModelScope.launch {
+            prefs.setHalfTotalRisk(value)
+            _halfRisk.value = value
         }
     }
 
