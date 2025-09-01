@@ -32,6 +32,13 @@ data class StockData(
     val volume: Float
 )
 
+// 聚合市场数据
+data class MarketStats(
+    val latestClose: Double,
+    val sevenDayReturn: Double?,
+    val annualVolatility: Double?
+)
+
 @Serializable
 data class SinaStockData(
     val day: String,
@@ -131,45 +138,37 @@ object AShare {
     }
 
     /**
-     * 计算近90个交易日每日对数收益率的标准差（波动率）。
-     * 若获取数据失败返回 null。
+     * Fetch one set of daily price data (最多 90 日) 并一次性计算：
+     *  - 最新收盘价
+     *  - 七日涨跌幅
+     *  - 90 日年化波动率
      */
-    suspend fun getVolatility(code: String): Double? {
-        return try {
-            val prices = getPrice(code = code, count = 90, frequency = "1d")
-            if (prices.size < 90) return null
-            // daily log returns delta_i = ln(p_i / p_{i+1}) where p1 is yesterday
-            val deltas = prices.windowed(2) { (p1, p2) -> kotlin.math.ln(p1.close / p2.close) }
-            if (deltas.isEmpty()) return null
-            val mean = deltas.average()
-            val variance = deltas.sumOf { (it - mean) * (it - mean) } / deltas.size
-            // Annualize: daily volatility * sqrt(252) ≈ 15.87
-            kotlin.math.sqrt(variance) * 15.87
-        } catch (e: Exception) {
-            null
-        }
+    suspend fun getMarketStats(code: String): MarketStats? {
+        // 拉取 90 个交易日的收盘价（含今天）
+        val prices = getPrice(code = code, count = 90, frequency = "1d")
+        if (prices.isEmpty()) return null
+
+        val latestClose = prices.last().close.toDouble()
+
+        // --- 七日涨跌幅 ---
+        val sevenDayReturn: Double? = if (prices.size >= 8) {
+            val close7 = prices[prices.size - 8].close.toDouble()
+            if (close7 == 0.0) null else (latestClose - close7) / close7
+        } else null
+
+        // --- 90 日年化波动率 ---
+        val annualVol: Double? = if (prices.size >= 90) {
+            val deltas = prices.takeLast(90).windowed(2) { (p1, p2) -> kotlin.math.ln(p1.close / p2.close) }
+            if (deltas.isEmpty()) null else {
+                val mean = deltas.average()
+                val variance = deltas.sumOf { (it - mean) * (it - mean) } / deltas.size
+                kotlin.math.sqrt(variance) * 15.87
+            }
+        } else null
+
+        return MarketStats(latestClose, sevenDayReturn, annualVol)
     }
 
-    /**
-     * 计算过去 7 个交易日（含今日）的涨跌幅。
-     * 公式： (今日收盘价 - 7 日前收盘价) / 7 日前收盘价
-     * 若数据不足 8 条或获取失败返回 null。
-     */
-    suspend fun getSevenDayReturn(code: String): Double? {
-        return try {
-            // 需要过去 7 个完整交易日的数据，取 8 条收盘价（含今天）
-            val prices = getPrice(code = code, count = 8, frequency = "1d")
-            if (prices.size < 8) return null
-
-            val sevenDaysAgoClose = prices[prices.size - 8].close.toDouble()
-            val latestClose = prices.last().close.toDouble()
-            if (sevenDaysAgoClose == 0.0) return null
-
-            (latestClose - sevenDaysAgoClose) / sevenDaysAgoClose
-        } catch (e: Exception) {
-            null
-        }
-    }
 
     private suspend fun getPriceDayTx(
         code: String,

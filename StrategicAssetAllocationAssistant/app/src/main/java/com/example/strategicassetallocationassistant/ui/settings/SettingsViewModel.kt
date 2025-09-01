@@ -24,12 +24,25 @@ class SettingsViewModel @Inject constructor(
     private val _intervalMinutes = MutableStateFlow(PreferencesRepository.DEFAULT_INTERVAL_MINUTES)
     val intervalMinutes: StateFlow<Long> = _intervalMinutes
 
+    private val _halfSatR = MutableStateFlow(PreferencesRepository.DEFAULT_HALF_SATURATION_R)
+    val halfSaturationR: StateFlow<Double> = _halfSatR
+
+    private val _halfSatD = MutableStateFlow(PreferencesRepository.DEFAULT_HALF_SATURATION_D)
+    val halfSaturationD: StateFlow<Double> = _halfSatD
+
+    private val _alpha = MutableStateFlow(PreferencesRepository.DEFAULT_ALPHA)
+    val alpha: StateFlow<Double> = _alpha
+
     private val _events = MutableSharedFlow<Event>()
     val events: SharedFlow<Event> = _events
 
     init {
         viewModelScope.launch {
             _intervalMinutes.value = prefs.refreshIntervalMinutes.first()
+
+            _halfSatR.value = prefs.halfSaturationR.first()
+            _halfSatD.value = prefs.halfSaturationD.first()
+            _alpha.value = prefs.alpha.first()
         }
     }
 
@@ -37,6 +50,27 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             prefs.setRefreshIntervalMinutes(minutes)
             _intervalMinutes.value = minutes
+        }
+    }
+
+    fun onHalfSaturationRChanged(value: Double) {
+        viewModelScope.launch {
+            prefs.setHalfSaturationR(value)
+            _halfSatR.value = value
+        }
+    }
+
+    fun onHalfSaturationDChanged(value: Double) {
+        viewModelScope.launch {
+            prefs.setHalfSaturationD(value)
+            _halfSatD.value = value
+        }
+    }
+
+    fun onAlphaChanged(value: Double) {
+        viewModelScope.launch {
+            prefs.setAlpha(value)
+            _alpha.value = value
         }
     }
 

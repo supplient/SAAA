@@ -2,8 +2,11 @@ package com.example.strategicassetallocationassistant.domain
 
 import com.example.strategicassetallocationassistant.data.network.AShare
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
+import com.example.strategicassetallocationassistant.data.preferences.PreferencesRepository
+import com.example.strategicassetallocationassistant.domain.BuyFactorCalculator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
@@ -20,12 +23,19 @@ data class MarketDataUpdateStats(
  * 不刷新货币基金类型的资产。
  */
 class UpdateMarketDataUseCase @Inject constructor(
-    private val repository: PortfolioRepository
+    private val repository: PortfolioRepository,
+    private val prefs: PreferencesRepository
 ) {
     suspend operator fun invoke(): MarketDataUpdateStats {
         return withContext(Dispatchers.IO) {
-            // 获取当前资产列表
+            // 获取当前资产列表及偏好参数
             val portfolio = repository.getPortfolioOnce()
+
+            val rTilde = prefs.halfSaturationR.first()
+            val dTilde = prefs.halfSaturationD.first()
+            val alpha = prefs.alpha.first()
+
+            val calculator = BuyFactorCalculator(rTilde, dTilde, alpha)
 
             var success = 0
             var fail = 0
@@ -40,20 +50,23 @@ class UpdateMarketDataUseCase @Inject constructor(
                     return@forEach 
                 }
 
-                // 统一频率：按股票逻辑
-                val frequency = "5m"
+                val stats = runCatching { AShare.getMarketStats(code) }.getOrNull()
 
-                val latest = runCatching {
-                    AShare.getPrice(code = code, count = 1, frequency = frequency)
-                        .lastOrNull()
-                }.getOrNull()
+                if (stats != null && stats.latestClose > 0.0) {
+                    val tempAsset = asset.copy(
+                        unitValue = stats.latestClose,
+                        volatility = stats.annualVolatility,
+                        sevenDayReturn = stats.sevenDayReturn
+                    )
 
-                if (latest != null && latest.close > 0f) {
-                    val volatility = AShare.getVolatility(code)
-                    val updated = asset.copy(
-                        unitValue = latest.close.toDouble(),
+                    val totalAssetsValue = portfolio.assets.sumOf { it.currentMarketValue } + portfolio.cash
+                    val factors = calculator.calculate(tempAsset, totalAssetsValue)
+
+                    val updated = tempAsset.copy(
                         lastUpdateTime = LocalDateTime.now(),
-                        volatility = volatility
+                        offsetFactor = factors.offsetFactor,
+                        drawdownFactor = factors.drawdownFactor,
+                        buyFactor = factors.buyFactor
                     )
                     repository.updateAsset(updated)
                     success++

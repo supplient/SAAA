@@ -72,6 +72,12 @@ data class Asset(
     @Contextual val lastUpdateTime: LocalDateTime? = null,  // 数据最后更新时间
     val note: String? = null,                     // 备注
     val volatility: Double? = null               // 90日每日收益率标准差
+    ,
+    val sevenDayReturn: Double? = null           // 七日涨跌幅（-1~1）
+    ,
+    val offsetFactor: Double? = null,           // E
+    val drawdownFactor: Double? = null,         // D
+    val buyFactor: Double? = null               // B
 ) {
     // 计算当前市场价值
     val currentMarketValue: Double

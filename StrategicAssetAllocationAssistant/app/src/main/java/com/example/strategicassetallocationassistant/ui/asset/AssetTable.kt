@@ -162,6 +162,22 @@ private fun AssetTableHeader(
                 )
             }
 
+            // 买入因子
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "买入因子",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             // 更新时间
             Box(
                 modifier = Modifier
@@ -348,6 +364,20 @@ private fun AssetTableRow(
             ) {
                 Text(
                     text = analysis.asset.volatility?.let { String.format("%.2f%%", it * 100) } ?: "-",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 买入因子值
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = analysis.asset.buyFactor?.let { String.format("%.2f%%", it * 100) } ?: "-",
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )

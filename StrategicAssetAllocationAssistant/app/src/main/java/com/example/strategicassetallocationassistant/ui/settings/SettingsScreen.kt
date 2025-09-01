@@ -121,6 +121,49 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
                 }
             }
 
+            // ----- 买入因子参数 -----
+            val halfR by viewModel.halfSaturationR.collectAsState()
+            val halfD by viewModel.halfSaturationD.collectAsState()
+            val alpha by viewModel.alpha.collectAsState()
+
+            fun Double.toInputString(): String = String.format("%.2f", this)
+
+            var rInput by remember { mutableStateOf(halfR.toInputString()) }
+            var dInput by remember { mutableStateOf(halfD.toInputString()) }
+            var alphaInput by remember { mutableStateOf(alpha.toInputString()) }
+
+            Text("买入因子参数", modifier = Modifier.padding(top = 16.dp))
+
+            OutlinedTextField(
+                value = rInput,
+                onValueChange = {
+                    rInput = it
+                    it.toDoubleOrNull()?.let { v -> viewModel.onHalfSaturationRChanged(v) }
+                },
+                label = { Text("半饱和相对偏移 r̃ (0-1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = dInput,
+                onValueChange = {
+                    dInput = it
+                    it.toDoubleOrNull()?.let { v -> viewModel.onHalfSaturationDChanged(v) }
+                },
+                label = { Text("半饱和跌幅 d̃ (0-1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = alphaInput,
+                onValueChange = {
+                    alphaInput = it
+                    it.toDoubleOrNull()?.let { v -> viewModel.onAlphaChanged(v) }
+                },
+                label = { Text("偏移权重 α (0-1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
             Button(onClick = { viewModel.exportData() }, contentPadding = PaddingValues(8.dp)) {
                 Text("导出数据到剪贴板")
             }
