@@ -51,7 +51,7 @@ fun PortfolioSummary(
 
             // 中：总体风险因子
             Text(
-                text = "${String.format("%.2f%%", (riskFactor ?: 0.0)*100)}",
+                text = "🚩${String.format("%.2f%%", (riskFactor ?: 0.0)*100)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )

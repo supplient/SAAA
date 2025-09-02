@@ -249,69 +249,6 @@ fun AssetListScreen(
 }
 
 /**
- * 底部信息栏组件
- * 显示可用现金和资产占比信息，固定在下部
- */
-@Composable
-private fun BottomInfoBar(
-    totalAssets: Double,
-    availableCash: Double,
-    targetWeightSum: Double,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // 计算除现金外的资产市值和占比
-    val nonCashAssetsValue = totalAssets - availableCash
-    val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
-    val nonCashTargetWeightSum = targetWeightSum
-    val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
-    
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 左侧：可用现金
-            Text(
-                text = "¥${String.format("%.2f", availableCash)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-            
-            // 右侧：除现金外资产占比信息
-            val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
-            if (deviationAbs > 0.0001) {
-                // 根据实际偏差情况使用+或-符号
-                val deviationSymbol = if (nonCashWeightDeviation > 0) "+" else "-"
-                Text(
-                    text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% $deviationSymbol ${String.format("%.1f", deviationAbs * 100)}%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Medium
-                )
-            } else {
-                Text(
-                    text = "∑${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-    }
-}
-
-/**
  * 排序对话框组件
  */
 @Composable
