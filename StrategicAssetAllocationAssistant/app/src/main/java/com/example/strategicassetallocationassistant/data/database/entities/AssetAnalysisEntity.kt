@@ -31,6 +31,8 @@ data class AssetAnalysisEntity(
     val sevenDayReturn: Double? = null,    // 七日涨跌幅（-1~1）
     val buyFactor: Double? = null,         // 买入因子 B
     val sellThreshold: Double? = null,     // 卖出阈值 S
+    val buyFactorLog: String? = null,      // 买入因子计算过程日志
+    val sellThresholdLog: String? = null,  // 卖出阈值计算过程日志
     @Serializable(with = LocalDateTimeSerializer::class)
     val lastUpdateTime: LocalDateTime? = null  // 分析数据最后更新时间
 ) {
@@ -44,6 +46,8 @@ data class AssetAnalysisEntity(
             sevenDayReturn: Double? = null,
             buyFactor: Double? = null,
             sellThreshold: Double? = null,
+            buyFactorLog: String? = null,
+            sellThresholdLog: String? = null,
             lastUpdateTime: LocalDateTime? = null
         ): AssetAnalysisEntity {
             return AssetAnalysisEntity(
@@ -52,6 +56,8 @@ data class AssetAnalysisEntity(
                 sevenDayReturn = sevenDayReturn,
                 buyFactor = buyFactor,
                 sellThreshold = sellThreshold,
+                buyFactorLog = buyFactorLog,
+                sellThresholdLog = sellThresholdLog,
                 lastUpdateTime = lastUpdateTime
             )
         }

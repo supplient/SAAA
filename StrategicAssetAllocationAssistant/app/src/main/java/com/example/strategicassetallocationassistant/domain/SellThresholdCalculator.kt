@@ -22,6 +22,89 @@ class SellThresholdCalculator(
     private val halfSaturationTotalRisk: Double = 0.00035 // f~ 半饱和总体风险
 ) {
     var lastRiskFactor: Double = 0.0
+    var lastOverallRiskFactorLog: String = ""
+
+    data class SellThresholdResult(
+        val thresholds: List<Double>,                    // 每个资产的卖出阈值
+        val thresholdLogs: List<String>,                // 每个资产的卖出阈值计算过程日志
+        val overallRiskFactor: Double,                  // 总体风险因子
+        val overallRiskFactorLog: String                // 总体风险因子计算过程日志
+    )
+
+    /**
+     * 计算所有资产的卖出阈值（新版本，包含计算过程日志）
+     * @param assets 资产列表
+     * @param cash   可用现金，用于计算当前占比
+     * @param volatilityMap 资产ID到波动率的映射
+     * @return SellThresholdResult 包含阈值、日志和总体风险因子信息
+     */
+    fun calculateWithLogs(assets: List<Asset>, cash: Double, volatilityMap: Map<UUID, Double?>): SellThresholdResult {
+        val totalValue = assets.sumOf { it.currentMarketValue } + cash
+        if (totalValue <= 0) {
+            return SellThresholdResult(
+                thresholds = List(assets.size) { 0.0 },
+                thresholdLogs = List(assets.size) { "无效输入: totalValue=$totalValue" },
+                overallRiskFactor = 0.0,
+                overallRiskFactorLog = "无效输入: totalValue=$totalValue"
+            )
+        }
+
+        // 1. 计算各资产的超配量和风险
+        data class AssetRiskInfo(val asset: Asset, val a: Double, val volatility: Double, val risk: Double)
+        val assetRiskInfos = assets.map { asset ->
+            val currentWeight = asset.currentMarketValue / totalValue
+            val a = max(0.0, currentWeight - asset.targetWeight)
+            val volatility = volatilityMap[asset.id] ?: 0.0
+            val risk = volatility * a
+            AssetRiskInfo(asset, a, volatility, risk)
+        }
+
+        // 2. 计算总体风险 f
+        val f = assetRiskInfos.sumOf { it.risk }
+
+        // 3. 计算风险因子 F
+        val F = f / (f + halfSaturationTotalRisk)
+        lastRiskFactor = F
+
+        // 4. 生成总体风险因子计算过程日志
+        val overallRiskFactorLog = buildString {
+            // 列举每个资产的风险贡献
+            assetRiskInfos.forEachIndexed { index, info ->
+                if (index > 0) append("+")
+                append(String.format("%.6f", info.risk))
+            }
+            append(String.format("=%.6f; %.6f/(%.6f+%.6f)=%.3f", f, f, f, halfSaturationTotalRisk, F))
+        }
+        lastOverallRiskFactorLog = overallRiskFactorLog
+
+        // 5. 计算每个资产的卖出阈值及其日志
+        val thresholds = mutableListOf<Double>()
+        val thresholdLogs = mutableListOf<String>()
+        
+        assets.forEach { asset ->
+            val vol = volatilityMap[asset.id] ?: 0.0
+            val volClamped = vol.coerceIn(0.0, 1.0)
+            val FClamped = F.coerceIn(0.0, 1.0)
+            
+            var S = baseThreshold
+            S *= (1 - volClamped)
+            S *= (1 - FClamped)
+            
+            // 生成此资产的卖出阈值计算过程日志
+            val log = String.format("%.3f*(1-%.3f)*(1-%.3f)=%.3f", 
+                baseThreshold, volClamped, FClamped, S)
+            
+            thresholds.add(S)
+            thresholdLogs.add(log)
+        }
+
+        return SellThresholdResult(
+            thresholds = thresholds,
+            thresholdLogs = thresholdLogs,
+            overallRiskFactor = F,
+            overallRiskFactorLog = overallRiskFactorLog
+        )
+    }
 
     /**
      * 计算所有资产的卖出阈值。
@@ -31,35 +114,7 @@ class SellThresholdCalculator(
      * @return 映射 AssetId → 阈值 (0-1)，未超配返回 0.0
      */
     fun calculate(assets: List<Asset>, cash: Double, volatilityMap: Map<UUID, Double?>): List<Double> {
-        val totalValue = assets.sumOf { it.currentMarketValue } + cash
-        if (totalValue <= 0) return List(assets.size) { 0.0 }
-
-        // 1. a_i & current weight
-        data class OverAsset(val asset: Asset, val a: Double, val volatility: Double)
-        val overAssets = assets.map { asset ->
-            val currentWeight = asset.currentMarketValue / totalValue
-            val a = max(0.0, currentWeight - asset.targetWeight)
-            val volatility = volatilityMap[asset.id] ?: 0.0
-            OverAsset(asset, a, volatility)
-        }.filter { it.a > 0 }
-
-        // 2. f
-        val f = overAssets.sumOf { it.volatility * it.a }
-
-        // 3. F
-        val F = f / (f + halfSaturationTotalRisk)
-        lastRiskFactor = F
-
-        // 4. thresholds
-        val resultList = mutableListOf<Double>()
-        assets.forEach { asset ->
-            val vol = volatilityMap[asset.id] ?: 0.0
-			var S = baseThreshold
-			S *= (1 - vol.coerceIn(0.0, 1.0))
-			S *= (1 - F.coerceIn(0.0, 1.0))
-			resultList.add(S)
-        }
-        return resultList
+        return calculateWithLogs(assets, cash, volatilityMap).thresholds
     }
 
     /**

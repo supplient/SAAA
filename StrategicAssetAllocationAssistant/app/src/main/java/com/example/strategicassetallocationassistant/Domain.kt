@@ -85,6 +85,8 @@ data class AssetAnalysis(
     val sevenDayReturn: Double? = null,          // 七日涨跌幅（-1~1）
     val buyFactor: Double? = null,               // 买入因子 B
     val sellThreshold: Double? = null,           // 卖出阈值 S
+    val buyFactorLog: String? = null,            // 买入因子计算过程日志
+    val sellThresholdLog: String? = null,        // 卖出阈值计算过程日志
     @Contextual val lastUpdateTime: LocalDateTime? = null  // 分析数据最后更新时间
 )
 
@@ -94,7 +96,8 @@ data class Portfolio(
     val assets: List<Asset>,
     val cash: Double,
     val note: String? = null,
-    val overallRiskFactor: Double? = null
+    val overallRiskFactor: Double? = null,
+    val overallRiskFactorLog: String? = null    // 总体风险因子计算过程日志
 )
 
 // 交易记录

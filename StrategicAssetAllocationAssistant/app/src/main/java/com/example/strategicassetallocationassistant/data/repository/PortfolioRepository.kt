@@ -88,7 +88,8 @@ class PortfolioRepository @Inject constructor(
             assets = assets,
             cash = entity?.cash ?: 0.0,
             note = entity?.note,
-            overallRiskFactor = entity?.overallRiskFactor
+            overallRiskFactor = entity?.overallRiskFactor,
+            overallRiskFactorLog = entity?.overallRiskFactorLog
         )
     }
 
@@ -159,6 +160,10 @@ class PortfolioRepository @Inject constructor(
         portfolioDao.updateOverallRiskFactor(f)
     }
 
+    suspend fun updateOverallRiskFactorWithLog(f: Double, log: String) {
+        portfolioDao.updateOverallRiskFactorWithLog(f, log)
+    }
+
     /* --------------------- AssetAnalysis 相关方法 --------------------- */
     
     /**
@@ -203,10 +208,24 @@ class PortfolioRepository @Inject constructor(
     }
 
     /**
+     * 更新资产的买入因子和计算过程日志
+     */
+    suspend fun updateAssetBuyFactorWithLog(assetId: UUID, buyFactor: Double, buyFactorLog: String) {
+        assetAnalysisDao.updateBuyFactorWithLog(assetId.toString(), buyFactor, buyFactorLog)
+    }
+
+    /**
      * 更新资产的卖出阈值
      */
     suspend fun updateAssetSellThreshold(assetId: UUID, sellThreshold: Double) {
         assetAnalysisDao.updateSellThreshold(assetId.toString(), sellThreshold)
+    }
+
+    /**
+     * 更新资产的卖出阈值和计算过程日志
+     */
+    suspend fun updateAssetSellThresholdWithLog(assetId: UUID, sellThreshold: Double, sellThresholdLog: String) {
+        assetAnalysisDao.updateSellThresholdWithLog(assetId.toString(), sellThreshold, sellThresholdLog)
     }
 
     /**
@@ -387,6 +406,8 @@ class PortfolioRepository @Inject constructor(
             sevenDayReturn = sevenDayReturn,
             buyFactor = buyFactor,
             sellThreshold = sellThreshold,
+            buyFactorLog = buyFactorLog,
+            sellThresholdLog = sellThresholdLog,
             lastUpdateTime = lastUpdateTime
         )
 
@@ -397,6 +418,8 @@ class PortfolioRepository @Inject constructor(
             sevenDayReturn = sevenDayReturn,
             buyFactor = buyFactor,
             sellThreshold = sellThreshold,
+            buyFactorLog = buyFactorLog,
+            sellThresholdLog = sellThresholdLog,
             lastUpdateTime = lastUpdateTime
         )
 

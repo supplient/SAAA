@@ -27,7 +27,8 @@ class BuyFactorCalculator(
     data class Result(
         val offsetFactor: Double,  // E
         val drawdownFactor: Double,// D
-        val buyFactor: Double      // B
+        val buyFactor: Double,     // B
+        val calculationLog: String // 计算过程日志
     )
 
     /**
@@ -39,7 +40,7 @@ class BuyFactorCalculator(
      */
     fun calculate(asset: Asset, totalAssetsValue: Double, volatility: Double?, sevenDayReturn: Double?): Result {
         if (asset.targetWeight <= 0 || totalAssetsValue <= 0) {
-            return Result(0.0, 0.0, 0.0)
+            return Result(0.0, 0.0, 0.0, "无效输入: targetWeight=${asset.targetWeight}, totalAssetsValue=$totalAssetsValue")
         }
 
         // 当前占比
@@ -58,9 +59,26 @@ class BuyFactorCalculator(
         val k = volatility ?: 0.0
         val kClamped = k.coerceIn(0.0, 1.0)
 
-        val buyFactor = (1 - kClamped) * (alpha * offsetFactor + (1 - alpha) * drawdownFactor)
+        // 去波动率的买入因子
+        val preVolatilityBuyFactor = alpha * offsetFactor + (1 - alpha) * drawdownFactor
+        val buyFactor = (1 - kClamped) * preVolatilityBuyFactor
 
-        return Result(offsetFactor, drawdownFactor, buyFactor)
+        // 生成计算过程日志
+        val log = buildString {
+            append(String.format("%.3f-%.3f=%.3f", asset.targetWeight, currentWeight, asset.targetWeight - currentWeight))
+            append("; ")
+            append(String.format("%.3f/(%.3f+%.3f)=%.3f", r, r, halfSaturationRelativeOffset, offsetFactor))
+            append("; ")
+            append(String.format("max(0, -%.3f)=%.3f", delta, d))
+            append("; ")
+            append(String.format("%.3f/(%.3f+%.3f)=%.3f", d, d, halfSaturationDrawdown, drawdownFactor))
+            append("; ")
+            append(String.format("%.3f*%.3f+%.3f*%.3f=%.3f", alpha, offsetFactor, 1-alpha, drawdownFactor, preVolatilityBuyFactor))
+            append("; ")
+            append(String.format("%.3f*%.3f=%.3f", 1-kClamped, preVolatilityBuyFactor, buyFactor))
+        }
+
+        return Result(offsetFactor, drawdownFactor, buyFactor, log)
     }
 
     /**

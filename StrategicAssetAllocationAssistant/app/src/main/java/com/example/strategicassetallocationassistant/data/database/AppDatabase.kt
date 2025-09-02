@@ -30,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -189,6 +189,17 @@ abstract class AppDatabase : RoomDatabase() {
                             
                             // 4) 为asset_analysis表创建索引
                             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_asset_analysis_assetId ON asset_analysis(assetId)")
+                        }
+                    })
+                    .addMigrations(object : androidx.room.migration.Migration(8, 9) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            // 添加计算过程日志字段
+                            // 1) 为asset_analysis表添加日志字段
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN buyFactorLog TEXT")
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN sellThresholdLog TEXT")
+                            
+                            // 2) 为portfolio表添加总体风险因子日志字段
+                            db.execSQL("ALTER TABLE portfolio ADD COLUMN overallRiskFactorLog TEXT")
                         }
                     })
                     .addCallback(PrepopulateCallback(context.applicationContext))

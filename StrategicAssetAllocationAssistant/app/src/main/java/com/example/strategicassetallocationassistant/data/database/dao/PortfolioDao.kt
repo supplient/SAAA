@@ -86,4 +86,8 @@ interface PortfolioDao {
     // 更新总体风险因子
     @Query("UPDATE portfolio SET overallRiskFactor = :f WHERE id = 1")
     suspend fun updateOverallRiskFactor(f: Double)
+
+    // 更新总体风险因子和计算过程日志
+    @Query("UPDATE portfolio SET overallRiskFactor = :f, overallRiskFactorLog = :log WHERE id = 1")
+    suspend fun updateOverallRiskFactorWithLog(f: Double, log: String)
 }

@@ -74,7 +74,9 @@ class PortfolioViewModel @Inject constructor(
         val volatility: Double? = null,     // 波动率
         val sevenDayReturn: Double? = null, // 七日涨跌幅
         val buyFactor: Double? = null,      // 买入因子
-        val sellThreshold: Double? = null   // 卖出阈值
+        val sellThreshold: Double? = null,  // 卖出阈值
+        val buyFactorLog: String? = null,   // 买入因子计算过程日志
+        val sellThresholdLog: String? = null // 卖出阈值计算过程日志
     )
 
     /** AssetAnalysis 列表 Flow */
@@ -113,7 +115,9 @@ class PortfolioViewModel @Inject constructor(
                 volatility = analysisData?.volatility,
                 sevenDayReturn = analysisData?.sevenDayReturn,
                 buyFactor = analysisData?.buyFactor,
-                sellThreshold = analysisData?.sellThreshold
+                sellThreshold = analysisData?.sellThreshold,
+                buyFactorLog = analysisData?.buyFactorLog,
+                sellThresholdLog = analysisData?.sellThresholdLog
             )
         }
     }.stateIn(

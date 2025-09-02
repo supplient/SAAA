@@ -20,5 +20,6 @@ data class PortfolioEntity(
     ,@Serializable(with = com.example.strategicassetallocationassistant.LocalDateTimeSerializer::class)
     val lastBuyOpportunityCheck: java.time.LocalDateTime? = null,
     val pendingBuyOpportunity: Boolean = false,
-    val overallRiskFactor: Double? = null
+    val overallRiskFactor: Double? = null,
+    val overallRiskFactorLog: String? = null  // 总体风险因子计算过程日志
 )

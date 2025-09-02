@@ -77,10 +77,22 @@ interface AssetAnalysisDao {
     suspend fun updateBuyFactor(assetId: String, buyFactor: Double)
 
     /**
+     * 更新买入因子和计算过程日志
+     */
+    @Query("UPDATE asset_analysis SET buyFactor = :buyFactor, buyFactorLog = :buyFactorLog WHERE assetId = :assetId")
+    suspend fun updateBuyFactorWithLog(assetId: String, buyFactor: Double, buyFactorLog: String)
+
+    /**
      * 批量更新卖出阈值
      */
     @Query("UPDATE asset_analysis SET sellThreshold = :sellThreshold WHERE assetId = :assetId")
     suspend fun updateSellThreshold(assetId: String, sellThreshold: Double)
+
+    /**
+     * 更新卖出阈值和计算过程日志
+     */
+    @Query("UPDATE asset_analysis SET sellThreshold = :sellThreshold, sellThresholdLog = :sellThresholdLog WHERE assetId = :assetId")
+    suspend fun updateSellThresholdWithLog(assetId: String, sellThreshold: Double, sellThresholdLog: String)
 
     /**
      * 更新市场数据（波动率和七日收益率）
