@@ -70,21 +70,23 @@ data class Asset(
     val shares: Double? = null,                    // 份额/股数
     val unitValue: Double? = null,                 // 单位价格：货币基金恒为1，股票为每股价格，基金为净值
     @Contextual val lastUpdateTime: LocalDateTime? = null,  // 数据最后更新时间
-    val note: String? = null,                     // 备注
-    val volatility: Double? = null               // 90日每日收益率标准差
-    ,
-    val sevenDayReturn: Double? = null           // 七日涨跌幅（-1~1）
-    ,
-    val offsetFactor: Double? = null,           // E
-    val drawdownFactor: Double? = null,         // D
-    val buyFactor: Double? = null               // B
-    ,
-    val sellThreshold: Double? = null           // S
+    val note: String? = null                     // 备注
 ) {
     // 计算当前市场价值
     val currentMarketValue: Double
         get() = (shares ?: 0.0) * (unitValue ?: 0.0)
 }
+
+// 资产分析数据模型
+@Serializable
+data class AssetAnalysis(
+    @Contextual val assetId: UUID,               // 对应的资产ID
+    val volatility: Double? = null,              // 90日每日收益率标准差  
+    val sevenDayReturn: Double? = null,          // 七日涨跌幅（-1~1）
+    val buyFactor: Double? = null,               // 买入因子 B
+    val sellThreshold: Double? = null,           // 卖出阈值 S
+    @Contextual val lastUpdateTime: LocalDateTime? = null  // 分析数据最后更新时间
+)
 
 // 资产配置的顶层数据结构，包含所有资产和一个总的现金账户。
 @Serializable

@@ -2,6 +2,7 @@ package com.example.strategicassetallocationassistant.data.database
 
 import android.content.Context
 import com.example.strategicassetallocationassistant.data.database.dao.AssetDao
+import com.example.strategicassetallocationassistant.data.database.dao.AssetAnalysisDao
 import com.example.strategicassetallocationassistant.data.database.dao.PortfolioDao
 import com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
 // TradingOpportunityDao is accessed via AppDatabase inside the repository
@@ -33,6 +34,11 @@ object DatabaseModule {
     }
 
     @Provides
+    fun provideAssetAnalysisDao(appDatabase: AppDatabase): AssetAnalysisDao {
+        return appDatabase.assetAnalysisDao()
+    }
+
+    @Provides
     fun provideTransactionDao(appDatabase: AppDatabase): TransactionDao {
         return appDatabase.transactionDao()
     }
@@ -44,11 +50,13 @@ object DatabaseModule {
     fun providePortfolioRepository(
         appDatabase: AppDatabase,
         assetDao: AssetDao,
+        assetAnalysisDao: AssetAnalysisDao,
         portfolioDao: PortfolioDao,
         transactionDao: TransactionDao
     ): com.example.strategicassetallocationassistant.data.repository.PortfolioRepository {
         return com.example.strategicassetallocationassistant.data.repository.PortfolioRepository(
             assetDao,
+            assetAnalysisDao,
             portfolioDao,
             transactionDao,
             appDatabase

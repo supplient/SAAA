@@ -25,11 +25,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [
         AssetEntity::class,
+        com.example.strategicassetallocationassistant.data.database.entities.AssetAnalysisEntity::class,
         PortfolioEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -37,6 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
     
     // DAO 接口
     abstract fun assetDao(): AssetDao
+    abstract fun assetAnalysisDao(): com.example.strategicassetallocationassistant.data.database.dao.AssetAnalysisDao
     abstract fun portfolioDao(): PortfolioDao
     abstract fun transactionDao(): com.example.strategicassetallocationassistant.data.database.dao.TransactionDao
     abstract fun tradingOpportunityDao(): com.example.strategicassetallocationassistant.data.database.dao.TradingOpportunityDao
@@ -138,6 +140,55 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(object : androidx.room.migration.Migration(6, 7) {
                         override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                             db.execSQL("ALTER TABLE portfolio ADD COLUMN overallRiskFactor REAL")
+                        }
+                    })
+                    .addMigrations(object : androidx.room.migration.Migration(7, 8) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            // 1) 创建新的asset_analysis表
+                            db.execSQL("""
+                                CREATE TABLE IF NOT EXISTS asset_analysis (
+                                    assetId TEXT NOT NULL PRIMARY KEY,
+                                    volatility REAL,
+                                    sevenDayReturn REAL,
+                                    buyFactor REAL,
+                                    sellThreshold REAL,
+                                    lastUpdateTime TEXT,
+                                    FOREIGN KEY(assetId) REFERENCES assets(id) ON DELETE CASCADE
+                                )
+                            """.trimIndent())
+                            
+                            // 2) 迁移数据：将assets表中的相关字段数据迁移到asset_analysis表
+                            db.execSQL("""
+                                INSERT INTO asset_analysis(assetId, volatility, sevenDayReturn, buyFactor, sellThreshold)
+                                SELECT id, volatility, sevenDayReturn, buyFactor, sellThreshold FROM assets
+                                WHERE volatility IS NOT NULL OR sevenDayReturn IS NOT NULL OR buyFactor IS NOT NULL OR sellThreshold IS NOT NULL
+                            """.trimIndent())
+                            
+                            // 3) 重建assets表，移除已迁移的字段
+                            db.execSQL("""
+                                CREATE TABLE IF NOT EXISTS assets_new (
+                                    id TEXT NOT NULL PRIMARY KEY,
+                                    name TEXT NOT NULL,
+                                    targetWeight REAL NOT NULL,
+                                    code TEXT,
+                                    shares REAL,
+                                    unitValue REAL,
+                                    lastUpdateTime TEXT,
+                                    note TEXT
+                                )
+                            """.trimIndent())
+                            
+                            db.execSQL("""
+                                INSERT INTO assets_new(id, name, targetWeight, code, shares, unitValue, lastUpdateTime, note)
+                                SELECT id, name, targetWeight, code, shares, unitValue, lastUpdateTime, note
+                                FROM assets
+                            """.trimIndent())
+                            
+                            db.execSQL("DROP TABLE assets")
+                            db.execSQL("ALTER TABLE assets_new RENAME TO assets")
+                            
+                            // 4) 为asset_analysis表创建索引
+                            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_asset_analysis_assetId ON asset_analysis(assetId)")
                         }
                     })
                     .addCallback(PrepopulateCallback(context.applicationContext))

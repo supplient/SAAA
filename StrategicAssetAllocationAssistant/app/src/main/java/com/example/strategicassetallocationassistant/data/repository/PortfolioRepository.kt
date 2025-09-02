@@ -34,6 +34,7 @@ import kotlinx.serialization.json.Json
 @Singleton
 class PortfolioRepository @Inject constructor(
     private val assetDao: AssetDao,
+    private val assetAnalysisDao: com.example.strategicassetallocationassistant.data.database.dao.AssetAnalysisDao,
     private val portfolioDao: PortfolioDao,
     private val transactionDao: TransactionDao,
     private val db: AppDatabase
@@ -156,6 +157,56 @@ class PortfolioRepository @Inject constructor(
     /* --------------------- Overall Risk Factor --------------------- */
     suspend fun updateOverallRiskFactor(f: Double) {
         portfolioDao.updateOverallRiskFactor(f)
+    }
+
+    /* --------------------- AssetAnalysis 相关方法 --------------------- */
+    
+    /**
+     * 观察所有资产分析数据
+     */
+    val assetAnalysisFlow: Flow<List<com.example.strategicassetallocationassistant.AssetAnalysis>> = 
+        assetAnalysisDao.getAllAssetAnalysis().map { list ->
+            list.map { it.toDomain() }
+        }
+
+    /**
+     * 根据资产ID获取分析数据
+     */
+    suspend fun getAssetAnalysisById(assetId: UUID): com.example.strategicassetallocationassistant.AssetAnalysis? {
+        return assetAnalysisDao.getAssetAnalysisById(assetId.toString())?.toDomain()
+    }
+
+    /**
+     * 插入或更新资产分析数据
+     */
+    suspend fun upsertAssetAnalysis(analysis: com.example.strategicassetallocationassistant.AssetAnalysis) {
+        assetAnalysisDao.insertAssetAnalysis(analysis.toEntity())
+    }
+
+    /**
+     * 更新资产的市场数据（波动率和七日收益率）
+     */
+    suspend fun updateAssetMarketData(assetId: UUID, volatility: Double?, sevenDayReturn: Double?) {
+        assetAnalysisDao.updateMarketData(
+            assetId = assetId.toString(),
+            volatility = volatility,
+            sevenDayReturn = sevenDayReturn,
+            lastUpdateTime = java.time.LocalDateTime.now()
+        )
+    }
+
+    /**
+     * 更新资产的买入因子
+     */
+    suspend fun updateAssetBuyFactor(assetId: UUID, buyFactor: Double) {
+        assetAnalysisDao.updateBuyFactor(assetId.toString(), buyFactor)
+    }
+
+    /**
+     * 更新资产的卖出阈值
+     */
+    suspend fun updateAssetSellThreshold(assetId: UUID, sellThreshold: Double) {
+        assetAnalysisDao.updateSellThreshold(assetId.toString(), sellThreshold)
     }
 
     /**
@@ -287,13 +338,7 @@ class PortfolioRepository @Inject constructor(
         shares = shares,
         unitValue = unitValue,
         lastUpdateTime = lastUpdateTime,
-        note = note,
-        volatility = volatility,
-        sevenDayReturn = sevenDayReturn,
-        offsetFactor = offsetFactor,
-        drawdownFactor = drawdownFactor,
-        buyFactor = buyFactor,
-        sellThreshold = sellThreshold
+        note = note
     )
 
     private fun Asset.toEntity(): AssetEntity = AssetEntity.create(
@@ -304,13 +349,7 @@ class PortfolioRepository @Inject constructor(
         shares = shares,
         unitValue = unitValue,
         lastUpdateTime = lastUpdateTime,
-        note = note,
-        volatility = volatility,
-        sevenDayReturn = sevenDayReturn,
-        offsetFactor = offsetFactor,
-        drawdownFactor = drawdownFactor,
-        buyFactor = buyFactor,
-        sellThreshold = sellThreshold
+        note = note
     )
 
     // no longer used combineCashFlow
@@ -339,6 +378,27 @@ class PortfolioRepository @Inject constructor(
         time = time,
         reason = reason
     )
+
+    /* ---------------------------- AssetAnalysis 转换 ---------------------------- */
+    private fun com.example.strategicassetallocationassistant.data.database.entities.AssetAnalysisEntity.toDomain(): com.example.strategicassetallocationassistant.AssetAnalysis =
+        com.example.strategicassetallocationassistant.AssetAnalysis(
+            assetId = UUID.fromString(assetId),
+            volatility = volatility,
+            sevenDayReturn = sevenDayReturn,
+            buyFactor = buyFactor,
+            sellThreshold = sellThreshold,
+            lastUpdateTime = lastUpdateTime
+        )
+
+    private fun com.example.strategicassetallocationassistant.AssetAnalysis.toEntity(): com.example.strategicassetallocationassistant.data.database.entities.AssetAnalysisEntity =
+        com.example.strategicassetallocationassistant.data.database.entities.AssetAnalysisEntity.create(
+            assetId = assetId.toString(),
+            volatility = volatility,
+            sevenDayReturn = sevenDayReturn,
+            buyFactor = buyFactor,
+            sellThreshold = sellThreshold,
+            lastUpdateTime = lastUpdateTime
+        )
 
     private fun TradingOpportunityEntity.toDomain(): com.example.strategicassetallocationassistant.TradingOpportunity =
         com.example.strategicassetallocationassistant.TradingOpportunity(

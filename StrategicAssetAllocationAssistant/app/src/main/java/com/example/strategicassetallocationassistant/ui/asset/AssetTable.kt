@@ -379,7 +379,7 @@ private fun AssetTableRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = analysis.asset.volatility?.let { String.format("%.2f%%", it * 100) } ?: "-",
+                    text = analysis.volatility?.let { String.format("%.2f%%", it * 100) } ?: "-",
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )
@@ -393,7 +393,7 @@ private fun AssetTableRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = analysis.asset.buyFactor?.let { String.format("%.2f%%", it * 100) } ?: "-",
+                    text = analysis.buyFactor?.let { String.format("%.2f%%", it * 100) } ?: "-",
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )
@@ -407,7 +407,7 @@ private fun AssetTableRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = analysis.asset.sellThreshold?.let { String.format("%.2f%%", it * 100) } ?: "-",
+                    text = analysis.sellThreshold?.let { String.format("%.2f%%", it * 100) } ?: "-",
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )

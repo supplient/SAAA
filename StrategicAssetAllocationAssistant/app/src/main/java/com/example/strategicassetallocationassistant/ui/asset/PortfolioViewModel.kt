@@ -69,17 +69,26 @@ class PortfolioViewModel @Inject constructor(
         val deviationPct: Double,           // 与目标占比的偏离 (正:+ 负:-)
         val targetMarketValue: Double,      // 目标市值
         val deviationValue: Double,         // 与目标市值的偏离 (正:超出 负:不足)
-        val isRefreshFailed: Boolean        // 是否刷新失败
+        val isRefreshFailed: Boolean,       // 是否刷新失败
+        // 来自AssetAnalysis表的数据
+        val volatility: Double? = null,     // 波动率
+        val sevenDayReturn: Double? = null, // 七日涨跌幅
+        val buyFactor: Double? = null,      // 买入因子
+        val sellThreshold: Double? = null   // 卖出阈值
     )
 
     /** AssetAnalysis 列表 Flow */
     val assetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
         assets,
         portfolioState,
-        failedRefreshAssetIds
-    ) { assetList, portfolio, failedIds ->
+        failedRefreshAssetIds,
+        repository.assetAnalysisFlow
+    ) { assetList, portfolio, failedIds, analysisDataList ->
         val totalMarketValue = assetList.sumOf { it.currentMarketValue }
         val totalAssetsValue = totalMarketValue + portfolio.cash // 总资产 = 资产市值 + 可用现金
+        
+        // 创建分析数据的映射
+        val analysisMap = analysisDataList.associateBy { it.assetId }
         
         assetList.map { asset ->
             val value = asset.currentMarketValue
@@ -89,6 +98,10 @@ class PortfolioViewModel @Inject constructor(
             // 修正：目标市值也应该基于总资产计算
             val targetValue = totalAssetsValue * asset.targetWeight
             val deviationValue = value - targetValue
+            
+            // 获取对应的分析数据
+            val analysisData = analysisMap[asset.id]
+            
             AssetAnalysis(
                 asset = asset,
                 marketValue = value,
@@ -96,7 +109,11 @@ class PortfolioViewModel @Inject constructor(
                 deviationPct = deviationPct,
                 targetMarketValue = targetValue,
                 deviationValue = deviationValue,
-                isRefreshFailed = failedIds.contains(asset.id)
+                isRefreshFailed = failedIds.contains(asset.id),
+                volatility = analysisData?.volatility,
+                sevenDayReturn = analysisData?.sevenDayReturn,
+                buyFactor = analysisData?.buyFactor,
+                sellThreshold = analysisData?.sellThreshold
             )
         }
     }.stateIn(
@@ -192,8 +209,8 @@ class PortfolioViewModel @Inject constructor(
             SortOption.MARKET_VALUE_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationValue) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationValue) }
             SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
             SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
-            SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.asset.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.asset.buyFactor ?: 0.0 }
-            SortOption.SELL_THRESHOLD -> if (ascending) analyses.sortedBy { it.asset.sellThreshold ?: 0.0 } else analyses.sortedByDescending { it.asset.sellThreshold ?: 0.0 }
+            SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.buyFactor ?: 0.0 }
+            SortOption.SELL_THRESHOLD -> if (ascending) analyses.sortedBy { it.sellThreshold ?: 0.0 } else analyses.sortedByDescending { it.sellThreshold ?: 0.0 }
         }
     }.stateIn(
         scope = viewModelScope,

@@ -32,10 +32,12 @@ class BuyFactorCalculator(
 
     /**
      * 计算给定资产的 [Result]。
-     * @param asset 资产对象，需要包含 targetWeight、sevenDayReturn、volatility 等信息
+     * @param asset 资产对象，包含 targetWeight 等基本信息
      * @param totalAssetsValue 所有资产总市值 + 现金，用于计算当前占比
+     * @param volatility 资产波动率
+     * @param sevenDayReturn 七日涨跌幅
      */
-    fun calculate(asset: Asset, totalAssetsValue: Double): Result {
+    fun calculate(asset: Asset, totalAssetsValue: Double, volatility: Double?, sevenDayReturn: Double?): Result {
         if (asset.targetWeight <= 0 || totalAssetsValue <= 0) {
             return Result(0.0, 0.0, 0.0)
         }
@@ -49,15 +51,25 @@ class BuyFactorCalculator(
         val offsetFactor = if (r <= 0) 0.0 else r / (r + halfSaturationRelativeOffset)
 
         // 七日跌幅绝对值 d
-        val delta = asset.sevenDayReturn ?: 0.0
+        val delta = sevenDayReturn ?: 0.0
         val d = max(0.0, -delta)
         val drawdownFactor = if (d <= 0) 0.0 else d / (d + halfSaturationDrawdown)
 
-        val k = asset.volatility ?: 0.0
+        val k = volatility ?: 0.0
         val kClamped = k.coerceIn(0.0, 1.0)
 
         val buyFactor = (1 - kClamped) * (alpha * offsetFactor + (1 - alpha) * drawdownFactor)
 
         return Result(offsetFactor, drawdownFactor, buyFactor)
+    }
+
+    /**
+     * 计算给定资产的 [Result]（向后兼容版本，从Asset对象获取分析数据）
+     * @deprecated 使用新版本的calculate方法，传入volatility和sevenDayReturn参数
+     */
+    @Deprecated("Asset类不再包含分析数据，使用新版本的calculate方法")
+    fun calculate(asset: Asset, totalAssetsValue: Double): Result {
+        // 这个方法现在不可用了，因为Asset不再包含volatility和sevenDayReturn
+        return calculate(asset, totalAssetsValue, null, null)
     }
 }

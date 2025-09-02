@@ -58,23 +58,25 @@ class UpdateMarketDataUseCase @Inject constructor(
                 val stats = runCatching { AShare.getMarketStats(code) }.getOrNull()
 
                 if (stats != null && stats.latestClose > 0.0) {
-                    val tempAsset = asset.copy(
+                    // 1. 更新资产基本信息（单价和更新时间）
+                    val updatedAsset = asset.copy(
                         unitValue = stats.latestClose,
+                        lastUpdateTime = LocalDateTime.now()
+                    )
+                    repository.updateAsset(updatedAsset)
+
+                    // 2. 更新资产分析数据（波动率和七日收益率）
+                    repository.updateAssetMarketData(
+                        assetId = asset.id,
                         volatility = stats.annualVolatility,
                         sevenDayReturn = stats.sevenDayReturn
                     )
 
+                    // 3. 计算并更新买入因子
                     val totalAssetsValue = portfolio.assets.sumOf { it.currentMarketValue } + portfolio.cash
-                    val factors = calculator.calculate(tempAsset, totalAssetsValue)
-
-                    val updated = tempAsset.copy(
-                        lastUpdateTime = LocalDateTime.now(),
-                        offsetFactor = factors.offsetFactor,
-                        drawdownFactor = factors.drawdownFactor,
-                        buyFactor = factors.buyFactor,
-                        sellThreshold = 0.0 // placeholder
-                    )
-                    repository.updateAsset(updated)
+                    val factors = calculator.calculate(updatedAsset, totalAssetsValue, stats.annualVolatility, stats.sevenDayReturn)
+                    
+                    repository.updateAssetBuyFactor(asset.id, factors.buyFactor)
                     success++
                 } else {
                     fail++
@@ -83,10 +85,12 @@ class UpdateMarketDataUseCase @Inject constructor(
             }
 
             // 计算并写入卖出阈值一次性
-            val thresholds = sellCalc.calculate(portfolio.assets, portfolio.cash)
+            // 首先获取所有资产的波动率数据
+            val allAnalyses = repository.assetAnalysisFlow.first()
+            val volatilityMap = allAnalyses.associate { it.assetId to it.volatility }
+            val thresholds = sellCalc.calculate(portfolio.assets, portfolio.cash, volatilityMap)
             thresholds.forEachIndexed { idx, th ->
-                val asset = portfolio.assets[idx].copy(sellThreshold = th)
-                repository.updateAsset(asset)
+                repository.updateAssetSellThreshold(portfolio.assets[idx].id, th)
             }
 
             repository.updateOverallRiskFactor(sellCalc.lastRiskFactor)

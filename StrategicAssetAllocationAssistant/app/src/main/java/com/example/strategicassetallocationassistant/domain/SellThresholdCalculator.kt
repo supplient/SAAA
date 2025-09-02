@@ -27,22 +27,24 @@ class SellThresholdCalculator(
      * 计算所有资产的卖出阈值。
      * @param assets 资产列表
      * @param cash   可用现金，用于计算当前占比
+     * @param volatilityMap 资产ID到波动率的映射
      * @return 映射 AssetId → 阈值 (0-1)，未超配返回 0.0
      */
-    fun calculate(assets: List<Asset>, cash: Double): List<Double> {
+    fun calculate(assets: List<Asset>, cash: Double, volatilityMap: Map<UUID, Double?>): List<Double> {
         val totalValue = assets.sumOf { it.currentMarketValue } + cash
         if (totalValue <= 0) return List(assets.size) { 0.0 }
 
         // 1. a_i & current weight
-        data class OverAsset(val asset: Asset, val a: Double)
+        data class OverAsset(val asset: Asset, val a: Double, val volatility: Double)
         val overAssets = assets.map { asset ->
             val currentWeight = asset.currentMarketValue / totalValue
             val a = max(0.0, currentWeight - asset.targetWeight)
-            OverAsset(asset, a)
+            val volatility = volatilityMap[asset.id] ?: 0.0
+            OverAsset(asset, a, volatility)
         }.filter { it.a > 0 }
 
         // 2. f
-        val f = overAssets.sumOf { (it.asset.volatility ?: 0.0) * it.a }
+        val f = overAssets.sumOf { it.volatility * it.a }
 
         // 3. F
         val F = f / (f + halfSaturationTotalRisk)
@@ -51,12 +53,22 @@ class SellThresholdCalculator(
         // 4. thresholds
         val resultList = mutableListOf<Double>()
         assets.forEach { asset ->
-            val vol = asset.volatility ?: 0.0
+            val vol = volatilityMap[asset.id] ?: 0.0
 			var S = baseThreshold
 			S *= (1 - vol.coerceIn(0.0, 1.0))
 			S *= (1 - F.coerceIn(0.0, 1.0))
 			resultList.add(S)
         }
         return resultList
+    }
+
+    /**
+     * 计算所有资产的卖出阈值（向后兼容版本）。
+     * @deprecated Asset类不再包含volatility字段，使用新版本的calculate方法
+     */
+    @Deprecated("Asset类不再包含volatility字段，使用新版本的calculate方法")
+    fun calculate(assets: List<Asset>, cash: Double): List<Double> {
+        val volatilityMap = assets.associate { it.id to 0.0 } // 默认波动率为0
+        return calculate(assets, cash, volatilityMap)
     }
 }
