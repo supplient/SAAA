@@ -42,6 +42,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,9 +51,16 @@ fun AddEditAssetScreen(
 ) {
     // Create ViewModel with Hilt
     val viewModel: AddEditAssetViewModel = hiltViewModel()
+    val portfolioViewModel: PortfolioViewModel = hiltViewModel()
 
     // Collect UI state from ViewModel
     val name by viewModel.name.collectAsState()
+    
+    // 获取当前编辑资产的分析数据
+    val assetAnalyses by portfolioViewModel.assetAnalyses.collectAsState()
+    val currentAssetAnalysis = viewModel.editingAssetId?.let { assetId ->
+        assetAnalyses.find { it.asset.id == assetId }
+    }
     
     val targetWeight by viewModel.targetWeightInput.collectAsState()
     val code by viewModel.code.collectAsState()
@@ -168,6 +176,15 @@ fun AddEditAssetScreen(
                 label = { Text("备注") },
                 modifier = Modifier.fillMaxWidth()
             )
+            
+            // 计算过程展示
+            if (currentAssetAnalysis != null && viewModel.editingAssetId != null) {
+                CalculationProcessSection(
+                    buyFactorLog = currentAssetAnalysis.buyFactorLog,
+                    sellThresholdLog = currentAssetAnalysis.sellThresholdLog,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 
@@ -197,5 +214,82 @@ fun AddEditAssetScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * 计算过程展示组件
+ */
+@Composable
+private fun CalculationProcessSection(
+    buyFactorLog: String?,
+    sellThresholdLog: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // 标题
+        Text(
+            text = "计算过程",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        
+        // 买入因子计算过程
+        if (!buyFactorLog.isNullOrBlank()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "买入因子计算过程:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                OutlinedTextField(
+                    value = buyFactorLog.replace("; ", "\n"),
+                    onValueChange = { /* 只读 */ },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    textStyle = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                )
+            }
+        }
+        
+        // 卖出阈值计算过程
+        if (!sellThresholdLog.isNullOrBlank()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "卖出阈值计算过程:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                OutlinedTextField(
+                    value = sellThresholdLog,
+                    onValueChange = { /* 只读 */ },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 1,
+                    textStyle = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                )
+            }
+        }
+        
+        // 如果没有计算过程数据，显示提示
+        if (buyFactorLog.isNullOrBlank() && sellThresholdLog.isNullOrBlank()) {
+            Text(
+                text = "暂无计算过程数据。请先刷新市场数据。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }

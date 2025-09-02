@@ -56,6 +56,15 @@ fun ConfigNoteScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 总体风险因子计算过程展示
+            OverallRiskFactorSection(
+                overallRiskFactorLog = portfolio.overallRiskFactorLog,
+                overallRiskFactor = portfolio.overallRiskFactor,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -69,6 +78,65 @@ fun ConfigNoteScreen(
                     Text("保存")
                 }
             }
+        }
+    }
+}
+
+/**
+ * 总体风险因子计算过程展示组件
+ */
+@Composable
+private fun OverallRiskFactorSection(
+    overallRiskFactorLog: String?,
+    overallRiskFactor: Double?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 标题
+        Text(
+            text = "总体风险因子",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        
+        // 当前风险因子值
+        if (overallRiskFactor != null) {
+            Text(
+                text = "当前值: ${String.format("%.3f", overallRiskFactor)}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        
+        // 计算过程
+        if (!overallRiskFactorLog.isNullOrBlank()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "计算过程:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                OutlinedTextField(
+                    value = overallRiskFactorLog.replace("; ", "\n"),
+                    onValueChange = { /* 只读 */ },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    textStyle = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                )
+            }
+        } else {
+            Text(
+                text = "暂无计算过程数据。请先刷新市场数据。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
