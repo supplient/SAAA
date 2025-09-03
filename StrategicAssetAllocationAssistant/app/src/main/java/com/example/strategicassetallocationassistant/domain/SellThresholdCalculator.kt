@@ -68,12 +68,16 @@ class SellThresholdCalculator(
 
         // 4. 生成总体风险因子计算过程日志
         val overallRiskFactorLog = buildString {
+            append("<第一个资产波动值*绝对偏移量>+<第二个资产波动值*绝对偏移量>+...<最后一个资产波动值*绝对偏移量>=<资产总体风险>; ")
             // 列举每个资产的风险贡献
             assetRiskInfos.forEachIndexed { index, info ->
                 if (index > 0) append("+")
-                append(String.format("%.6f", info.risk))
+                append(String.format("%.6f*%.6f", info.volatility, info.a))
             }
-            append(String.format("=%.6f; %.6f/(%.6f+%.6f)=%.3f", f, f, f, halfSaturationTotalRisk, F))
+            append(String.format("=%.6f", f))
+            append("; ")
+            append("<资产总体风险>/(<资产总体风险>+<半饱和总体风险>)=<总体风险因子>; ")
+            append(String.format("%.6f/(%.6f+%.6f)=%.3f", f, f, halfSaturationTotalRisk, F))
         }
         lastOverallRiskFactorLog = overallRiskFactorLog
 
@@ -91,7 +95,8 @@ class SellThresholdCalculator(
             S *= (1 - FClamped)
             
             // 生成此资产的卖出阈值计算过程日志
-            val log = String.format("%.3f*(1-%.3f)*(1-%.3f)=%.3f", 
+            var log = "<基础卖出阈值>*<1-资产波动率>*<1-总体风险因子>=<卖出阈值>; "
+            log += String.format("%.3f*(1-%.3f)*(1-%.3f)=%.3f", 
                 baseThreshold, volClamped, FClamped, S)
             
             thresholds.add(S)

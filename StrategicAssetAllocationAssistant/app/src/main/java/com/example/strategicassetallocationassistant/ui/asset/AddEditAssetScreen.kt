@@ -271,7 +271,7 @@ private fun CalculationProcessSection(
                     fontWeight = FontWeight.Medium
                 )
                 OutlinedTextField(
-                    value = sellThresholdLog,
+                    value = sellThresholdLog.replace("; ", "\n"),
                     onValueChange = { /* 只读 */ },
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth(),

@@ -65,16 +65,22 @@ class BuyFactorCalculator(
 
         // 生成计算过程日志
         val log = buildString {
-            append(String.format("%.3f-%.3f=%.3f", asset.targetWeight, currentWeight, asset.targetWeight - currentWeight))
+            append("(<目标占比>-<当前占比>)/<目标占比>=<相对偏移>; ")
+            append(String.format("(%.3f-%.3f)/%.3f=%.3f", asset.targetWeight, currentWeight, asset.targetWeight, (asset.targetWeight - currentWeight)/asset.targetWeight))
             append("; ")
+            append("<相对偏移>/(<相对偏移>+<半饱和相对偏移>=<偏移因子>; ")
             append(String.format("%.3f/(%.3f+%.3f)=%.3f", r, r, halfSaturationRelativeOffset, offsetFactor))
             append("; ")
+            append("max(0, -<七日涨跌幅>)=<七日绝对跌幅>; ")
             append(String.format("max(0, -%.3f)=%.3f", delta, d))
             append("; ")
+            append("<七日绝对跌幅>/(<七日绝对跌幅>+<半饱和跌幅>)=<跌幅因子>; ")
             append(String.format("%.3f/(%.3f+%.3f)=%.3f", d, d, halfSaturationDrawdown, drawdownFactor))
             append("; ")
+            append("<偏移权重>*<偏移因子>+<1-偏移权重>*<跌幅因子>=<去波动率的买入因子>; ")
             append(String.format("%.3f*%.3f+%.3f*%.3f=%.3f", alpha, offsetFactor, 1-alpha, drawdownFactor, preVolatilityBuyFactor))
             append("; ")
+            append("<1-资产波动率>*<去波动率的买入因子>=<买入因子>; ")
             append(String.format("%.3f*%.3f=%.3f", 1-kClamped, preVolatilityBuyFactor, buyFactor))
         }
 
