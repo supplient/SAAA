@@ -17,11 +17,163 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import java.time.format.DateTimeFormatter
+import java.util.UUID
+
+// 定义表格列的数据结构
+private data class ColumnDefinition(
+    val title: String,
+    val width: Dp,
+    val headerAlignment: Alignment = Alignment.Center,
+    val contentAlignment: Alignment = Alignment.Center,
+    val content: @Composable (analysis: PortfolioViewModel.AssetAnalysis, isHidden: Boolean) -> Unit
+)
+
+// 创建一个包含所有可滚动列定义的列表
+@Composable
+private fun rememberScrollableColumns(): List<ColumnDefinition> {
+    return remember {
+        listOf(
+            ColumnDefinition(
+                title = "占比",
+                width = 80.dp,
+                content = { analysis, _ ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${String.format("%.2f", analysis.currentWeight * 100)}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "= ${(analysis.asset.targetWeight * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "${if (analysis.deviationPct >= 0) "+" else ""}${String.format("%.2f", analysis.deviationPct * 100)}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            ),
+            ColumnDefinition(
+                title = "买因卖阈",
+                width = 80.dp,
+                content = { analysis, _ ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = analysis.buyFactor?.let { "🏷️${String.format("%.2f", it * 100)}" } ?: "-",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = analysis.sellThreshold?.let { "+${String.format("%.2f", it * analysis.asset.targetWeight * 100)}%卖" } ?: "-",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                }
+            ),
+            ColumnDefinition(
+                title = "价份波",
+                width = 80.dp,
+                content = { analysis, isHidden ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (isHidden) "***" else "¥${String.format("%.4f", analysis.asset.unitValue ?: 0.0)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = if (isHidden) "***" else "×${String.format("%.2f", analysis.asset.shares ?: 0.0)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = analysis.volatility?.let { "〰️${String.format("%.2f%%", it * 100)}" } ?: "-",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            ),
+            ColumnDefinition(
+                title = "市值",
+                width = 100.dp,
+                content = { analysis, isHidden ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (isHidden) "***" else "¥${String.format("%.2f", analysis.marketValue)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = if (isHidden) "***" else "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = if (isHidden) "***" else "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            ),
+            ColumnDefinition(
+                title = "更新时间",
+                width = 120.dp,
+                content = { analysis, _ ->
+                    analysis.asset.lastUpdateTime?.let { time ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = time.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } ?: Text(
+                        text = "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            ),
+            ColumnDefinition(
+                title = "备注",
+                width = 160.dp,
+                contentAlignment = Alignment.CenterStart,
+                headerAlignment = Alignment.Center,
+                content = { analysis, _ ->
+                    Text(
+                        text = analysis.asset.note ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            )
+        )
+    }
+}
 
 /**
  * 资产列表表格组件
@@ -31,20 +183,21 @@ import java.time.format.DateTimeFormatter
 fun AssetTable(
     analyses: List<PortfolioViewModel.AssetAnalysis>,
     isHidden: Boolean,
-    onAddTransaction: (java.util.UUID) -> Unit,
-    onEditAsset: (java.util.UUID) -> Unit,
+    onAddTransaction: (UUID) -> Unit,
+    onEditAsset: (UUID) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
-    
+    val scrollableColumns = rememberScrollableColumns()
+
     Column(modifier = modifier) {
         // 表头
         AssetTableHeader(
-            isHidden = isHidden,
+            scrollableColumns = scrollableColumns,
             horizontalScrollState = horizontalScrollState,
             modifier = Modifier.fillMaxWidth()
         )
-        
+
         // 数据行
         LazyColumn(
             modifier = Modifier.fillMaxWidth()
@@ -53,6 +206,7 @@ fun AssetTable(
                 AssetTableRow(
                     analysis = analysis,
                     isHidden = isHidden,
+                    scrollableColumns = scrollableColumns,
                     horizontalScrollState = horizontalScrollState,
                     onAddTransaction = { onAddTransaction(analysis.asset.id) },
                     onEditAsset = { onEditAsset(analysis.asset.id) },
@@ -68,7 +222,7 @@ fun AssetTable(
  */
 @Composable
 private fun AssetTableHeader(
-    isHidden: Boolean,
+    scrollableColumns: List<ColumnDefinition>,
     horizontalScrollState: androidx.compose.foundation.ScrollState,
     modifier: Modifier = Modifier
 ) {
@@ -91,107 +245,28 @@ private fun AssetTableHeader(
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
-        
+
         // 剩余列（可横向滚动）
         Row(
             modifier = Modifier
                 .horizontalScroll(horizontalScrollState)
                 .padding(start = 8.dp)
         ) {
-            // 占比列（合并目标占比、当前占比、偏离度）
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "占比",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 买因卖阈
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "买因卖阈",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 价份波
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "价份波",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            // 市值列（合并目标市值、当前市值、市值偏离）
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "市值",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 更新时间
-            Box(
-                modifier = Modifier
-                    .width(120.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "更新时间",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 备注
-            Box(
-                modifier = Modifier
-                    .width(160.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "备注",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
+            scrollableColumns.forEach { column ->
+                Box(
+                    modifier = Modifier
+                        .width(column.width)
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = column.headerAlignment
+                ) {
+                    Text(
+                        text = column.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -205,6 +280,7 @@ private fun AssetTableHeader(
 private fun AssetTableRow(
     analysis: PortfolioViewModel.AssetAnalysis,
     isHidden: Boolean,
+    scrollableColumns: List<ColumnDefinition>,
     horizontalScrollState: androidx.compose.foundation.ScrollState,
     onAddTransaction: () -> Unit,
     onEditAsset: () -> Unit,
@@ -238,7 +314,7 @@ private fun AssetTableRow(
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
-                
+
                 if (analysis.isRefreshFailed) {
                     Icon(
                         imageVector = Icons.Default.Warning,
@@ -249,168 +325,22 @@ private fun AssetTableRow(
                 }
             }
         }
-        
+
         // 剩余列（可横向滚动）
         Row(
             modifier = Modifier
                 .horizontalScroll(horizontalScrollState)
                 .padding(start = 8.dp)
         ) {
-            // 占比列（显示：当前占比=目标占比±偏离度）
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+            scrollableColumns.forEach { column ->
+                Box(
+                    modifier = Modifier
+                        .width(column.width)
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = column.contentAlignment
                 ) {
-                    Text(
-                        text = "${String.format("%.2f", analysis.currentWeight * 100)}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "= ${(analysis.asset.targetWeight * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "${if (analysis.deviationPct >= 0) "+" else ""}${String.format("%.2f", analysis.deviationPct * 100)}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
+                    column.content(analysis, isHidden)
                 }
-            }
-
-            // 买因卖阈
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = analysis.buyFactor?.let { "🏷️${String.format("%.2f", it * 100)}" } ?: "-",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = analysis.sellThreshold?.let { "+${String.format("%.2f", it * analysis.asset.targetWeight * 100)}%卖" } ?: "-",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
-            }
-            
-            // 价份波
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = if (isHidden) "***" else "¥${String.format("%.4f", analysis.asset.unitValue ?: 0.0)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = if (isHidden) "***" else "×${String.format("%.2f", analysis.asset.shares ?: 0.0)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = analysis.volatility?.let { "〰️${String.format("%.2f%%", it * 100)}" } ?: "-",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            
-            // 市值列（显示：当前市值=目标市值±偏离市值）
-            Box(
-                modifier = Modifier
-                    .width(100.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = if (isHidden) "***" else "¥${String.format("%.2f", analysis.marketValue)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = if (isHidden) "***" else "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = if (isHidden) "***" else "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            // 更新时间（两行显示：时分秒 + 年月日）
-            Box(
-                modifier = Modifier
-                    .width(120.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                analysis.asset.lastUpdateTime?.let { time ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = time.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } ?: Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 备注
-            Box(
-                modifier = Modifier
-                    .width(160.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = analysis.asset.note ?: "",
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
             }
         }
     }
