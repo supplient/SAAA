@@ -113,16 +113,16 @@ private fun AssetTableHeader(
                     textAlign = TextAlign.Center
                 )
             }
-            
-            // 市值列（合并目标市值、当前市值、市值偏离）
+
+            // 买因卖阈
             Box(
                 modifier = Modifier
-                    .width(100.dp)
+                    .width(80.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "市值",
+                    text = "买因卖阈",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -145,16 +145,16 @@ private fun AssetTableHeader(
                     textAlign = TextAlign.Center
                 )
             }
-
-            // 买因卖阈
+            
+            // 市值列（合并目标市值、当前市值、市值偏离）
             Box(
                 modifier = Modifier
-                    .width(80.dp)
+                    .width(100.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "买因卖阈",
+                    text = "市值",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -285,11 +285,11 @@ private fun AssetTableRow(
                     )
                 }
             }
-            
-            // 市值列（显示：当前市值=目标市值±偏离市值）
+
+            // 买因卖阈
             Box(
                 modifier = Modifier
-                    .width(100.dp)
+                    .width(80.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -297,21 +297,16 @@ private fun AssetTableRow(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (isHidden) "***" else "¥${String.format("%.2f", analysis.marketValue)}",
+                        text = analysis.buyFactor?.let { "🏷️${String.format("%.2f", it * 100)}" } ?: "-",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = if (isHidden) "***" else "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
+                        text = analysis.sellThreshold?.let { "+${String.format("%.2f", it * analysis.asset.targetWeight * 100)}%卖" } ?: "-",
                         style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = if (isHidden) "***" else "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
@@ -343,11 +338,11 @@ private fun AssetTableRow(
                     )
                 }
             }
-
-            // 买因卖阈
+            
+            // 市值列（显示：当前市值=目标市值±偏离市值）
             Box(
                 modifier = Modifier
-                    .width(80.dp)
+                    .width(100.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -355,16 +350,21 @@ private fun AssetTableRow(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = analysis.buyFactor?.let { "🏷️${String.format("%.2f", it * 100)}" } ?: "-",
+                        text = if (isHidden) "***" else "¥${String.format("%.2f", analysis.marketValue)}",
                         style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
                     )
                     Text(
-                        text = analysis.sellThreshold?.let { "+${String.format("%.2f", it * analysis.asset.targetWeight * 100)}%卖" } ?: "-",
+                        text = if (isHidden) "***" else "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
                         style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.tertiary
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = if (isHidden) "***" else "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
