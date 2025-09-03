@@ -32,7 +32,7 @@ private data class ColumnDefinition(
     val width: Dp,
     val headerAlignment: Alignment = Alignment.Center,
     val contentAlignment: Alignment = Alignment.Center,
-    val content: @Composable (analysis: PortfolioViewModel.AssetAnalysis, isHidden: Boolean) -> Unit
+    val content: @Composable (analysis: PortfolioViewModel.AssetInfo, isHidden: Boolean) -> Unit
 )
 
 // 创建一个包含所有可滚动列定义的列表
@@ -181,7 +181,7 @@ private fun rememberScrollableColumns(): List<ColumnDefinition> {
  */
 @Composable
 fun AssetTable(
-    analyses: List<PortfolioViewModel.AssetAnalysis>,
+    analyses: List<PortfolioViewModel.AssetInfo>,
     isHidden: Boolean,
     onAddTransaction: (UUID) -> Unit,
     onEditAsset: (UUID) -> Unit,
@@ -278,7 +278,7 @@ private fun AssetTableHeader(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun AssetTableRow(
-    analysis: PortfolioViewModel.AssetAnalysis,
+    analysis: PortfolioViewModel.AssetInfo,
     isHidden: Boolean,
     scrollableColumns: List<ColumnDefinition>,
     horizontalScrollState: androidx.compose.foundation.ScrollState,

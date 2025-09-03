@@ -29,7 +29,7 @@ import androidx.compose.foundation.combinedClickable
  */
 @Composable
 fun AssetAnalysisTable(
-    analyses: List<PortfolioViewModel.AssetAnalysis>,
+    analyses: List<PortfolioViewModel.AssetInfo>,
     onEditAsset: (java.util.UUID) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -261,7 +261,7 @@ private fun AssetAnalysisTableHeader(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun AssetAnalysisTableRow(
-    analysis: PortfolioViewModel.AssetAnalysis,
+    analysis: PortfolioViewModel.AssetInfo,
     horizontalScrollState: androidx.compose.foundation.ScrollState,
     onEditAsset: () -> Unit,
     modifier: Modifier = Modifier

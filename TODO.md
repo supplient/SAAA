@@ -302,7 +302,7 @@ v0.1.0的目标是让各种功能都切实可用。
         * 卖出阈值显示为“+...%卖”
     * [x] 修改列顺序
     * [x] 重构AssetTable中的代码，让表头和列内容能用一个代码块，避免过于分散
-    * [ ] 将`PortfolioViewModel.AssetAnalysis`重命名为`PortfolioViewModel.AssetInfo`
+    * [x] 将`PortfolioViewModel.AssetAnalysis`重命名为`PortfolioViewModel.AssetInfo`
     * [ ] 根据我的手机显示效果修改各列宽度
 * [ ] 优化资产分析列表界面
 * [ ] 修复隐藏资产数值显示

@@ -60,9 +60,9 @@ class PortfolioViewModel @Inject constructor(
     val failedRefreshAssetIds: StateFlow<Set<UUID>> = _failedRefreshAssetIds.asStateFlow()
 
     /**
-     * Asset level analytics calculated based on current market value and target weight.
+     * Asset level info calculated based on current market value and target weight.
      */
-    data class AssetAnalysis(
+    data class AssetInfo(
         val asset: Asset,
         val marketValue: Double,
         val currentWeight: Double,          // 当前占比 (0-1)
@@ -85,8 +85,8 @@ class PortfolioViewModel @Inject constructor(
         val assetRisk: Double? = null           // 资产风险 k_i * a_i
     )
 
-    /** AssetAnalysis 列表 Flow */
-    val assetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
+    /** AssetInfo 列表 Flow */
+    val assetAnalyses: StateFlow<List<AssetInfo>> = combine(
         assets,
         portfolioState,
         failedRefreshAssetIds,
@@ -110,7 +110,7 @@ class PortfolioViewModel @Inject constructor(
             // 获取对应的分析数据
             val analysisData = analysisMap[asset.id]
             
-            AssetAnalysis(
+            AssetInfo(
                 asset = asset,
                 marketValue = value,
                 currentWeight = weight,
@@ -220,7 +220,7 @@ class PortfolioViewModel @Inject constructor(
     }
 
     /** 排序后的资产分析列表 */
-    val sortedAssetAnalyses: StateFlow<List<AssetAnalysis>> = combine(
+    val sortedAssetAnalyses: StateFlow<List<AssetInfo>> = combine(
         assetAnalyses,
         sortOption,
         isAscending
