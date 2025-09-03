@@ -126,11 +126,16 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
             val halfD by viewModel.halfSaturationD.collectAsState()
             val alpha by viewModel.alpha.collectAsState()
 
-            fun Double.toInputString(): String = String.format("%.2f", this)
+            fun Double.toInputString(): String = String.format("%.8f", this)
 
             var rInput by remember { mutableStateOf(halfR.toInputString()) }
             var dInput by remember { mutableStateOf(halfD.toInputString()) }
             var alphaInput by remember { mutableStateOf(alpha.toInputString()) }
+
+            // 同步输入框的值与ViewModel的值
+            LaunchedEffect(halfR) { rInput = halfR.toInputString() }
+            LaunchedEffect(halfD) { dInput = halfD.toInputString() }
+            LaunchedEffect(alpha) { alphaInput = alpha.toInputString() }
 
             Text("买入因子参数", modifier = Modifier.padding(top = 16.dp))
 
@@ -170,6 +175,10 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
 
             var baseSellInput by remember { mutableStateOf(baseSell.toInputString()) }
             var halfRiskInput by remember { mutableStateOf(halfRisk.toInputString()) }
+
+            // 同步输入框的值与ViewModel的值
+            LaunchedEffect(baseSell) { baseSellInput = baseSell.toInputString() }
+            LaunchedEffect(halfRisk) { halfRiskInput = halfRisk.toInputString() }
 
             Text("卖出阈值参数", modifier = Modifier.padding(top = 16.dp))
 
