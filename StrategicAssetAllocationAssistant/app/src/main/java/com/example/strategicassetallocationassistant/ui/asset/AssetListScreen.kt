@@ -47,7 +47,8 @@ fun AssetListScreen(
     onOpenTransactions: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenOpportunities: () -> Unit = {},
-    onOpenConfigNote: () -> Unit = {}
+    onOpenConfigNote: () -> Unit = {},
+    onOpenAssetAnalysis: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState()
     val analyses by viewModel.assetAnalyses.collectAsState()
@@ -81,6 +82,7 @@ fun AssetListScreen(
                 AppDrawer(
                     onClose = { scope.launch { drawerState.close() } },
                     onNavigateToConfigNote = onOpenConfigNote,
+                    onNavigateToAssetAnalysis = onOpenAssetAnalysis,
                     onNavigateToApiTest = onOpenApiTest,
                     onNavigateToTransactions = onOpenTransactions,
                     onNavigateToSettings = onOpenSettings

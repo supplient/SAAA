@@ -70,6 +70,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenConfigNote = {
                                     navController.navigate(NavRoutes.ConfigNote.route)
+                                },
+                                onOpenAssetAnalysis = {
+                                    navController.navigate(NavRoutes.AssetAnalysis.route)
                                 }
                             )
                         }
@@ -142,6 +145,20 @@ class MainActivity : ComponentActivity() {
                             ConfigNoteScreen(
                                 navController = navController,
                                 viewModel = viewModel
+                            )
+                        }
+                        
+                        // 资产分析界面
+                        composable(NavRoutes.AssetAnalysis.route) {
+                            val viewModel: PortfolioViewModel = hiltViewModel()
+                            AssetAnalysisScreen(
+                                viewModel = viewModel,
+                                onBackClick = {
+                                    navController.popBackStack()
+                                },
+                                onEditAsset = { id ->
+                                    navController.navigate(NavRoutes.EditAsset.createRoute(id.toString()))
+                                }
                             )
                         }
                     }

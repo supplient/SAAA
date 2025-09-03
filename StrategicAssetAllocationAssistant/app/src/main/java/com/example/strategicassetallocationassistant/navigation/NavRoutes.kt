@@ -26,4 +26,5 @@ sealed class NavRoutes(val route: String) {
     object Settings : NavRoutes("settings")
     object TradingOpportunities : NavRoutes("trading_opportunities")
     object ConfigNote : NavRoutes("config_note")
+    object AssetAnalysis : NavRoutes("asset_analysis")
 }

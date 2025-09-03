@@ -134,6 +134,13 @@ class PortfolioViewModel @Inject constructor(
         }
     }
 
+    /** 仅刷新分析数据（买入因子、卖出阈值等），不更新资产市价数据 */
+    fun refreshAnalysisData() {
+        viewModelScope.launch {
+            updateMarketData.updateAssetAnalyses()
+        }
+    }
+
     /** 更新可用现金 */
     fun updateCash(newCash: Double) {
         viewModelScope.launch {
@@ -172,6 +179,7 @@ class PortfolioViewModel @Inject constructor(
         MARKET_VALUE_DEVIATION_ABS("市值偏差绝对值"),
         UNIT_PRICE("单价"),
         SHARES("份额"),
+        SEVEN_DAY_RETURN("七日涨跌幅"),
         BUY_FACTOR("买入因子"),
         SELL_THRESHOLD("卖出阈值")
     }
@@ -213,6 +221,7 @@ class PortfolioViewModel @Inject constructor(
             SortOption.MARKET_VALUE_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationValue) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationValue) }
             SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
             SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
+            SortOption.SEVEN_DAY_RETURN -> if (ascending) analyses.sortedBy { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY } else analyses.sortedByDescending { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY }
             SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.buyFactor ?: 0.0 }
             SortOption.SELL_THRESHOLD -> if (ascending) analyses.sortedBy { it.sellThreshold ?: 0.0 } else analyses.sortedByDescending { it.sellThreshold ?: 0.0 }
         }
