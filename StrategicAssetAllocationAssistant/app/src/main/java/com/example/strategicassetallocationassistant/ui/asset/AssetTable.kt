@@ -146,7 +146,7 @@ private fun AssetTableHeader(
                 )
             }
 
-            // 买入因子
+            // 买因卖阈
             Box(
                 modifier = Modifier
                     .width(80.dp)
@@ -154,23 +154,7 @@ private fun AssetTableHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "买入因子",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 卖出阈值
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "卖出阈值",
+                    text = "买因卖阈",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -360,32 +344,29 @@ private fun AssetTableRow(
                 }
             }
 
-            // 买入因子值
+            // 买因卖阈
             Box(
                 modifier = Modifier
                     .width(80.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = analysis.buyFactor?.let { String.format("%.2f%%", it * 100) } ?: "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 卖出阈值值
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = analysis.sellThreshold?.let { String.format("%.2f%%", it * 100) } ?: "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = analysis.buyFactor?.let { "🏷️${String.format("%.2f", it * 100)}" } ?: "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = analysis.sellThreshold?.let { "+${String.format("%.2f", it * analysis.asset.targetWeight * 100)}%卖" } ?: "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
             }
 
             // 更新时间（两行显示：时分秒 + 年月日）
