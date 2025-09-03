@@ -27,6 +27,7 @@ class SellThresholdCalculator(
     data class SellThresholdResult(
         val thresholds: List<Double>,                    // 每个资产的卖出阈值
         val thresholdLogs: List<String>,                // 每个资产的卖出阈值计算过程日志
+        val assetRisks: List<Double>,                    // 每个资产的风险 k_i * a_i
         val overallRiskFactor: Double,                  // 总体风险因子
         val overallRiskFactorLog: String                // 总体风险因子计算过程日志
     )
@@ -44,6 +45,7 @@ class SellThresholdCalculator(
             return SellThresholdResult(
                 thresholds = List(assets.size) { 0.0 },
                 thresholdLogs = List(assets.size) { "无效输入: totalValue=$totalValue" },
+                assetRisks = List(assets.size) { 0.0 },
                 overallRiskFactor = 0.0,
                 overallRiskFactorLog = "无效输入: totalValue=$totalValue"
             )
@@ -62,11 +64,14 @@ class SellThresholdCalculator(
         // 2. 计算总体风险 f
         val f = assetRiskInfos.sumOf { it.risk }
 
-        // 3. 计算风险因子 F
+        // 3. 收集每个资产的风险
+        val assetRisks = assetRiskInfos.map { it.risk }
+
+        // 4. 计算风险因子 F
         val F = f / (f + halfSaturationTotalRisk)
         lastRiskFactor = F
 
-        // 4. 生成总体风险因子计算过程日志
+        // 5. 生成总体风险因子计算过程日志
         val overallRiskFactorLog = buildString {
             append("<第一个资产波动值*绝对偏移量>+<第二个资产波动值*绝对偏移量>+...<最后一个资产波动值*绝对偏移量>=<资产总体风险>; ")
             // 列举每个资产的风险贡献
@@ -106,6 +111,7 @@ class SellThresholdCalculator(
         return SellThresholdResult(
             thresholds = thresholds,
             thresholdLogs = thresholdLogs,
+            assetRisks = assetRisks,
             overallRiskFactor = F,
             overallRiskFactorLog = overallRiskFactorLog
         )

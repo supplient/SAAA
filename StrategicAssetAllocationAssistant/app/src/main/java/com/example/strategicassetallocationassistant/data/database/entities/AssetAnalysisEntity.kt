@@ -33,6 +33,16 @@ data class AssetAnalysisEntity(
     val sellThreshold: Double? = null,     // 卖出阈值 S
     val buyFactorLog: String? = null,      // 买入因子计算过程日志
     val sellThresholdLog: String? = null,  // 卖出阈值计算过程日志
+
+    // 买入因子计算中间结果
+    val relativeOffset: Double? = null,     // 相对偏移 r
+    val offsetFactor: Double? = null,       // 偏移因子 E
+    val drawdownFactor: Double? = null,     // 跌幅因子 D
+    val preVolatilityBuyFactor: Double? = null, // 去波动率的买入因子
+
+    // 卖出阈值计算中间结果
+    val assetRisk: Double? = null,          // 资产风险 k_i * a_i
+
     @Serializable(with = LocalDateTimeSerializer::class)
     val lastUpdateTime: LocalDateTime? = null  // 分析数据最后更新时间
 ) {
@@ -48,6 +58,11 @@ data class AssetAnalysisEntity(
             sellThreshold: Double? = null,
             buyFactorLog: String? = null,
             sellThresholdLog: String? = null,
+            relativeOffset: Double? = null,
+            offsetFactor: Double? = null,
+            drawdownFactor: Double? = null,
+            preVolatilityBuyFactor: Double? = null,
+            assetRisk: Double? = null,
             lastUpdateTime: LocalDateTime? = null
         ): AssetAnalysisEntity {
             return AssetAnalysisEntity(
@@ -58,6 +73,11 @@ data class AssetAnalysisEntity(
                 sellThreshold = sellThreshold,
                 buyFactorLog = buyFactorLog,
                 sellThresholdLog = sellThresholdLog,
+                relativeOffset = relativeOffset,
+                offsetFactor = offsetFactor,
+                drawdownFactor = drawdownFactor,
+                preVolatilityBuyFactor = preVolatilityBuyFactor,
+                assetRisk = assetRisk,
                 lastUpdateTime = lastUpdateTime
             )
         }

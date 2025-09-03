@@ -204,29 +204,47 @@ class PortfolioRepository @Inject constructor(
     }
 
     /**
-     * 更新资产的买入因子和计算过程日志
+     * 更新资产的买入因子和计算过程日志（包含中间计算结果）
      */
-    suspend fun updateAssetBuyFactorWithLog(assetId: UUID, buyFactor: Double, buyFactorLog: String) {
+    suspend fun updateAssetBuyFactorWithLog(
+        assetId: UUID,
+        buyFactor: Double,
+        buyFactorLog: String,
+        relativeOffset: Double,
+        offsetFactor: Double,
+        drawdownFactor: Double,
+        preVolatilityBuyFactor: Double
+    ) {
         val existing = assetAnalysisDao.getAssetAnalysisById(assetId.toString())?.toDomain()
             ?: com.example.strategicassetallocationassistant.AssetAnalysis(assetId = assetId)
 
         val updated = existing.copy(
             buyFactor = buyFactor,
-            buyFactorLog = buyFactorLog
+            buyFactorLog = buyFactorLog,
+            relativeOffset = relativeOffset,
+            offsetFactor = offsetFactor,
+            drawdownFactor = drawdownFactor,
+            preVolatilityBuyFactor = preVolatilityBuyFactor
         )
         upsertAssetAnalysis(updated)
     }
 
     /**
-     * 更新资产的卖出阈值和计算过程日志
+     * 更新资产的卖出阈值和计算过程日志（包含中间计算结果）
      */
-    suspend fun updateAssetSellThresholdWithLog(assetId: UUID, sellThreshold: Double, sellThresholdLog: String) {
+    suspend fun updateAssetSellThresholdWithLog(
+        assetId: UUID,
+        sellThreshold: Double,
+        sellThresholdLog: String,
+        assetRisk: Double
+    ) {
         val existing = assetAnalysisDao.getAssetAnalysisById(assetId.toString())?.toDomain()
             ?: com.example.strategicassetallocationassistant.AssetAnalysis(assetId = assetId)
 
         val updated = existing.copy(
             sellThreshold = sellThreshold,
-            sellThresholdLog = sellThresholdLog
+            sellThresholdLog = sellThresholdLog,
+            assetRisk = assetRisk
         )
         upsertAssetAnalysis(updated)
     }
@@ -411,6 +429,11 @@ class PortfolioRepository @Inject constructor(
             sellThreshold = sellThreshold,
             buyFactorLog = buyFactorLog,
             sellThresholdLog = sellThresholdLog,
+            relativeOffset = relativeOffset,
+            offsetFactor = offsetFactor,
+            drawdownFactor = drawdownFactor,
+            preVolatilityBuyFactor = preVolatilityBuyFactor,
+            assetRisk = assetRisk,
             lastUpdateTime = lastUpdateTime
         )
 
@@ -423,6 +446,11 @@ class PortfolioRepository @Inject constructor(
             sellThreshold = sellThreshold,
             buyFactorLog = buyFactorLog,
             sellThresholdLog = sellThresholdLog,
+            relativeOffset = relativeOffset,
+            offsetFactor = offsetFactor,
+            drawdownFactor = drawdownFactor,
+            preVolatilityBuyFactor = preVolatilityBuyFactor,
+            assetRisk = assetRisk,
             lastUpdateTime = lastUpdateTime
         )
 

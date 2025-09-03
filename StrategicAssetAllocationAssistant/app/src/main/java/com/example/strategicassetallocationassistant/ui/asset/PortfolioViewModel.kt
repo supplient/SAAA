@@ -76,7 +76,13 @@ class PortfolioViewModel @Inject constructor(
         val buyFactor: Double? = null,      // 买入因子
         val sellThreshold: Double? = null,  // 卖出阈值
         val buyFactorLog: String? = null,   // 买入因子计算过程日志
-        val sellThresholdLog: String? = null // 卖出阈值计算过程日志
+        val sellThresholdLog: String? = null, // 卖出阈值计算过程日志
+        // 中间计算结果
+        val relativeOffset: Double? = null,     // 相对偏移 r
+        val offsetFactor: Double? = null,       // 偏移因子 E
+        val drawdownFactor: Double? = null,     // 跌幅因子 D
+        val preVolatilityBuyFactor: Double? = null, // 去波动率的买入因子
+        val assetRisk: Double? = null           // 资产风险 k_i * a_i
     )
 
     /** AssetAnalysis 列表 Flow */
@@ -117,7 +123,12 @@ class PortfolioViewModel @Inject constructor(
                 buyFactor = analysisData?.buyFactor,
                 sellThreshold = analysisData?.sellThreshold,
                 buyFactorLog = analysisData?.buyFactorLog,
-                sellThresholdLog = analysisData?.sellThresholdLog
+                sellThresholdLog = analysisData?.sellThresholdLog,
+                relativeOffset = analysisData?.relativeOffset,
+                offsetFactor = analysisData?.offsetFactor,
+                drawdownFactor = analysisData?.drawdownFactor,
+                preVolatilityBuyFactor = analysisData?.preVolatilityBuyFactor,
+                assetRisk = analysisData?.assetRisk
             )
         }
     }.stateIn(
@@ -181,7 +192,12 @@ class PortfolioViewModel @Inject constructor(
         SHARES("份额"),
         SEVEN_DAY_RETURN("七日涨跌幅"),
         BUY_FACTOR("买入因子"),
-        SELL_THRESHOLD("卖出阈值")
+        SELL_THRESHOLD("卖出阈值"),
+        RELATIVE_OFFSET("相对偏移"),
+        OFFSET_FACTOR("偏移因子"),
+        DRAWDOWN_FACTOR("跌幅因子"),
+        PRE_VOLATILITY_BUY_FACTOR("去波动买入因子"),
+        ASSET_RISK("资产风险")
     }
 
     // 排序状态
@@ -224,6 +240,11 @@ class PortfolioViewModel @Inject constructor(
             SortOption.SEVEN_DAY_RETURN -> if (ascending) analyses.sortedBy { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY } else analyses.sortedByDescending { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY }
             SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.buyFactor ?: 0.0 }
             SortOption.SELL_THRESHOLD -> if (ascending) analyses.sortedBy { it.sellThreshold ?: 0.0 } else analyses.sortedByDescending { it.sellThreshold ?: 0.0 }
+            SortOption.RELATIVE_OFFSET -> if (ascending) analyses.sortedBy { it.relativeOffset ?: Double.NEGATIVE_INFINITY } else analyses.sortedByDescending { it.relativeOffset ?: Double.NEGATIVE_INFINITY }
+            SortOption.OFFSET_FACTOR -> if (ascending) analyses.sortedBy { it.offsetFactor ?: 0.0 } else analyses.sortedByDescending { it.offsetFactor ?: 0.0 }
+            SortOption.DRAWDOWN_FACTOR -> if (ascending) analyses.sortedBy { it.drawdownFactor ?: 0.0 } else analyses.sortedByDescending { it.drawdownFactor ?: 0.0 }
+            SortOption.PRE_VOLATILITY_BUY_FACTOR -> if (ascending) analyses.sortedBy { it.preVolatilityBuyFactor ?: 0.0 } else analyses.sortedByDescending { it.preVolatilityBuyFactor ?: 0.0 }
+            SortOption.ASSET_RISK -> if (ascending) analyses.sortedBy { it.assetRisk ?: 0.0 } else analyses.sortedByDescending { it.assetRisk ?: 0.0 }
         }
     }.stateIn(
         scope = viewModelScope,

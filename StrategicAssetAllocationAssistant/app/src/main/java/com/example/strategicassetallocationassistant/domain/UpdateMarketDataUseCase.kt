@@ -116,7 +116,15 @@ class UpdateMarketDataUseCase @Inject constructor(
             val vol = volatilityMap[asset.id]
             val sevenDayRet = sevenDayReturnMap[asset.id]
             val factors = buyCalc.calculate(asset, totalAssetsValue, vol, sevenDayRet)
-            repository.updateAssetBuyFactorWithLog(asset.id, factors.buyFactor, factors.calculationLog)
+            repository.updateAssetBuyFactorWithLog(
+                asset.id,
+                factors.buyFactor,
+                factors.calculationLog,
+                factors.relativeOffset,
+                factors.offsetFactor,
+                factors.drawdownFactor,
+                factors.preVolatilityBuyFactor
+            )
         }
 
         // 2. 计算卖出阈值及风险因子
@@ -129,10 +137,12 @@ class UpdateMarketDataUseCase @Inject constructor(
         // 更新资产卖出阈值及其日志
         sellThresholdResult.thresholds.forEachIndexed { idx, threshold ->
             val thresholdLog = sellThresholdResult.thresholdLogs[idx]
+            val assetRisk = sellThresholdResult.assetRisks[idx]
             repository.updateAssetSellThresholdWithLog(
                 portfolio.assets[idx].id,
                 threshold,
-                thresholdLog
+                thresholdLog,
+                assetRisk
             )
         }
 

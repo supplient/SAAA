@@ -171,6 +171,86 @@ private fun AssetAnalysisTableHeader(
                     textAlign = TextAlign.Center
                 )
             }
+
+            // 相对偏移列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "相对偏移",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 偏移因子列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "偏移因子",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 跌幅因子列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "跌幅因子",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 去波动买入因子列
+            Box(
+                modifier = Modifier
+                    .width(100.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "去波动买入因子",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            // 资产风险列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "资产风险",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -326,6 +406,121 @@ private fun AssetAnalysisTableRow(
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )
+            }
+
+            // 相对偏移列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val relativeOffset = analysis.relativeOffset
+                if (relativeOffset != null) {
+                    Text(
+                        text = String.format("%.3f", relativeOffset),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        text = "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // 偏移因子列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val offsetFactor = analysis.offsetFactor
+                if (offsetFactor != null) {
+                    Text(
+                        text = String.format("%.3f", offsetFactor),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        text = "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // 跌幅因子列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val drawdownFactor = analysis.drawdownFactor
+                if (drawdownFactor != null) {
+                    Text(
+                        text = String.format("%.3f", drawdownFactor),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        text = "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // 去波动买入因子列
+            Box(
+                modifier = Modifier
+                    .width(100.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val preVolatilityBuyFactor = analysis.preVolatilityBuyFactor
+                if (preVolatilityBuyFactor != null) {
+                    Text(
+                        text = String.format("%.3f", preVolatilityBuyFactor),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        text = "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // 资产风险列
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val assetRisk = analysis.assetRisk
+                if (assetRisk != null) {
+                    Text(
+                        text = String.format("%.6f", assetRisk),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    Text(
+                        text = "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }

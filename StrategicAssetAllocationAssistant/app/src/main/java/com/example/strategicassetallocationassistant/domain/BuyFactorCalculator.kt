@@ -25,10 +25,12 @@ class BuyFactorCalculator(
 ) {
 
     data class Result(
-        val offsetFactor: Double,  // E
-        val drawdownFactor: Double,// D
-        val buyFactor: Double,     // B
-        val calculationLog: String // 计算过程日志
+        val relativeOffset: Double,     // r - 相对偏移
+        val offsetFactor: Double,       // E - 偏移因子
+        val drawdownFactor: Double,     // D - 跌幅因子
+        val preVolatilityBuyFactor: Double, // 去波动率的买入因子
+        val buyFactor: Double,          // B - 买入因子
+        val calculationLog: String      // 计算过程日志
     )
 
     /**
@@ -40,16 +42,16 @@ class BuyFactorCalculator(
      */
     fun calculate(asset: Asset, totalAssetsValue: Double, volatility: Double?, sevenDayReturn: Double?): Result {
         if (asset.targetWeight <= 0 || totalAssetsValue <= 0) {
-            return Result(0.0, 0.0, 0.0, "无效输入: targetWeight=${asset.targetWeight}, totalAssetsValue=$totalAssetsValue")
+            return Result(0.0, 0.0, 0.0, 0.0, 0.0, "无效输入: targetWeight=${asset.targetWeight}, totalAssetsValue=$totalAssetsValue")
         }
 
         // 当前占比
         val currentWeight = asset.currentMarketValue / totalAssetsValue
 
         // r = (target - current)/target
-        val r = (asset.targetWeight - currentWeight) / asset.targetWeight
+        val relativeOffset = (asset.targetWeight - currentWeight) / asset.targetWeight
 
-        val offsetFactor = if (r <= 0) 0.0 else r / (r + halfSaturationRelativeOffset)
+        val offsetFactor = if (relativeOffset <= 0) 0.0 else relativeOffset / (relativeOffset + halfSaturationRelativeOffset)
 
         // 七日跌幅绝对值 d
         val delta = sevenDayReturn ?: 0.0
@@ -69,7 +71,7 @@ class BuyFactorCalculator(
             append(String.format("(%.3f-%.3f)/%.3f=%.3f", asset.targetWeight, currentWeight, asset.targetWeight, (asset.targetWeight - currentWeight)/asset.targetWeight))
             append("; ")
             append("<相对偏移>/(<相对偏移>+<半饱和相对偏移>=<偏移因子>; ")
-            append(String.format("%.3f/(%.3f+%.3f)=%.3f", r, r, halfSaturationRelativeOffset, offsetFactor))
+            append(String.format("%.3f/(%.3f+%.3f)=%.3f", relativeOffset, relativeOffset, halfSaturationRelativeOffset, offsetFactor))
             append("; ")
             append("max(0, -<七日涨跌幅>)=<七日绝对跌幅>; ")
             append(String.format("max(0, -%.3f)=%.3f", delta, d))
@@ -84,7 +86,7 @@ class BuyFactorCalculator(
             append(String.format("%.3f*%.3f=%.3f", 1-kClamped, preVolatilityBuyFactor, buyFactor))
         }
 
-        return Result(offsetFactor, drawdownFactor, buyFactor, log)
+        return Result(relativeOffset, offsetFactor, drawdownFactor, preVolatilityBuyFactor, buyFactor, log)
     }
 
     /**

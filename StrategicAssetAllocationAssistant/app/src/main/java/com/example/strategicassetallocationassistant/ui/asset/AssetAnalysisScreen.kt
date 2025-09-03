@@ -110,7 +110,12 @@ private fun AnalysisSortDialog(
         PortfolioViewModel.SortOption.WEIGHT_DEVIATION_ABS,
         PortfolioViewModel.SortOption.SEVEN_DAY_RETURN,
         PortfolioViewModel.SortOption.BUY_FACTOR,
-        PortfolioViewModel.SortOption.SELL_THRESHOLD
+        PortfolioViewModel.SortOption.SELL_THRESHOLD,
+        PortfolioViewModel.SortOption.RELATIVE_OFFSET,
+        PortfolioViewModel.SortOption.OFFSET_FACTOR,
+        PortfolioViewModel.SortOption.DRAWDOWN_FACTOR,
+        PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR,
+        PortfolioViewModel.SortOption.ASSET_RISK
     )
     
     AlertDialog(

@@ -30,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -197,9 +197,22 @@ abstract class AppDatabase : RoomDatabase() {
                             // 1) 为asset_analysis表添加日志字段
                             db.execSQL("ALTER TABLE asset_analysis ADD COLUMN buyFactorLog TEXT")
                             db.execSQL("ALTER TABLE asset_analysis ADD COLUMN sellThresholdLog TEXT")
-                            
+
                             // 2) 为portfolio表添加总体风险因子日志字段
                             db.execSQL("ALTER TABLE portfolio ADD COLUMN overallRiskFactorLog TEXT")
+                        }
+                    })
+                    .addMigrations(object : androidx.room.migration.Migration(9, 10) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            // 添加中间计算结果字段
+                            // 买入因子计算中间结果
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN relativeOffset REAL")
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN offsetFactor REAL")
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN drawdownFactor REAL")
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN preVolatilityBuyFactor REAL")
+
+                            // 卖出阈值计算中间结果
+                            db.execSQL("ALTER TABLE asset_analysis ADD COLUMN assetRisk REAL")
                         }
                     })
                     .addCallback(PrepopulateCallback(context.applicationContext))
