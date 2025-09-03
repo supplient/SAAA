@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
+import android.util.Log
 import retrofit2.Retrofit
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -146,25 +147,51 @@ object AShare {
     suspend fun getMarketStats(code: String): MarketStats? {
         // 拉取 90 个交易日的收盘价（含今天）
         val prices = getPrice(code = code, count = 90, frequency = "1d")
-        if (prices.isEmpty()) return null
+        if (prices.isEmpty()) {
+            Log.e("AShare", "getMarketStats: prices is empty for code: $code")
+            return null
+        }
 
         val latestClose = prices.last().close.toDouble()
 
         // --- 七日涨跌幅 ---
-        val sevenDayReturn: Double? = if (prices.size >= 8) {
-            val close7 = prices[prices.size - 8].close.toDouble()
-            if (close7 == 0.0) null else (latestClose - close7) / close7
-        } else null
+        val sevenDayReturn: Double? = if (prices.isNotEmpty()) {
+            val referenceClose: Double
+            if (prices.size >= 8) {
+                referenceClose = prices[prices.size - 8].close.toDouble()
+            } else {
+                // 使用最早交易日的收盘价进行计算
+                referenceClose = prices.first().close.toDouble()
+                Log.i(
+                    "AShare",
+                    "getMarketStats: prices.size < 8 for code: $code, using data ${prices.size - 1} days ago to calculate sevenDayReturn"
+                )
+            }
+
+            if (referenceClose == 0.0) null else (latestClose - referenceClose) / referenceClose
+        } else {
+            null
+        }
 
         // --- 90 日年化波动率 ---
-        val annualVol: Double? = if (prices.size >= 90) {
-            val deltas = prices.takeLast(90).windowed(2) { (p1, p2) -> kotlin.math.ln(p1.close / p2.close) }
+        val annualVol: Double? = if (prices.size >= 2) {
+            val effectiveList = if (prices.size >= 90) prices.takeLast(90) else {
+                Log.i(
+                    "AShare",
+                    "getMarketStats: prices.size < 90 for code: $code, using available ${prices.size} records to calculate annualVol"
+                )
+                prices
+            }
+
+            val deltas = effectiveList.windowed(2) { (p1, p2) -> kotlin.math.ln(p1.close / p2.close) }
             if (deltas.isEmpty()) null else {
                 val mean = deltas.average()
                 val variance = deltas.sumOf { (it - mean) * (it - mean) } / deltas.size
                 kotlin.math.sqrt(variance) * 15.87
             }
-        } else null
+        } else {
+            null
+        }
 
         return MarketStats(latestClose, sevenDayReturn, annualVol)
     }
@@ -183,6 +210,9 @@ object AShare {
         }
         val end = if (endDate.isNotEmpty() && endDate != LocalDate.now().toString()) endDate else ""
         val param = "$code,$unit,,$end,$count,qfq"
+
+        // Debug: print the final URL for Tencent day data
+        Log.d("AShare", "Fetching TX day data with URL: ${TX_DAY_BASE_URL}appstock/app/fqkline/get?param=$param")
         val response = txDayService.getTxDayPrice(param)
         val dataContainer = response.data[code] ?: return emptyList()
 
@@ -212,6 +242,9 @@ object AShare {
     ): List<StockData> {
         val ts = frequency.removeSuffix("m").toIntOrNull() ?: 1
         val param = "$code,m$ts,,$count"
+
+        // Debug: print the final URL for Tencent minute data
+        Log.d("AShare", "Fetching TX minute data with URL: ${TX_MIN_BASE_URL}appstock/app/kline/mkline?param=$param")
         val responseBody = txMinService.getTxMinPrice(param)
         val responseString = responseBody.string()
 
@@ -280,6 +313,10 @@ object AShare {
         }
 
         val url = "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=$code&scale=$ts&ma=5&datalen=$dataLen"
+
+        // Debug: print the final URL used for fetching data
+        Log.d("AShare", "Fetching data from URL: $url")
+
         val response = sinaService.getSinaPrice(url)
 
         val mapped = response.map {

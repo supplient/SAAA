@@ -192,40 +192,43 @@ class PortfolioRepository @Inject constructor(
      * 更新资产的市场数据（波动率和七日收益率）
      */
     suspend fun updateAssetMarketData(assetId: UUID, volatility: Double?, sevenDayReturn: Double?) {
-        assetAnalysisDao.updateMarketData(
-            assetId = assetId.toString(),
+        val existing = assetAnalysisDao.getAssetAnalysisById(assetId.toString())?.toDomain()
+            ?: com.example.strategicassetallocationassistant.AssetAnalysis(assetId = assetId)
+        
+        val updated = existing.copy(
             volatility = volatility,
             sevenDayReturn = sevenDayReturn,
             lastUpdateTime = java.time.LocalDateTime.now()
         )
-    }
-
-    /**
-     * 更新资产的买入因子
-     */
-    suspend fun updateAssetBuyFactor(assetId: UUID, buyFactor: Double) {
-        assetAnalysisDao.updateBuyFactor(assetId.toString(), buyFactor)
+        upsertAssetAnalysis(updated)
     }
 
     /**
      * 更新资产的买入因子和计算过程日志
      */
     suspend fun updateAssetBuyFactorWithLog(assetId: UUID, buyFactor: Double, buyFactorLog: String) {
-        assetAnalysisDao.updateBuyFactorWithLog(assetId.toString(), buyFactor, buyFactorLog)
-    }
+        val existing = assetAnalysisDao.getAssetAnalysisById(assetId.toString())?.toDomain()
+            ?: com.example.strategicassetallocationassistant.AssetAnalysis(assetId = assetId)
 
-    /**
-     * 更新资产的卖出阈值
-     */
-    suspend fun updateAssetSellThreshold(assetId: UUID, sellThreshold: Double) {
-        assetAnalysisDao.updateSellThreshold(assetId.toString(), sellThreshold)
+        val updated = existing.copy(
+            buyFactor = buyFactor,
+            buyFactorLog = buyFactorLog
+        )
+        upsertAssetAnalysis(updated)
     }
 
     /**
      * 更新资产的卖出阈值和计算过程日志
      */
     suspend fun updateAssetSellThresholdWithLog(assetId: UUID, sellThreshold: Double, sellThresholdLog: String) {
-        assetAnalysisDao.updateSellThresholdWithLog(assetId.toString(), sellThreshold, sellThresholdLog)
+        val existing = assetAnalysisDao.getAssetAnalysisById(assetId.toString())?.toDomain()
+            ?: com.example.strategicassetallocationassistant.AssetAnalysis(assetId = assetId)
+
+        val updated = existing.copy(
+            sellThreshold = sellThreshold,
+            sellThresholdLog = sellThresholdLog
+        )
+        upsertAssetAnalysis(updated)
     }
 
     /**
