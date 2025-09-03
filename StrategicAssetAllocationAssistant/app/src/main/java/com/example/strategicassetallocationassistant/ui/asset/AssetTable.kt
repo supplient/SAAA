@@ -130,23 +130,7 @@ private fun AssetTableHeader(
                 )
             }
             
-            // 单价和份额列
-            Box(
-                modifier = Modifier
-                    .width(70.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "单价/份额",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            // 波动率
+            // 价份波
             Box(
                 modifier = Modifier
                     .width(80.dp)
@@ -154,7 +138,7 @@ private fun AssetTableHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "波动率",
+                    text = "价份波",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -348,10 +332,10 @@ private fun AssetTableRow(
                 }
             }
             
-            // 单价和份额列
+            // 价份波
             Box(
                 modifier = Modifier
-                    .width(70.dp)
+                    .width(80.dp)
                     .padding(horizontal = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -368,21 +352,12 @@ private fun AssetTableRow(
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center
                     )
+                    Text(
+                        text = analysis.volatility?.let { "〰️${String.format("%.2f%%", it * 100)}" } ?: "-",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
                 }
-            }
-
-            // 波动率值
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .padding(horizontal = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = analysis.volatility?.let { String.format("%.2f%%", it * 100) } ?: "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
             }
 
             // 买入因子值
