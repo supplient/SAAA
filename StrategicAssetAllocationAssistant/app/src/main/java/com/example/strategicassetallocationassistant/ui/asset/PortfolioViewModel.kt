@@ -59,76 +59,24 @@ class PortfolioViewModel @Inject constructor(
     private val _failedRefreshAssetIds = MutableStateFlow<Set<UUID>>(emptySet())
     val failedRefreshAssetIds: StateFlow<Set<UUID>> = _failedRefreshAssetIds.asStateFlow()
 
-    /**
-     * Asset level info calculated based on current market value and target weight.
-     */
-    data class AssetInfo(
-        val asset: Asset,
-        val marketValue: Double,
-        val currentWeight: Double,          // 当前占比 (0-1)
-        val deviationPct: Double,           // 与目标占比的偏离 (正:+ 负:-)
-        val targetMarketValue: Double,      // 目标市值
-        val deviationValue: Double,         // 与目标市值的偏离 (正:超出 负:不足)
-        val isRefreshFailed: Boolean,       // 是否刷新失败
-        // 来自AssetAnalysis表的数据
-        val volatility: Double? = null,     // 波动率
-        val sevenDayReturn: Double? = null, // 七日涨跌幅
-        val buyFactor: Double? = null,      // 买入因子
-        val sellThreshold: Double? = null,  // 卖出阈值
-        val buyFactorLog: String? = null,   // 买入因子计算过程日志
-        val sellThresholdLog: String? = null, // 卖出阈值计算过程日志
-        // 中间计算结果
-        val relativeOffset: Double? = null,     // 相对偏移 r
-        val offsetFactor: Double? = null,       // 偏移因子 E
-        val drawdownFactor: Double? = null,     // 跌幅因子 D
-        val preVolatilityBuyFactor: Double? = null, // 去波动率的买入因子
-        val assetRisk: Double? = null           // 资产风险 k_i * a_i
-    )
+    // AssetInfo 已迁移到 ui.common.model 包
 
     /** AssetInfo 列表 Flow */
-    val assetAnalyses: StateFlow<List<AssetInfo>> = combine(
+    val assetAnalyses: StateFlow<List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>> = combine(
         assets,
         portfolioState,
         failedRefreshAssetIds,
         repository.assetAnalysisFlow
     ) { assetList, portfolio, failedIds, analysisDataList ->
         val totalMarketValue = assetList.sumOf { it.currentMarketValue }
-        val totalAssetsValue = totalMarketValue + portfolio.cash // 总资产 = 资产市值 + 可用现金
-        
-        // 创建分析数据的映射
+        val totalAssetsValue = totalMarketValue + portfolio.cash
         val analysisMap = analysisDataList.associateBy { it.assetId }
-        
         assetList.map { asset ->
-            val value = asset.currentMarketValue
-            // 修正：资产当前占比 = 资产当前市值 / (所有资产总市值 + 可用现金)
-            val weight = if (totalAssetsValue > 0) value / totalAssetsValue else 0.0
-            val deviationPct = weight - asset.targetWeight
-            // 修正：目标市值也应该基于总资产计算
-            val targetValue = totalAssetsValue * asset.targetWeight
-            val deviationValue = value - targetValue
-            
-            // 获取对应的分析数据
-            val analysisData = analysisMap[asset.id]
-            
-            AssetInfo(
+            com.example.strategicassetallocationassistant.ui.common.util.buildAssetInfo(
                 asset = asset,
-                marketValue = value,
-                currentWeight = weight,
-                deviationPct = deviationPct,
-                targetMarketValue = targetValue,
-                deviationValue = deviationValue,
-                isRefreshFailed = failedIds.contains(asset.id),
-                volatility = analysisData?.volatility,
-                sevenDayReturn = analysisData?.sevenDayReturn,
-                buyFactor = analysisData?.buyFactor,
-                sellThreshold = analysisData?.sellThreshold,
-                buyFactorLog = analysisData?.buyFactorLog,
-                sellThresholdLog = analysisData?.sellThresholdLog,
-                relativeOffset = analysisData?.relativeOffset,
-                offsetFactor = analysisData?.offsetFactor,
-                drawdownFactor = analysisData?.drawdownFactor,
-                preVolatilityBuyFactor = analysisData?.preVolatilityBuyFactor,
-                assetRisk = analysisData?.assetRisk
+                totalAssetsValue = totalAssetsValue,
+                analysis = analysisMap[asset.id],
+                isRefreshFailed = failedIds.contains(asset.id)
             )
         }
     }.stateIn(
@@ -220,7 +168,7 @@ class PortfolioViewModel @Inject constructor(
     }
 
     /** 排序后的资产分析列表 */
-    val sortedAssetAnalyses: StateFlow<List<AssetInfo>> = combine(
+    val sortedAssetAnalyses: StateFlow<List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>> = combine(
         assetAnalyses,
         sortOption,
         isAscending

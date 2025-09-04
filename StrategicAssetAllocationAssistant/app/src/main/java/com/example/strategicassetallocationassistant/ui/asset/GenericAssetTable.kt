@@ -33,7 +33,7 @@ data class AssetTableColumn(
     val width: Dp,
     val headerAlignment: Alignment = Alignment.Center,
     val contentAlignment: Alignment = Alignment.Center,
-    val content: @Composable (analysis: PortfolioViewModel.AssetInfo, isHidden: Boolean) -> Unit
+    val content: @Composable (analysis: com.example.strategicassetallocationassistant.ui.common.model.AssetInfo, isHidden: Boolean) -> Unit
 )
 
 /**
@@ -50,7 +50,7 @@ data class AssetTableBehavior(
  */
 @Composable
 fun GenericAssetTable(
-    analyses: List<PortfolioViewModel.AssetInfo>,
+    analyses: List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>,
     columns: List<AssetTableColumn>,
     behavior: AssetTableBehavior = AssetTableBehavior(),
     isHidden: Boolean = false,
@@ -151,7 +151,7 @@ private fun GenericAssetTableHeader(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun GenericAssetTableRow(
-    analysis: PortfolioViewModel.AssetInfo,
+    analysis: com.example.strategicassetallocationassistant.ui.common.model.AssetInfo,
     isHidden: Boolean,
     fixedColumn: AssetTableColumn?,
     scrollableColumns: List<AssetTableColumn>,

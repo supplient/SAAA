@@ -13,7 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.Alignment
 import java.time.format.DateTimeFormatter
-import com.example.strategicassetallocationassistant.PortfolioViewModel.AssetInfo
+import com.example.strategicassetallocationassistant.ui.common.model.AssetInfo
 
 /**
  * 可复用的单元格组件库，用于在不同列/组合列中显示相同的资产指标数据。

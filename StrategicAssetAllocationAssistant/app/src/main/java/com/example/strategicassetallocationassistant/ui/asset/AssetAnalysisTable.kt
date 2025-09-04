@@ -10,7 +10,7 @@ import java.util.UUID
  */
 @Composable
 fun AssetAnalysisTable(
-    analyses: List<PortfolioViewModel.AssetInfo>,
+    analyses: List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>,
     onEditAsset: (UUID) -> Unit,
     modifier: Modifier = Modifier
 ) {

@@ -10,7 +10,7 @@ import java.util.UUID
  */
 @Composable
 fun AssetTable(
-    analyses: List<PortfolioViewModel.AssetInfo>,
+    analyses: List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>,
     isHidden: Boolean,
     onAddTransaction: (UUID) -> Unit,
     onEditAsset: (UUID) -> Unit,
