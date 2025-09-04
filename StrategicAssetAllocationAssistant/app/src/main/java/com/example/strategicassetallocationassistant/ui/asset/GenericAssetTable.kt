@@ -317,6 +317,51 @@ object CommonAssetColumns {
     )
     
     /**
+     * 七波相列
+     */
+    fun sevenDayReturnVolatilityRelativeOffsetCombinedColumn() = AssetTableColumn(
+        title = "七波相",
+        width = 80.dp,
+        content = { info, _ ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AssetMetricsCells.SevenDayReturn(info)
+                AssetMetricsCells.Volatility(info)
+                AssetMetricsCells.RelativeOffset(info)
+            }
+        }
+    )
+
+    /**
+     * 偏跌去波列
+     */
+    fun offsetFactorDrawdownFactorPreVolatilityBuyFactorCombinedColumn() = AssetTableColumn(
+        title = "偏跌去波",
+        width = 100.dp,
+        content = { info, _ ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AssetMetricsCells.OffsetFactor(info)
+                AssetMetricsCells.DrawdownFactor(info)
+                AssetMetricsCells.PreVolatilityBuyFactor(info)
+            }
+        }
+    )
+
+    /**
+     * 买卖风
+     */
+    fun buyFactorSellThresholdAssetRiskCombinedColumn() = AssetTableColumn(
+        title = "买卖风",
+        width = 80.dp,
+        content = { info, _ ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AssetMetricsCells.BuyFactor(info)
+                AssetMetricsCells.SellThreshold(info)
+                AssetMetricsCells.AssetRisk(info)
+            }
+        }
+    )
+    
+    /**
      * 七日涨跌幅列
      */
     fun sevenDayReturnColumn() = AssetTableColumn(

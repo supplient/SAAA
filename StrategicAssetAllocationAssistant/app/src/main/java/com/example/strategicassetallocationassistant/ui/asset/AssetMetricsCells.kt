@@ -58,7 +58,7 @@ object AssetMetricsCells {
         val pct = info.sevenDayReturn
         if (pct != null) {
             Text(
-                text = "${if (pct >= 0) "+" else ""}${String.format("%.2f%%", pct * 100)}",
+                text = "七${if (pct >= 0) "+" else ""}${String.format("%.2f%%", pct * 100)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = if (pct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center
@@ -72,7 +72,7 @@ object AssetMetricsCells {
     @Composable
     fun RelativeOffset(info: AssetInfo) {
         Text(
-            text = info.relativeOffset?.let { String.format("%.3f", it) } ?: "-",
+            text = info.relativeOffset?.let { String.format("R%.2f%%", it*100) } ?: "-",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -82,8 +82,9 @@ object AssetMetricsCells {
     @Composable
     fun OffsetFactor(info: AssetInfo) {
         Text(
-            text = info.offsetFactor?.let { String.format("%.3f", it) } ?: "-",
+            text = info.offsetFactor?.let { String.format("偏因%.2f%%", it*100) } ?: "-",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline,
             textAlign = TextAlign.Center
         )
     }
@@ -92,8 +93,9 @@ object AssetMetricsCells {
     @Composable
     fun DrawdownFactor(info: AssetInfo) {
         Text(
-            text = info.drawdownFactor?.let { String.format("%.3f", it) } ?: "-",
+            text = info.drawdownFactor?.let { String.format("跌因%.2f%%", it*100) } ?: "-",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.tertiary,
             textAlign = TextAlign.Center
         )
     }
@@ -102,8 +104,9 @@ object AssetMetricsCells {
     @Composable
     fun PreVolatilityBuyFactor(info: AssetInfo) {
         Text(
-            text = info.preVolatilityBuyFactor?.let { String.format("%.3f", it) } ?: "-",
+            text = info.preVolatilityBuyFactor?.let { String.format("🏷️%.2f%%", it*100) } ?: "-",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary,
             textAlign = TextAlign.Center
         )
     }
@@ -112,7 +115,7 @@ object AssetMetricsCells {
     @Composable
     fun AssetRisk(info: AssetInfo) {
         Text(
-            text = info.assetRisk?.let { String.format("%.6f", it) } ?: "-",
+            text = info.assetRisk?.let { String.format("🎲%.6f", it) } ?: "-",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )

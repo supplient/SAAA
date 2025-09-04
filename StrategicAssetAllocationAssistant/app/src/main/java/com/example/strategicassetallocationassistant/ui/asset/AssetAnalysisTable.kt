@@ -18,15 +18,9 @@ fun AssetAnalysisTable(
         listOf(
             CommonAssetColumns.assetNameColumn(),
             CommonAssetColumns.weightColumn(),
-            CommonAssetColumns.sevenDayReturnColumn(),
-            CommonAssetColumns.volatilityColumn(),
-            CommonAssetColumns.buyFactorColumn(),
-            CommonAssetColumns.sellThresholdColumn(),
-            CommonAssetColumns.relativeOffsetColumn(),
-            CommonAssetColumns.offsetFactorColumn(),
-            CommonAssetColumns.drawdownFactorColumn(),
-            CommonAssetColumns.preVolatilityBuyFactorColumn(),
-            CommonAssetColumns.assetRiskColumn()
+            CommonAssetColumns.sevenDayReturnVolatilityRelativeOffsetCombinedColumn(),
+            CommonAssetColumns.offsetFactorDrawdownFactorPreVolatilityBuyFactorCombinedColumn(),
+            CommonAssetColumns.buyFactorSellThresholdAssetRiskCombinedColumn()
         )
     }
     
