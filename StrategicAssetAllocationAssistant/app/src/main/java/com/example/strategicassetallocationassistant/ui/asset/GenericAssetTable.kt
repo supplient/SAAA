@@ -54,6 +54,7 @@ fun GenericAssetTable(
     columns: List<AssetTableColumn>,
     behavior: AssetTableBehavior = AssetTableBehavior(),
     isHidden: Boolean = false,
+    useLazy: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
@@ -69,19 +70,35 @@ fun GenericAssetTable(
         )
         
         // 数据行
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(analyses) { analysis ->
-                GenericAssetTableRow(
-                    analysis = analysis,
-                    isHidden = isHidden,
-                    fixedColumn = fixedColumn.firstOrNull(),
-                    scrollableColumns = scrollableColumns,
-                    horizontalScrollState = horizontalScrollState,
-                    behavior = behavior,
-                    modifier = Modifier.fillMaxWidth()
-                )
+        if (useLazy) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(analyses) { analysis ->
+                    GenericAssetTableRow(
+                        analysis = analysis,
+                        isHidden = isHidden,
+                        fixedColumn = fixedColumn.firstOrNull(),
+                        scrollableColumns = scrollableColumns,
+                        horizontalScrollState = horizontalScrollState,
+                        behavior = behavior,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                analyses.forEach { analysis ->
+                    GenericAssetTableRow(
+                        analysis = analysis,
+                        isHidden = isHidden,
+                        fixedColumn = fixedColumn.firstOrNull(),
+                        scrollableColumns = scrollableColumns,
+                        horizontalScrollState = horizontalScrollState,
+                        behavior = behavior,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

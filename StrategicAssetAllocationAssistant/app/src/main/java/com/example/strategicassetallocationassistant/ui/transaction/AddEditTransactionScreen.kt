@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import kotlinx.coroutines.flow.collectLatest
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import com.example.strategicassetallocationassistant.GenericAssetTable
+import com.example.strategicassetallocationassistant.CommonAssetColumns
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +27,7 @@ fun AddEditTransactionScreen(navController: NavController) {
     val price by viewModel.priceInput.collectAsState()
     val fee by viewModel.feeInput.collectAsState()
     val reason by viewModel.reasonInput.collectAsState()
+    val previewInfos by viewModel.previewInfos.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     var typeExpanded by remember { mutableStateOf(false) }
@@ -41,6 +44,17 @@ fun AddEditTransactionScreen(navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (previewInfos.size == 2) {
+                GenericAssetTable(
+                    analyses = previewInfos,
+                    columns = listOf(
+                        CommonAssetColumns.weightColumn(),
+                        CommonAssetColumns.marketValueColumn()
+                    ),
+                    useLazy = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             // 类型
             ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = !typeExpanded }) {
                 OutlinedTextField(

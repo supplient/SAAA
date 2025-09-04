@@ -14,6 +14,10 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
+import com.example.strategicassetallocationassistant.ui.common.model.AssetInfo
+import com.example.strategicassetallocationassistant.ui.common.util.buildAssetInfo
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 
 /**
  * ViewModel for Add / Edit Transaction screen.
@@ -47,7 +51,7 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _selectedAssetId = MutableStateFlow<UUID?>(null)
     val selectedAssetId: StateFlow<UUID?> = _selectedAssetId.asStateFlow()
 
-    private val _sharesInput = MutableStateFlow("")
+    private val _sharesInput = MutableStateFlow("100")
     val sharesInput: StateFlow<String> = _sharesInput.asStateFlow()
 
     private val _priceInput = MutableStateFlow("")
@@ -59,12 +63,53 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _reasonInput = MutableStateFlow("")
     val reasonInput: StateFlow<String> = _reasonInput.asStateFlow()
 
+    /* ---------------- Preview Infos ---------------- */
+    private val _previewInfos = MutableStateFlow<List<AssetInfo>>(emptyList())
+    val previewInfos: StateFlow<List<AssetInfo>> = _previewInfos.asStateFlow()
+
     private val editingTxId: UUID? = savedStateHandle.get<String>(ARG_TRANSACTION_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     private val fromOpportunityId: UUID? = savedStateHandle.get<String>(ARG_OPPORTUNITY_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     private val initialAssetId: UUID? = savedStateHandle.get<String>(ARG_ASSET_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
     val isEditing: Boolean get() = editingTxId != null
 
     init {
+        // monitor changes to recompute preview
+        viewModelScope.launch {
+            // combine first big streams into Triple
+            combine(
+                repository.portfolioFlow,
+                repository.assetsFlow,
+                repository.assetAnalysisFlow
+            ) { portfolio, assets, analyses ->
+                Triple(portfolio, assets, analyses)
+            }.combine(
+                combine(_selectedAssetId, _sharesInput, _type) { id, sharesStr, tradeType ->
+                    Triple(id, sharesStr, tradeType)
+                }
+            ) { (portfolio, assets, analyses), (selectedId, sharesStr, tradeType) ->
+                val asset = assets.firstOrNull { it.id == selectedId } ?: return@combine emptyList<AssetInfo>()
+
+                val totalAssetsValue = portfolio.cash + assets.sumOf { it.currentMarketValue }
+
+                val analysis = analyses.firstOrNull { it.assetId == asset.id }
+
+                val oldInfo = buildAssetInfo(asset, totalAssetsValue, analysis, false)
+
+                val deltaShares = sharesStr.toDoubleOrNull() ?: return@combine listOf(oldInfo)
+                val newShares = when (tradeType) {
+                    TradeType.BUY -> (asset.shares ?: 0.0) + deltaShares
+                    TradeType.SELL -> ((asset.shares ?: 0.0) - deltaShares).coerceAtLeast(0.0)
+                }
+
+                val assetNew = asset.copy(shares = newShares)
+                val newInfo = buildAssetInfo(assetNew, totalAssetsValue, analysis, false)
+
+                listOf(oldInfo, newInfo)
+            }.collect {
+                _previewInfos.value = it
+            }
+        }
+
         editingTxId?.let { id ->
             viewModelScope.launch {
                 repository.getTransactionById(id)?.let { tx ->
