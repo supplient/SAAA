@@ -19,7 +19,6 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionListScreen(
-    navToAdd: () -> Unit,
     navToEdit: (java.util.UUID) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TransactionViewModel = hiltViewModel()
@@ -29,11 +28,6 @@ fun TransactionListScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(title = { Text("交易记录") })
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = navToAdd) {
-                Icon(Icons.Default.Add, contentDescription = "Add Tx")
-            }
         }
     ) { inner ->
         if (transactions.isEmpty()) {

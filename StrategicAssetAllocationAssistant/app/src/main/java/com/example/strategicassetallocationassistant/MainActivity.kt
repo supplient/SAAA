@@ -96,13 +96,8 @@ class MainActivity : ComponentActivity() {
 
                         composable(NavRoutes.TransactionList.route) {
                             TransactionListScreen(
-                                navToAdd = { navController.navigate(NavRoutes.AddTransaction.route) },
                                 navToEdit = { navController.navigate(NavRoutes.EditTransaction.createRoute(it.toString())) }
                             )
-                        }
-
-                        composable(NavRoutes.AddTransaction.route) {
-                            AddEditTransactionScreen(navController = navController)
                         }
 
                         composable(

@@ -10,7 +10,6 @@ sealed class NavRoutes(val route: String) {
     }
     object ApiTest : NavRoutes("api_test")
     object TransactionList : NavRoutes("transaction_list")
-    object AddTransaction : NavRoutes("add_transaction")
     object EditTransaction : NavRoutes("edit_transaction/{transactionId}") {
         const val ARG_TX_ID = "transactionId"
         fun createRoute(txId: String): String = "edit_transaction/$txId"
