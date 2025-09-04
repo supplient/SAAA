@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import com.example.strategicassetallocationassistant.AssetMetricsCells
 
 /**
  * 资产表格列定义
@@ -218,28 +219,7 @@ object CommonAssetColumns {
         width = 80.dp,
         headerAlignment = Alignment.CenterStart,
         contentAlignment = Alignment.CenterStart,
-        content = { analysis, _ ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = analysis.asset.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                if (analysis.isRefreshFailed) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "刷新失败",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.AssetName(info) }
     )
     
     /**
@@ -248,27 +228,11 @@ object CommonAssetColumns {
     fun weightColumn() = AssetTableColumn(
         title = "占比",
         width = 80.dp,
-        content = { analysis, _ ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "${String.format("%.2f", analysis.currentWeight * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "= ${(analysis.asset.targetWeight * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "${if (analysis.deviationPct >= 0) "+" else ""}${String.format("%.2f", analysis.deviationPct * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (analysis.deviationPct >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
+        content = { info, _ ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AssetMetricsCells.CurrentWeight(info)
+                AssetMetricsCells.TargetWeight(info)
+                AssetMetricsCells.WeightDeviation(info)
             }
         }
     )
@@ -303,23 +267,11 @@ object CommonAssetColumns {
     fun priceSharesVolatilityCombinedColumn() = AssetTableColumn(
         title = "价份波",
         width = 80.dp,
-        content = { analysis, isHidden ->
+        content = { info, hidden ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = if (isHidden) "***" else "¥${String.format("%.4f", analysis.asset.unitValue ?: 0.0)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = if (isHidden) "***" else "×${String.format("%.2f", analysis.asset.shares ?: 0.0)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = analysis.volatility?.let { "〰️${String.format("%.2f%%", it * 100)}" } ?: "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
+                AssetMetricsCells.UnitPrice(info, hidden)
+                AssetMetricsCells.Shares(info, hidden)
+                AssetMetricsCells.Volatility(info)
             }
         }
     )
@@ -330,25 +282,11 @@ object CommonAssetColumns {
     fun marketValueColumn() = AssetTableColumn(
         title = "市值",
         width = 100.dp,
-        content = { analysis, isHidden ->
+        content = { info, hidden ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = if (isHidden) "***" else "¥${String.format("%.2f", analysis.marketValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = if (isHidden) "***" else "= ¥${String.format("%.2f", analysis.targetMarketValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = if (isHidden) "***" else "${if (analysis.deviationValue >= 0) "+" else ""}¥${String.format("%.2f", analysis.deviationValue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (analysis.deviationValue >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
+                AssetMetricsCells.CurrentMarketValue(info, hidden)
+                AssetMetricsCells.TargetMarketValue(info, hidden)
+                AssetMetricsCells.MarketValueDeviation(info, hidden)
             }
         }
     )
@@ -359,25 +297,11 @@ object CommonAssetColumns {
     fun updateTimeColumn() = AssetTableColumn(
         title = "更新时间",
         width = 120.dp,
-        content = { analysis, _ ->
-            analysis.asset.lastUpdateTime?.let { time ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = time.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } ?: Text(
-                text = "-",
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center
-            )
+        content = { info, _ ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AssetMetricsCells.UpdateTimeClock(info)
+                AssetMetricsCells.UpdateTimeDate(info)
+            }
         }
     )
     
@@ -389,14 +313,7 @@ object CommonAssetColumns {
         width = 160.dp,
         contentAlignment = Alignment.CenterStart,
         headerAlignment = Alignment.Center,
-        content = { analysis, _ ->
-            Text(
-                text = analysis.asset.note ?: "",
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
+        content = { info, _ -> AssetMetricsCells.Note(info) }
     )
     
     /**
@@ -405,23 +322,7 @@ object CommonAssetColumns {
     fun sevenDayReturnColumn() = AssetTableColumn(
         title = "七日涨跌幅",
         width = 80.dp,
-        content = { analysis, _ ->
-            val sevenDayReturn = analysis.sevenDayReturn
-            if (sevenDayReturn != null) {
-                Text(
-                    text = "${if (sevenDayReturn >= 0) "+" else ""}${String.format("%.2f", sevenDayReturn * 100)}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (sevenDayReturn >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.SevenDayReturn(info) }
     )
     
     /**
@@ -430,13 +331,7 @@ object CommonAssetColumns {
     fun volatilityColumn() = AssetTableColumn(
         title = "波动率",
         width = 80.dp,
-        content = { analysis, _ ->
-            Text(
-                text = analysis.volatility?.let { String.format("%.2f%%", it * 100) } ?: "-",
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center
-            )
-        }
+        content = { info, _ -> AssetMetricsCells.Volatility(info) }
     )
     
     /**
@@ -445,13 +340,7 @@ object CommonAssetColumns {
     fun buyFactorColumn() = AssetTableColumn(
         title = "买入因子",
         width = 80.dp,
-        content = { analysis, _ ->
-            Text(
-                text = analysis.buyFactor?.let { String.format("%.2f%%", it * 100) } ?: "-",
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center
-            )
-        }
+        content = { info, _ -> AssetMetricsCells.BuyFactor(info) }
     )
     
     /**
@@ -460,13 +349,7 @@ object CommonAssetColumns {
     fun sellThresholdColumn() = AssetTableColumn(
         title = "卖出阈值",
         width = 80.dp,
-        content = { analysis, _ ->
-            Text(
-                text = analysis.sellThreshold?.let { String.format("%.2f%%", it * 100) } ?: "-",
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center
-            )
-        }
+        content = { info, _ -> AssetMetricsCells.SellThreshold(info) }
     )
     
     /**
@@ -475,22 +358,7 @@ object CommonAssetColumns {
     fun relativeOffsetColumn() = AssetTableColumn(
         title = "相对偏移",
         width = 80.dp,
-        content = { analysis, _ ->
-            val relativeOffset = analysis.relativeOffset
-            if (relativeOffset != null) {
-                Text(
-                    text = String.format("%.3f", relativeOffset),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.RelativeOffset(info) }
     )
     
     /**
@@ -499,22 +367,7 @@ object CommonAssetColumns {
     fun offsetFactorColumn() = AssetTableColumn(
         title = "偏移因子",
         width = 80.dp,
-        content = { analysis, _ ->
-            val offsetFactor = analysis.offsetFactor
-            if (offsetFactor != null) {
-                Text(
-                    text = String.format("%.3f", offsetFactor),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.OffsetFactor(info) }
     )
     
     /**
@@ -523,22 +376,7 @@ object CommonAssetColumns {
     fun drawdownFactorColumn() = AssetTableColumn(
         title = "跌幅因子",
         width = 80.dp,
-        content = { analysis, _ ->
-            val drawdownFactor = analysis.drawdownFactor
-            if (drawdownFactor != null) {
-                Text(
-                    text = String.format("%.3f", drawdownFactor),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.DrawdownFactor(info) }
     )
     
     /**
@@ -547,22 +385,7 @@ object CommonAssetColumns {
     fun preVolatilityBuyFactorColumn() = AssetTableColumn(
         title = "去波动买入因子",
         width = 100.dp,
-        content = { analysis, _ ->
-            val preVolatilityBuyFactor = analysis.preVolatilityBuyFactor
-            if (preVolatilityBuyFactor != null) {
-                Text(
-                    text = String.format("%.3f", preVolatilityBuyFactor),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.PreVolatilityBuyFactor(info) }
     )
     
     /**
@@ -571,21 +394,6 @@ object CommonAssetColumns {
     fun assetRiskColumn() = AssetTableColumn(
         title = "资产风险",
         width = 80.dp,
-        content = { analysis, _ ->
-            val assetRisk = analysis.assetRisk
-            if (assetRisk != null) {
-                Text(
-                    text = String.format("%.6f", assetRisk),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        content = { info, _ -> AssetMetricsCells.AssetRisk(info) }
     )
 }
