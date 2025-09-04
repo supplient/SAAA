@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.first
 @HiltViewModel
 class AddEditTransactionViewModel @Inject constructor(
     private val repository: com.example.strategicassetallocationassistant.data.repository.PortfolioRepository,
+    private val updateMarketData: com.example.strategicassetallocationassistant.domain.UpdateMarketDataUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -54,14 +55,29 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _sharesInput = MutableStateFlow("100")
     val sharesInput: StateFlow<String> = _sharesInput.asStateFlow()
 
-    private val _priceInput = MutableStateFlow("")
-    val priceInput: StateFlow<String> = _priceInput.asStateFlow()
+    // 当前资产单价 Flow（只读）
+    val currentPrice: StateFlow<Double?> = combine(assets, _selectedAssetId) { list, id ->
+        list.firstOrNull { it.id == id }?.unitValue
+    }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = null)
 
     private val _feeInput = MutableStateFlow("5")
     val feeInput: StateFlow<String> = _feeInput.asStateFlow()
 
     private val _reasonInput = MutableStateFlow("")
     val reasonInput: StateFlow<String> = _reasonInput.asStateFlow()
+
+    // price refreshing indicator
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    suspend fun refreshPriceAndAnalysis(): Boolean {
+        val assetId = _selectedAssetId.value ?: return false
+        val asset = assets.value.firstOrNull { it.id == assetId } ?: return false
+        _isRefreshing.value = true
+        val ok = updateMarketData.refreshAsset(asset)
+        _isRefreshing.value = false
+        return ok
+    }
 
     /* ---------------- Preview Infos ---------------- */
     private val _previewInfos = MutableStateFlow<List<AssetInfo>>(emptyList())
@@ -116,7 +132,6 @@ class AddEditTransactionViewModel @Inject constructor(
                     _type.value = tx.type
                     _assetIdInput.value = tx.assetId?.toString().orEmpty()
                     _sharesInput.value = tx.shares.toString()
-                    _priceInput.value = tx.price.toString()
                     _feeInput.value = tx.fee.toString()
                     _reasonInput.value = tx.reason.orEmpty()
                 }
@@ -131,7 +146,6 @@ class AddEditTransactionViewModel @Inject constructor(
                     _selectedAssetId.value = op.assetId
                     _assetIdInput.value = op.assetId?.toString().orEmpty()
                     _sharesInput.value = op.shares.toString()
-                    _priceInput.value = op.price.toString()
                     _feeInput.value = op.fee.toString()
                     _reasonInput.value = op.reason
                 }
@@ -155,7 +169,6 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     fun onSharesChange(value: String) { _sharesInput.value = value }
-    fun onPriceChange(value: String) { _priceInput.value = value }
     fun onFeeChange(value: String) { _feeInput.value = value }
     fun onReasonChange(value: String) { _reasonInput.value = value }
 
@@ -183,7 +196,7 @@ class AddEditTransactionViewModel @Inject constructor(
 
     private fun buildTransaction(): Transaction? {
         val shares = _sharesInput.value.toDoubleOrNull() ?: return null
-        val price = _priceInput.value.toDoubleOrNull() ?: return null
+        val price = currentPrice.value ?: return null
         val fee = _feeInput.value.toDoubleOrNull() ?: 5.0
         val assetUuid = _selectedAssetId.value ?: return null // Asset is mandatory now
 

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -16,6 +17,8 @@ import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.example.strategicassetallocationassistant.GenericAssetTable
 import com.example.strategicassetallocationassistant.CommonAssetColumns
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +27,7 @@ fun AddEditTransactionScreen(navController: NavController) {
     val type by viewModel.type.collectAsState()
     val assetId by viewModel.assetIdInput.collectAsState()
     val shares by viewModel.sharesInput.collectAsState()
-    val price by viewModel.priceInput.collectAsState()
+    val currentPrice by viewModel.currentPrice.collectAsState()
     val fee by viewModel.feeInput.collectAsState()
     val reason by viewModel.reasonInput.collectAsState()
     val previewInfos by viewModel.previewInfos.collectAsState()
@@ -97,7 +100,23 @@ fun AddEditTransactionScreen(navController: NavController) {
                 }
             }
             OutlinedTextField(value = shares, onValueChange = viewModel::onSharesChange, label = { Text("份额") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = price, onValueChange = viewModel::onPriceChange, label = { Text("价格") }, modifier = Modifier.fillMaxWidth())
+            // 行2 单价 + 刷新
+            val isRefreshing by viewModel.isRefreshing.collectAsState()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "单价: ¥${currentPrice?.let { String.format("%.4f", it) } ?: "-"}", modifier = Modifier.weight(1f))
+                if (isRefreshing) {
+                    CircularProgressIndicator(Modifier.size(20.dp))
+                } else {
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            val ok = viewModel.refreshPriceAndAnalysis()
+                            Toast.makeText(context, if (ok) "刷新成功" else "刷新失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "刷新单价")
+                    }
+                }
+            }
 
             OutlinedTextField(value = fee, onValueChange = viewModel::onFeeChange, label = { Text("手续费") }, modifier = Modifier.fillMaxWidth())
 

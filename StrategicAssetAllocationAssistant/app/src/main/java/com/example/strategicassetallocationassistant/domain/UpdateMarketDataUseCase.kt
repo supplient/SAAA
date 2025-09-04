@@ -1,5 +1,6 @@
 package com.example.strategicassetallocationassistant.domain
 
+import com.example.strategicassetallocationassistant.Asset
 import com.example.strategicassetallocationassistant.data.network.AShare
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
 import com.example.strategicassetallocationassistant.data.preferences.PreferencesRepository
@@ -46,45 +47,40 @@ class UpdateMarketDataUseCase @Inject constructor(
         var fail = 0
         val failedAssetIds = mutableListOf<UUID>()
 
-        // 获取当前资产列表
         val portfolio = repository.getPortfolioOnce()
 
-        // 遍历资产并更新资产信息：市价、波动率、七日收益率
         portfolio.assets.forEach { asset ->
-            // 如果没有代码，计入失败
-            val code = asset.code ?: run {
-                fail++
-                failedAssetIds.add(asset.id)
-                return@forEach
-            }
-
-            // 获取资产市场数据
-            val stats = runCatching { AShare.getMarketStats(code) }.getOrNull()
-
-            // 如果市场数据获取成功，更新资产信息
-            if (stats != null && stats.latestClose > 0.0) {
-                // 1. 更新资产基本信息（单价和更新时间）
-                val updatedAsset = asset.copy(
-                    unitValue = stats.latestClose,
-                    lastUpdateTime = LocalDateTime.now()
-                )
-                repository.updateAsset(updatedAsset)
-
-                // 2. 更新资产分析数据（波动率和七日收益率）
-                repository.updateAssetMarketData(
-                    assetId = asset.id,
-                    volatility = stats.annualVolatility,
-                    sevenDayReturn = stats.sevenDayReturn
-                )
-
-                success++
-            } else {
-                fail++
-                failedAssetIds.add(asset.id)
+            if (refreshAsset(asset)) success++ else {
+                fail++; failedAssetIds.add(asset.id)
             }
         }
 
         return MarketDataUpdateStats(success, fail, failedAssetIds)
+    }
+
+    /** 刷新单个资产的市场数据与分析数据 */
+    suspend fun refreshAsset(asset: Asset): Boolean {
+        val code = asset.code ?: return false
+
+        val stats = runCatching { AShare.getMarketStats(code) }.getOrNull() ?: return false
+
+        if (stats.latestClose <= 0.0) return false
+
+        // 1. 更新资产价格
+        val updatedAsset = asset.copy(
+            unitValue = stats.latestClose,
+            lastUpdateTime = LocalDateTime.now()
+        )
+        repository.updateAsset(updatedAsset)
+
+        // 2. 更新分析数据
+        repository.updateAssetMarketData(
+            assetId = asset.id,
+            volatility = stats.annualVolatility,
+            sevenDayReturn = stats.sevenDayReturn
+        )
+
+        return true
     }
 
     /**
