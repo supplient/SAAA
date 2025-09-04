@@ -247,11 +247,11 @@ object AssetMetricsCells {
     fun AssetName(info: AssetInfo) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
                 text = info.asset.name,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -260,7 +260,7 @@ object AssetMetricsCells {
                     imageVector = Icons.Default.Warning,
                     contentDescription = "刷新失败",
                     tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(12.dp)
                 )
             }
         }

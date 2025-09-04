@@ -100,14 +100,14 @@ private fun GenericAssetTableHeader(
     Row(
         modifier = modifier
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(8.dp)
+            .padding(2.dp)
     ) {
         // 固定列（如果存在）
         fixedColumn?.let { column ->
             Box(
                 modifier = Modifier
                     .width(column.width)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 2.dp),
                 contentAlignment = column.headerAlignment
             ) {
                 Text(
@@ -123,13 +123,13 @@ private fun GenericAssetTableHeader(
         Row(
             modifier = Modifier
                 .horizontalScroll(horizontalScrollState)
-                .padding(start = 8.dp)
+                .padding(start = 2.dp)
         ) {
             scrollableColumns.forEach { column ->
                 Box(
                     modifier = Modifier
                         .width(column.width)
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 2.dp),
                     contentAlignment = column.headerAlignment
                 ) {
                     Text(
@@ -167,7 +167,7 @@ private fun GenericAssetTableRow(
                 else 
                     Color.Transparent
             )
-            .padding(8.dp)
+            .padding(2.dp)
             .combinedClickable(
                 onClick = { behavior.onRowClick?.invoke(analysis.asset.id) },
                 onLongClick = { behavior.onRowLongClick?.invoke(analysis.asset.id) }
@@ -178,7 +178,7 @@ private fun GenericAssetTableRow(
             Box(
                 modifier = Modifier
                     .width(column.width)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 2.dp),
                 contentAlignment = column.contentAlignment
             ) {
                 column.content(analysis, isHidden)
@@ -189,13 +189,13 @@ private fun GenericAssetTableRow(
         Row(
             modifier = Modifier
                 .horizontalScroll(horizontalScrollState)
-                .padding(start = 8.dp)
+                .padding(start = 2.dp)
         ) {
             scrollableColumns.forEach { column ->
                 Box(
                     modifier = Modifier
                         .width(column.width)
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 2.dp),
                     contentAlignment = column.contentAlignment
                 ) {
                     column.content(analysis, isHidden)
@@ -216,7 +216,7 @@ object CommonAssetColumns {
      */
     fun assetNameColumn() = AssetTableColumn(
         title = "资产名称",
-        width = 80.dp,
+        width = 60.dp,
         headerAlignment = Alignment.CenterStart,
         contentAlignment = Alignment.CenterStart,
         content = { info, _ -> AssetMetricsCells.AssetName(info) }
@@ -227,7 +227,7 @@ object CommonAssetColumns {
      */
     fun weightColumn() = AssetTableColumn(
         title = "占比",
-        width = 80.dp,
+        width = 60.dp,
         content = { info, _ ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AssetMetricsCells.CurrentWeight(info)
@@ -242,7 +242,7 @@ object CommonAssetColumns {
      */
     fun buyFactorSellThresholdCombinedColumn() = AssetTableColumn(
         title = "买因卖阈",
-        width = 80.dp,
+        width = 70.dp,
         content = { analysis, _ ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -296,7 +296,7 @@ object CommonAssetColumns {
      */
     fun updateTimeColumn() = AssetTableColumn(
         title = "更新时间",
-        width = 120.dp,
+        width = 100.dp,
         content = { info, _ ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AssetMetricsCells.UpdateTimeClock(info)
@@ -336,7 +336,7 @@ object CommonAssetColumns {
      */
     fun offsetFactorDrawdownFactorPreVolatilityBuyFactorCombinedColumn() = AssetTableColumn(
         title = "偏跌去波",
-        width = 100.dp,
+        width = 80.dp,
         content = { info, _ ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AssetMetricsCells.OffsetFactor(info)
