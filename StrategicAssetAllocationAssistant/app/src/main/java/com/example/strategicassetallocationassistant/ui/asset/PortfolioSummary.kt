@@ -24,6 +24,7 @@ fun PortfolioSummary(
     deviation: Double,
     availableCash: Double,
     riskFactor: Double?,
+    isHidden: Boolean = false,
     onCashClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -43,7 +44,7 @@ fun PortfolioSummary(
         ) {
             // 左：可用现金
             Text(
-                text = "¥${String.format("%.2f", availableCash)}",
+                text = if (isHidden) "***" else "¥${String.format("%.2f", availableCash)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary

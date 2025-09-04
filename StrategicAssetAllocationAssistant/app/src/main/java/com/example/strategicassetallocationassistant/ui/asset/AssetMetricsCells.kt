@@ -156,9 +156,9 @@ object AssetMetricsCells {
 
     /** 单价 */
     @Composable
-    fun UnitPrice(info: AssetInfo, isHidden: Boolean) {
+    fun UnitPrice(info: AssetInfo) {
         Text(
-            text = if (isHidden) "***" else "¥${String.format("%.4f", info.asset.unitValue ?: 0.0)}",
+            text = "¥${String.format("%.4f", info.asset.unitValue ?: 0.0)}",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )

@@ -111,7 +111,7 @@ fun AssetListScreen(
                         IconButton(onClick = { viewModel.toggleAssetAmountHidden() }) {
                             val isHidden by viewModel.isAssetAmountHidden.collectAsState()
                             Icon(
-                                imageVector = if (isHidden) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                imageVector = if (isHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                 contentDescription = if (isHidden) "显示资产数目" else "隐藏资产数目"
                             )
                         }
@@ -151,6 +151,7 @@ fun AssetListScreen(
                     deviation = deviationPct,
                     availableCash = portfolio.cash,
                     riskFactor = portfolio.overallRiskFactor,
+                    isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                     onCashClick = { showCashEditDialog = true }
                 )
             }

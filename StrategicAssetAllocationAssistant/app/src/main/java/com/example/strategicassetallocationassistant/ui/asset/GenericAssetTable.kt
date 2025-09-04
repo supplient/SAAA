@@ -269,7 +269,7 @@ object CommonAssetColumns {
         width = 80.dp,
         content = { info, hidden ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AssetMetricsCells.UnitPrice(info, hidden)
+                AssetMetricsCells.UnitPrice(info)
                 AssetMetricsCells.Shares(info, hidden)
                 AssetMetricsCells.Volatility(info)
             }
