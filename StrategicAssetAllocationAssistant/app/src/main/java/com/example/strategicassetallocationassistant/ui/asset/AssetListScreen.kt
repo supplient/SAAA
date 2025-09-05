@@ -63,7 +63,6 @@ fun AssetListScreen(
     
     // 现金编辑状态
     var showCashEditDialog by remember { mutableStateOf(false) }
-    var cashInputValue by remember { mutableStateOf("") }
     
     // 排序对话框状态
     var showSortDialog by remember { mutableStateOf(false) }
@@ -158,77 +157,12 @@ fun AssetListScreen(
             
             // 现金编辑对话框
             if (showCashEditDialog) {
-                AlertDialog(
-                    onDismissRequest = { showCashEditDialog = false },
-                    title = { Text("编辑可用现金") },
-                    text = {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            // 总资产展示（只读，始终显示具体数值）
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(text = "总资产", style = MaterialTheme.typography.bodyMedium)
-                                Text(text = "¥${String.format("%.2f", totalAssets)}", style = MaterialTheme.typography.bodyMedium)
-                            }
-
-                            // 除现金外占比
-                            val nonCashAssetsValue = totalAssets - portfolio.cash
-                            val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
-                            val nonCashTargetWeightSum = targetWeightSum
-                            val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
-                            val deviationAbs = kotlin.math.abs(nonCashWeightDeviation)
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(text = "除现金外占比", style = MaterialTheme.typography.bodyMedium)
-                                if (deviationAbs > 0.0001) {
-                                    Text(
-                                        text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% ± ${String.format("%.1f", deviationAbs * 100)}%",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                } else {
-                                    Text(
-                                        text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-                            // 可用现金编辑（始终显示具体数值）
-                            OutlinedTextField(
-                                value = cashInputValue,
-                                onValueChange = { cashInputValue = it },
-                                label = { Text("可用现金") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showCashEditDialog = false }) {
-                            Text("取消")
-                        }
-                    },
-                    confirmButton = {
-                        Button(onClick = {
-                            val newCash = cashInputValue.toDoubleOrNull()
-                            if (newCash != null && newCash >= 0) {
-                                viewModel.updateCash(newCash)
-                            }
-                            showCashEditDialog = false
-                        }) {
-                            Text("保存")
-                        }
-                    }
+                CashEditDialog(
+                    totalAssets = totalAssets,
+                    portfolioCash = portfolio.cash,
+                    targetWeightSum = targetWeightSum,
+                    onSaveCash = { newCash -> viewModel.updateCash(newCash) },
+                    onDismiss = { showCashEditDialog = false }
                 )
             }
             
