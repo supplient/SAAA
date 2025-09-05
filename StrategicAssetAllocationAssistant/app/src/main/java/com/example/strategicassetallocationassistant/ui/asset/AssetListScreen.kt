@@ -61,9 +61,6 @@ fun AssetListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     
-    // 现金编辑状态
-    var showCashEditDialog by remember { mutableStateOf(false) }
-    
     // 排序对话框状态
     var showSortDialog by remember { mutableStateOf(false) }
     
@@ -151,18 +148,9 @@ fun AssetListScreen(
                     availableCash = portfolio.cash,
                     riskFactor = portfolio.overallRiskFactor,
                     isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
-                    onCashClick = { showCashEditDialog = true }
-                )
-            }
-            
-            // 现金编辑对话框
-            if (showCashEditDialog) {
-                CashEditDialog(
                     totalAssets = totalAssets,
-                    portfolioCash = portfolio.cash,
                     targetWeightSum = targetWeightSum,
-                    onSaveCash = { newCash -> viewModel.updateCash(newCash) },
-                    onDismiss = { showCashEditDialog = false }
+                    onSaveCash = { newCash -> viewModel.updateCash(newCash) }
                 )
             }
             

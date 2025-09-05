@@ -7,6 +7,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,13 +29,17 @@ fun PortfolioSummary(
     availableCash: Double,
     riskFactor: Double?,
     isHidden: Boolean = false,
-    onCashClick: () -> Unit = {},
+    totalAssets: Double,
+    targetWeightSum: Double,
+    onSaveCash: (Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showCashEditDialog by remember { mutableStateOf(false) }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onCashClick),
+            .clickable { showCashEditDialog = true },
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 2.dp
     ) {
@@ -64,5 +72,15 @@ fun PortfolioSummary(
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+
+    if (showCashEditDialog) {
+        CashEditDialog(
+            totalAssets = totalAssets,
+            portfolioCash = availableCash,
+            targetWeightSum = targetWeightSum,
+            onSaveCash = onSaveCash,
+            onDismiss = { showCashEditDialog = false }
+        )
     }
 }
