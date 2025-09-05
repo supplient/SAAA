@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,14 +94,24 @@ fun AddEditTransactionScreen(navController: NavController) {
                 Spacer(Modifier.width(12.dp))
 
                 val sharesError by viewModel.sharesError.collectAsState()
-                OutlinedTextField(
-                    value = shares,
-                    onValueChange = viewModel::onSharesChange,
-                    label = { Text("份额") },
-                    isError = sharesError,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = shares,
+                        onValueChange = viewModel::onSharesChange,
+                        label = { Text("份额") },
+                        isError = sharesError,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Column {
+                        IconButton(onClick = { viewModel.incrementShares() }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "加100")
+                        }
+                        IconButton(onClick = { viewModel.decrementShares() }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "减100")
+                        }
+                    }
+                }
             }
 
             // 行2 单价 + 刷新

@@ -184,6 +184,22 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     fun onSharesChange(value: String) { _sharesInput.value = value; validateShares() }
+
+    /** 增加100股 */
+    fun incrementShares() {
+        val cur = _sharesInput.value.toDoubleOrNull() ?: 0.0
+        _sharesInput.value = String.format("%.0f", cur + 100)
+        validateShares()
+    }
+
+    /** 减少100股（不低于0） */
+    fun decrementShares() {
+        val cur = _sharesInput.value.toDoubleOrNull() ?: 0.0
+        val newVal = (cur - 100).coerceAtLeast(0.0)
+        _sharesInput.value = String.format("%.0f", newVal)
+        validateShares()
+    }
+
     fun onFeeChange(value: String) { _feeInput.value = value; validateFee() }
     fun onReasonChange(value: String) { _reasonInput.value = value }
 
