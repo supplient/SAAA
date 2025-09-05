@@ -35,11 +35,10 @@ fun PortfolioSummary(
     modifier: Modifier = Modifier
 ) {
     var showCashEditDialog by remember { mutableStateOf(false) }
+    var showSummaryDialog by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { showCashEditDialog = true },
+        modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 2.dp
     ) {
@@ -55,21 +54,24 @@ fun PortfolioSummary(
                 text = if (isHidden) "***" else "¥${String.format("%.2f", availableCash)}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { showCashEditDialog = true }
             )
 
             // 中：总体风险因子
             Text(
                 text = "🚩${String.format("%.2f%%", (riskFactor ?: 0.0)*100)}",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { showSummaryDialog = true }
             )
 
             // 右：资产占比汇总
             Text(
                 text = "Σ${String.format("%.1f", currentWeight*100)}% = ${String.format("%.1f", targetWeight*100)}% ${if(deviation>=0) "+" else "-"} ${String.format("%.1f", kotlin.math.abs(deviation)*100)}%",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable { showSummaryDialog = true }
             )
         }
     }
@@ -81,6 +83,15 @@ fun PortfolioSummary(
             targetWeightSum = targetWeightSum,
             onSaveCash = onSaveCash,
             onDismiss = { showCashEditDialog = false }
+        )
+    }
+
+    if (showSummaryDialog) {
+        PortfolioSummaryDialog(
+            totalAssets = totalAssets,
+            portfolioCash = availableCash,
+            targetWeightSum = targetWeightSum,
+            onDismiss = { showSummaryDialog = false }
         )
     }
 }
