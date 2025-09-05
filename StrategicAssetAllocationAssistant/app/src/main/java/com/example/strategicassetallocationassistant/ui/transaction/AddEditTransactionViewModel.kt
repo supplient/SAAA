@@ -203,6 +203,23 @@ class AddEditTransactionViewModel @Inject constructor(
         _feeError.value = _feeInput.value.toDoubleOrNull()?.let { it < 0 } ?: true
     }
 
+    // 保存按钮可用状态
+    private val _basicValid: StateFlow<Pair<Boolean, Boolean>> = combine(sharesError, feeError) { sErr, fErr ->
+        Pair(!sErr, !fErr)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(false, false))
+
+    val canSave: StateFlow<Boolean> = combine(
+        _basicValid,
+        _selectedAssetId,
+        currentPrice,
+        _sharesInput,
+        _feeInput
+    ) { validPair, aid, price, sharesStr, feeStr ->
+        val (shareOk, feeOk) = validPair
+        shareOk && feeOk && aid != null && price != null &&
+                sharesStr.isNotBlank() && feeStr.isNotBlank()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     suspend fun save(): Boolean {
         val tx = buildTransaction() ?: return false
         if (editingTxId == null) {

@@ -158,13 +158,15 @@ fun AddEditTransactionScreen(navController: NavController) {
 
                 Spacer(Modifier.weight(1f))
 
-                Button(onClick = {
+                val canSave by viewModel.canSave.collectAsState()
+                Button(enabled = canSave, onClick = {
                     coroutineScope.launch {
                         val success = viewModel.save()
                         if (success) {
+                            Toast.makeText(context, "保存成功", Toast.LENGTH_SHORT).show()
                             navController.navigateUp()
                         } else {
-                            Toast.makeText(context, "请先选择资产", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "输入不合法，无法保存", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }) { Text("保存") }
