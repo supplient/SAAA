@@ -78,9 +78,7 @@ fun PortfolioSummary(
 
     if (showCashEditDialog) {
         CashEditDialog(
-            totalAssets = totalAssets,
             portfolioCash = availableCash,
-            targetWeightSum = targetWeightSum,
             onSaveCash = onSaveCash,
             onDismiss = { showCashEditDialog = false }
         )

@@ -13,62 +13,78 @@ import kotlin.math.abs
 
 @Composable
 fun CashEditDialog(
-    totalAssets: Double,
     portfolioCash: Double,
-    targetWeightSum: Double,
     onSaveCash: (Double) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var cashInputValue by remember { mutableStateOf(portfolioCash.toString()) }
+    var isIncrease by remember { mutableStateOf(true) }
+    var deltaText by remember { mutableStateOf("") }
+    var newCashText by remember { mutableStateOf(String.format("%.2f", portfolioCash)) }
+    val newCashValid = newCashText.toDoubleOrNull()?.let { it >= 0 } == true
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("编辑可用现金") },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
+                // 第1行：+/- 按钮 与 变化量输入
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "总资产", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = "¥${String.format("%.2f", totalAssets)}", style = MaterialTheme.typography.bodyMedium)
-                }
-
-                val nonCashAssetsValue = totalAssets - portfolioCash
-                val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
-                val nonCashTargetWeightSum = targetWeightSum
-                val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
-                val deviationAbs = abs(nonCashWeightDeviation)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "除现金外占比", style = MaterialTheme.typography.bodyMedium)
-                    if (deviationAbs > 0.0001) {
-                        Text(
-                            text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% ± ${String.format("%.1f", deviationAbs * 100)}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
+                    Button(
+                        onClick = { isIncrease = !isIncrease },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isIncrease) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            contentColor = if (isIncrease) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onError
                         )
-                    } else {
+                    ) {
                         Text(
-                            text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            if (isIncrease) "+" else "-",
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    val deltaError = deltaText.isNotEmpty() && (deltaText.toDoubleOrNull()?.let { it < 0 } ?: true)
+                    OutlinedTextField(
+                        value = deltaText,
+                        onValueChange = { text ->
+                            deltaText = text
+                            val delta = text.toDoubleOrNull()
+                            if (delta != null && delta >= 0) {
+                                val candidate = (if (isIncrease) portfolioCash + delta else portfolioCash - delta)
+                                    .coerceAtLeast(0.0)
+                                newCashText = String.format("%.2f", candidate)
+                            }
+                        },
+                        label = { Text("变化量") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        isError = deltaError,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // 第2行：新的可用现金
+                val newCashError = newCashText.isNotEmpty() && (newCashText.toDoubleOrNull()?.let { it < 0 } ?: true)
                 OutlinedTextField(
-                    value = cashInputValue,
-                    onValueChange = { cashInputValue = it },
-                    label = { Text("可用现金") },
+                    value = newCashText,
+                    onValueChange = { text ->
+                        newCashText = text
+                        val newCash = text.toDoubleOrNull()
+                        if (newCash != null && newCash >= 0) {
+                            isIncrease = newCash >= portfolioCash
+                            val delta = abs(newCash - portfolioCash)
+                            deltaText = String.format("%.2f", delta)
+                        }
+                    },
+                    label = { Text("新的可用现金") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    isError = newCashError,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -79,8 +95,8 @@ fun CashEditDialog(
             }
         },
         confirmButton = {
-            Button(onClick = {
-                val newCash = cashInputValue.toDoubleOrNull()
+            Button(enabled = newCashValid, onClick = {
+                val newCash = newCashText.toDoubleOrNull()
                 if (newCash != null && newCash >= 0) {
                     onSaveCash(newCash)
                 }
