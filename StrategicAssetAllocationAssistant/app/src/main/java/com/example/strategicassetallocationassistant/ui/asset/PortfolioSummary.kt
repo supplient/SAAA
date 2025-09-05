@@ -58,19 +58,19 @@ fun PortfolioSummary(
                 modifier = Modifier.clickable { showCashEditDialog = true }
             )
 
-            // 中：总体风险因子
-            Text(
-                text = "🚩${String.format("%.2f%%", (riskFactor ?: 0.0)*100)}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
+            // 中：总体风险因子（复用组件）
+            com.example.strategicassetallocationassistant.RiskFactorView(
+                riskFactor = riskFactor,
+                showLabel = false,
                 modifier = Modifier.clickable { showSummaryDialog = true }
             )
 
-            // 右：资产占比汇总
-            Text(
-                text = "Σ${String.format("%.1f", currentWeight*100)}% = ${String.format("%.1f", targetWeight*100)}% ${if(deviation>=0) "+" else "-"} ${String.format("%.1f", kotlin.math.abs(deviation)*100)}%",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
+            // 右：资产占比汇总（复用组件）
+            com.example.strategicassetallocationassistant.NonCashWeightView(
+                currentWeight = currentWeight,
+                targetWeight = targetWeight,
+                showLabel = false,
+                prefix = "Σ",
                 modifier = Modifier.clickable { showSummaryDialog = true }
             )
         }
@@ -89,6 +89,7 @@ fun PortfolioSummary(
             totalAssets = totalAssets,
             portfolioCash = availableCash,
             targetWeightSum = targetWeightSum,
+            riskFactor = riskFactor,
             onDismiss = { showSummaryDialog = false }
         )
     }

@@ -9,13 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
+import com.example.strategicassetallocationassistant.NonCashWeightView
+import com.example.strategicassetallocationassistant.RiskFactorView
 
 @Composable
 fun PortfolioSummaryDialog(
     totalAssets: Double,
     portfolioCash: Double,
     targetWeightSum: Double,
+    riskFactor: Double?,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -36,30 +38,11 @@ fun PortfolioSummaryDialog(
                 // 除现金外占比
                 val nonCashAssetsValue = totalAssets - portfolioCash
                 val nonCashCurrentWeightSum = if (totalAssets > 0) nonCashAssetsValue / totalAssets else 0.0
-                val nonCashTargetWeightSum = targetWeightSum
-                val nonCashWeightDeviation = nonCashCurrentWeightSum - nonCashTargetWeightSum
-                val deviationAbs = abs(nonCashWeightDeviation)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "除现金外占比", style = MaterialTheme.typography.bodyMedium)
-                    if (deviationAbs > 0.0001) {
-                        Text(
-                            text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}% ± ${String.format("%.1f", deviationAbs * 100)}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    } else {
-                        Text(
-                            text = "${String.format("%.1f", nonCashCurrentWeightSum * 100)}% = ${String.format("%.1f", nonCashTargetWeightSum * 100)}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+                NonCashWeightView(
+                    currentWeight = nonCashCurrentWeightSum,
+                    targetWeight = targetWeightSum,
+                    showLabel = true
+                )
 
                 // 可用现金
                 Row(
@@ -70,6 +53,12 @@ fun PortfolioSummaryDialog(
                     Text(text = "可用现金", style = MaterialTheme.typography.bodyMedium)
                     Text(text = "¥${String.format("%.2f", portfolioCash)}", style = MaterialTheme.typography.bodyMedium)
                 }
+
+                // 总体风险因子
+                RiskFactorView(
+                    riskFactor = riskFactor,
+                    showLabel = true
+                )
             }
         },
         confirmButton = {},
