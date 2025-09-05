@@ -19,6 +19,9 @@ import com.example.strategicassetallocationassistant.GenericAssetTable
 import com.example.strategicassetallocationassistant.CommonAssetColumns
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +40,22 @@ fun AddEditTransactionScreen(navController: NavController) {
     val isEditing = viewModel.isEditing
 
     Scaffold(topBar = {
-        CenterAlignedTopAppBar(title = { Text(if (isEditing) "编辑交易" else "新增交易") })
+        CenterAlignedTopAppBar(title = {
+            Column {
+                Text(if (isEditing) "编辑交易" else "新增交易")
+                val assets = viewModel.assets.collectAsState().value
+                val aid = viewModel.selectedAssetId.collectAsState().value
+                val assetName = assets.firstOrNull { it.id == aid }?.name ?: ""
+                if (assetName.isNotBlank()) {
+                    Text(
+                        assetName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        })
     }) { inner ->
         Column(
             modifier = Modifier
@@ -58,48 +76,32 @@ fun AddEditTransactionScreen(navController: NavController) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            // 类型
-            ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = !typeExpanded }) {
-                OutlinedTextField(
-                    value = if (type == TradeType.BUY) "买入" else "卖出",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("交易类型") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
-                    TradeType.values().forEach { t ->
-                        DropdownMenuItem(text = { Text(if (t == TradeType.BUY) "买入" else "卖出") }, onClick = {
-                            viewModel.onTypeChange(t); typeExpanded = false
-                        })
-                    }
+
+            // 行1: 买/卖切换按钮 + 份额输入
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val isBuy = type == TradeType.BUY
+                val btnColors = ButtonDefaults.filledTonalButtonColors()
+                FilledTonalButton(
+                    onClick = { viewModel.onTypeChange(if (isBuy) TradeType.SELL else TradeType.BUY) },
+                    colors = btnColors,
+                    modifier = Modifier.width(80.dp)
+                ) {
+                    Text(if (isBuy) "买" else "卖")
                 }
+
+                Spacer(Modifier.width(12.dp))
+
+                val sharesError by viewModel.sharesError.collectAsState()
+                OutlinedTextField(
+                    value = shares,
+                    onValueChange = viewModel::onSharesChange,
+                    label = { Text("份额") },
+                    isError = sharesError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
             }
 
-            // Asset selection dropdown
-            var assetExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(expanded = assetExpanded, onExpandedChange = { assetExpanded = !assetExpanded }) {
-                OutlinedTextField(
-                    value = viewModel.selectedAssetId.collectAsState().value?.let { id ->
-                        viewModel.assets.collectAsState().value.firstOrNull { it.id == id }?.name ?: ""
-                    } ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("选择资产 (可选)") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = assetExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                DropdownMenu(expanded = assetExpanded, onDismissRequest = { assetExpanded = false }) {
-                    DropdownMenuItem(text = { Text("无") }, onClick = { viewModel.onAssetSelected(null); assetExpanded = false })
-                    viewModel.assets.collectAsState().value.forEach { asset ->
-                        DropdownMenuItem(text = { Text(asset.name) }, onClick = {
-                            viewModel.onAssetSelected(asset); assetExpanded = false
-                        })
-                    }
-                }
-            }
-            OutlinedTextField(value = shares, onValueChange = viewModel::onSharesChange, label = { Text("份额") }, modifier = Modifier.fillMaxWidth())
             // 行2 单价 + 刷新
             val isRefreshing by viewModel.isRefreshing.collectAsState()
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -118,7 +120,27 @@ fun AddEditTransactionScreen(navController: NavController) {
                 }
             }
 
-            OutlinedTextField(value = fee, onValueChange = viewModel::onFeeChange, label = { Text("手续费") }, modifier = Modifier.fillMaxWidth())
+            // 行3 手续费 & 总额
+            val feeError by viewModel.feeError.collectAsState()
+            val totalAmount by viewModel.totalAmount.collectAsState()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = fee,
+                    onValueChange = viewModel::onFeeChange,
+                    label = { Text("手续费") },
+                    isError = feeError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(0.3f)
+                )
+                Spacer(Modifier.width(12.dp))
+                OutlinedTextField(
+                    value = totalAmount,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("总额") },
+                    modifier = Modifier.weight(0.7f)
+                )
+            }
 
             OutlinedTextField(value = reason, onValueChange = viewModel::onReasonChange, label = { Text("交易理由 (可选)") }, modifier = Modifier.fillMaxWidth())
 

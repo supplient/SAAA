@@ -55,6 +55,10 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _sharesInput = MutableStateFlow("100")
     val sharesInput: StateFlow<String> = _sharesInput.asStateFlow()
 
+    // shares error flag
+    private val _sharesError = MutableStateFlow(false)
+    val sharesError: StateFlow<Boolean> = _sharesError.asStateFlow()
+
     // 当前资产单价 Flow（只读）
     val currentPrice: StateFlow<Double?> = combine(assets, _selectedAssetId) { list, id ->
         list.firstOrNull { it.id == id }?.unitValue
@@ -62,6 +66,16 @@ class AddEditTransactionViewModel @Inject constructor(
 
     private val _feeInput = MutableStateFlow("5")
     val feeInput: StateFlow<String> = _feeInput.asStateFlow()
+
+    private val _feeError = MutableStateFlow(false)
+    val feeError: StateFlow<Boolean> = _feeError.asStateFlow()
+
+    val totalAmount: StateFlow<String> = combine(_sharesInput, currentPrice, _feeInput) { sharesStr, price, feeStr ->
+        val shares = sharesStr.toDoubleOrNull()
+        val fee = feeStr.toDoubleOrNull()
+        if (shares == null || price == null || fee == null) return@combine "-"
+        String.format("%.2f", shares * price + fee)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "-")
 
     private val _reasonInput = MutableStateFlow("")
     val reasonInput: StateFlow<String> = _reasonInput.asStateFlow()
@@ -160,17 +174,34 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     /* -----------------------  Intents  ----------------------- */
-    fun onTypeChange(value: TradeType) { _type.value = value }
+    fun onTypeChange(value: TradeType) { _type.value = value; validateShares() }
     fun onAssetIdChange(value: String) { _assetIdInput.value = value }
 
     fun onAssetSelected(asset: Asset?) {
         _selectedAssetId.value = asset?.id
         _assetIdInput.value = asset?.id?.toString().orEmpty()
+        validateShares()
     }
 
-    fun onSharesChange(value: String) { _sharesInput.value = value }
-    fun onFeeChange(value: String) { _feeInput.value = value }
+    fun onSharesChange(value: String) { _sharesInput.value = value; validateShares() }
+    fun onFeeChange(value: String) { _feeInput.value = value; validateFee() }
     fun onReasonChange(value: String) { _reasonInput.value = value }
+
+    private fun validateShares() {
+        val shares = _sharesInput.value.toDoubleOrNull() ?: run { _sharesError.value = true; return }
+        if (shares < 0) { _sharesError.value = true; return }
+        if (_type.value == TradeType.SELL) {
+            val assetId = _selectedAssetId.value
+            val currentShares = assets.value.firstOrNull { it.id == assetId }?.shares ?: 0.0
+            _sharesError.value = shares > currentShares
+        } else {
+            _sharesError.value = false
+        }
+    }
+
+    private fun validateFee() {
+        _feeError.value = _feeInput.value.toDoubleOrNull()?.let { it < 0 } ?: true
+    }
 
     suspend fun save(): Boolean {
         val tx = buildTransaction() ?: return false
