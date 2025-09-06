@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -78,9 +80,7 @@ fun AssetListScreen(
                 AppDrawer(
                     onClose = { scope.launch { drawerState.close() } },
                     onNavigateToConfigNote = onOpenConfigNote,
-                    onNavigateToAssetAnalysis = onOpenAssetAnalysis,
                     onNavigateToApiTest = onOpenApiTest,
-                    onNavigateToTransactions = onOpenTransactions,
                     onNavigateToSettings = onOpenSettings
                 )
             }
@@ -98,6 +98,14 @@ fun AssetListScreen(
                         // 新增资产按钮
                         IconButton(onClick = onAddAsset) {
                             Icon(Icons.Default.Add, contentDescription = "新增资产")
+                        }
+                        // 资产分析按钮
+                        IconButton(onClick = onOpenAssetAnalysis) {
+                            Icon(Icons.Default.Analytics, contentDescription = "资产分析")
+                        }
+                        // 交易记录按钮
+                        IconButton(onClick = onOpenTransactions) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "交易记录")
                         }
                         // 排序按钮
                         IconButton(onClick = { showSortDialog = true }) {
