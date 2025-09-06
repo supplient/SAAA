@@ -10,7 +10,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.foundation.clickable
@@ -95,10 +95,6 @@ fun AssetListScreen(
                         }
                     },
                     actions = {
-                        // 新增资产按钮
-                        IconButton(onClick = onAddAsset) {
-                            Icon(Icons.Default.Add, contentDescription = "新增资产")
-                        }
                         // 资产分析按钮
                         IconButton(onClick = onOpenAssetAnalysis) {
                             Icon(Icons.Default.Analytics, contentDescription = "资产分析")
@@ -109,7 +105,7 @@ fun AssetListScreen(
                         }
                         // 排序按钮
                         IconButton(onClick = { showSortDialog = true }) {
-                            Icon(Icons.Default.Sort, contentDescription = "排序")
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "排序")
                         }
                         // 隐藏资产数目按钮
                         IconButton(onClick = { viewModel.toggleAssetAmountHidden() }) {
@@ -145,6 +141,7 @@ fun AssetListScreen(
                     isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                     onAddTransaction = onAddTransactionForAsset,
                     onEditAsset = onEditAsset,
+                    onAddAsset = onAddAsset,
                     modifier = Modifier.weight(1f)
                 )
                 

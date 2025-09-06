@@ -14,6 +14,7 @@ fun AssetTable(
     isHidden: Boolean,
     onAddTransaction: (UUID) -> Unit,
     onEditAsset: (UUID) -> Unit,
+    onAddAsset: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val columns = remember {
@@ -40,6 +41,8 @@ fun AssetTable(
         columns = columns,
         behavior = behavior,
         isHidden = isHidden,
+        showAddButton = true,
+        onAddClick = onAddAsset,
         modifier = modifier
     )
 }

@@ -2,6 +2,7 @@ package com.example.strategicassetallocationassistant
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -55,6 +57,8 @@ fun GenericAssetTable(
     behavior: AssetTableBehavior = AssetTableBehavior(),
     isHidden: Boolean = false,
     useLazy: Boolean = true,
+    showAddButton: Boolean = false,
+    onAddClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
@@ -85,6 +89,19 @@ fun GenericAssetTable(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+                
+                // 底部新增资产按钮行
+                if (showAddButton && onAddClick != null) {
+                    item {
+                        AddAssetButtonRow(
+                            fixedColumn = fixedColumn.firstOrNull(),
+                            scrollableColumns = scrollableColumns,
+                            horizontalScrollState = horizontalScrollState,
+                            onAddClick = onAddClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
         } else {
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -96,6 +113,17 @@ fun GenericAssetTable(
                         scrollableColumns = scrollableColumns,
                         horizontalScrollState = horizontalScrollState,
                         behavior = behavior,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
+                // 底部新增资产按钮行
+                if (showAddButton && onAddClick != null) {
+                    AddAssetButtonRow(
+                        fixedColumn = fixedColumn.firstOrNull(),
+                        scrollableColumns = scrollableColumns,
+                        horizontalScrollState = horizontalScrollState,
+                        onAddClick = onAddClick,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -154,6 +182,77 @@ private fun GenericAssetTableHeader(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 新增资产按钮行组件
+ */
+@Composable
+private fun AddAssetButtonRow(
+    fixedColumn: AssetTableColumn?,
+    scrollableColumns: List<AssetTableColumn>,
+    horizontalScrollState: androidx.compose.foundation.ScrollState,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable { onAddClick() }
+            .padding(vertical = 12.dp, horizontal = 2.dp)
+    ) {
+        // 固定列区域
+        fixedColumn?.let { column ->
+            Box(
+                modifier = Modifier
+                    .width(column.width)
+                    .padding(horizontal = 2.dp),
+                contentAlignment = column.contentAlignment
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "新增资产",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "新增资产",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+        
+        // 可滚动列区域
+        Row(
+            modifier = Modifier
+                .horizontalScroll(horizontalScrollState)
+                .padding(start = 2.dp)
+        ) {
+            scrollableColumns.forEach { column ->
+                Box(
+                    modifier = Modifier
+                        .width(column.width)
+                        .padding(horizontal = 2.dp),
+                    contentAlignment = column.contentAlignment
+                ) {
+                    Text(
+                        text = "点击新增",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                 }
