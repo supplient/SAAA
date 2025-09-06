@@ -59,8 +59,13 @@ class PortfolioRepository @Inject constructor(
     suspend fun importDataFromJson(json: String) {
         val backupData = Json.decodeFromString<PortfolioBackup>(json)
         db.withTransaction {
+            // 清空所有数据
             assetDao.deleteAllAssets()
             portfolioDao.deletePortfolio()
+            transactionDao.deleteAllTransactions()
+            tradingOpportunityDao.deleteAll()
+            
+            // 导入新数据
             assetDao.insertAssets(backupData.assets)
             portfolioDao.insertPortfolio(backupData.portfolio)
         }

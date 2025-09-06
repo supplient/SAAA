@@ -226,16 +226,23 @@ private fun ImportDialog(
         onDismissRequest = onDismiss,
         title = { Text("导入数据") },
         text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                label = { Text("在此处粘贴JSON数据") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column {
+                Text(
+                    text = "⚠️ 警告：导入数据将会清空所有现有的交易记录和交易机会！",
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("在此处粘贴JSON数据") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(text) }) {
-                Text("导入")
+                Text("确认导入")
             }
         },
         dismissButton = {
