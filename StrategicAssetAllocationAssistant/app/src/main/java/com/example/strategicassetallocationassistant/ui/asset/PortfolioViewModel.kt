@@ -115,7 +115,7 @@ class PortfolioViewModel @Inject constructor(
     }
 
     // 隐藏资产数目的状态
-    private val _isAssetAmountHidden = MutableStateFlow(false)
+    private val _isAssetAmountHidden = MutableStateFlow(true)
     val isAssetAmountHidden: StateFlow<Boolean> = _isAssetAmountHidden.asStateFlow()
 
     /** 切换资产数目隐藏状态 */

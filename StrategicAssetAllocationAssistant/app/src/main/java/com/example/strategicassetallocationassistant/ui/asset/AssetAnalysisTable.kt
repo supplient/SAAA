@@ -11,6 +11,7 @@ import java.util.UUID
 @Composable
 fun AssetAnalysisTable(
     analyses: List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>,
+    isHidden: Boolean,
     onEditAsset: (UUID) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -34,6 +35,7 @@ fun AssetAnalysisTable(
         analyses = analyses,
         columns = columns,
         behavior = behavior,
+        isHidden = isHidden,
         modifier = modifier
     )
 }
