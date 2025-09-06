@@ -137,3 +137,9 @@ data class TradingOpportunity(
     @Contextual val time: LocalDateTime,
     val reason: String
 )
+
+// 交易记录显示项（包含资产名称）
+data class TransactionDisplayItem(
+    val transaction: Transaction,
+    val assetName: String
+)

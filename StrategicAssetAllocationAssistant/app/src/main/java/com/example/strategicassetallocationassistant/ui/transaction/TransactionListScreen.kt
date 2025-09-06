@@ -20,7 +20,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TransactionListScreen(
     navToEdit: (java.util.UUID) -> Unit,
-    modifier: Modifier = Modifier,
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactionsState.collectAsState()
@@ -40,8 +39,8 @@ fun TransactionListScreen(
                     .fillMaxSize()
                     .padding(inner)
             ) {
-                items(transactions) { tx ->
-                    TransactionRow(tx = tx, onClick = { navToEdit(tx.id) })
+                items(transactions) { displayItem ->
+                    TransactionRow(displayItem = displayItem, onClick = { navToEdit(displayItem.transaction.id) })
                 }
             }
         }
@@ -49,8 +48,20 @@ fun TransactionListScreen(
 }
 
 @Composable
-private fun TransactionRow(tx: Transaction, onClick: () -> Unit) {
+private fun TransactionRow(displayItem: TransactionDisplayItem, onClick: () -> Unit) {
+    val tx = displayItem.transaction
     val dateStr = tx.time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+    
+    // 计算总额（包含手续费）
+    val totalAmount = tx.amount + tx.fee
+    val totalAmountStr = String.format("%.2f", totalAmount)
+    val amountPrefix = if (tx.type == TradeType.BUY) "-" else "+"
+    
+    // 格式化数值
+    val sharesStr = String.format("%.2f", tx.shares)
+    val priceStr = String.format("%.2f", tx.price)
+    val feeStr = String.format("%.2f", tx.fee)
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -59,21 +70,45 @@ private fun TransactionRow(tx: Transaction, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            // 第一行：资产名称（左对齐）+ 交易时间（右对齐，较小字体）
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween, 
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    text = if (tx.type == TradeType.BUY) "买入" else "卖出",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (tx.type == TradeType.BUY) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    text = displayItem.assetName,
+                    style = MaterialTheme.typography.titleMedium
                 )
-                Text(dateStr, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = dateStr, 
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // 第二行：<买/卖><份额>x<单价>+<手续费>=<+/-总额>
+            val tradeTypeText = if (tx.type == TradeType.BUY) "买" else "卖"
+            val tradeTypeColor = if (tx.type == TradeType.BUY) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            
+            Text(
+                text = "${tradeTypeText}${sharesStr}x${priceStr}+${feeStr}=${amountPrefix}${totalAmountStr}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = tradeTypeColor
+            )
+            
             Spacer(Modifier.height(4.dp))
-            Text("份额: ${tx.shares}  价格: ${tx.price}", style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(2.dp))
-            Text("金额: ${tx.amount}  手续费: ${tx.fee}", style = MaterialTheme.typography.bodySmall)
-            tx.reason?.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(2.dp))
-                Text(text = "理由: $it", style = MaterialTheme.typography.bodySmall)
+            
+            // 第三行：交易理由（单行，较小字体，不允许换行）
+            tx.reason?.takeIf { it.isNotBlank() }?.let { reason ->
+                Text(
+                    text = reason,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
             }
         }
     }

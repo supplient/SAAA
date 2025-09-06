@@ -39,9 +39,6 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _type = MutableStateFlow(TradeType.BUY)
     val type: StateFlow<TradeType> = _type.asStateFlow()
 
-    private val _assetIdInput = MutableStateFlow("")
-    val assetIdInput: StateFlow<String> = _assetIdInput.asStateFlow()
-
     // All assets for dropdown
     val assets: StateFlow<List<Asset>> = repository.assetsFlow.stateIn(
         scope = viewModelScope,
@@ -144,7 +141,7 @@ class AddEditTransactionViewModel @Inject constructor(
             viewModelScope.launch {
                 repository.getTransactionById(id)?.let { tx ->
                     _type.value = tx.type
-                    _assetIdInput.value = tx.assetId?.toString().orEmpty()
+                    _selectedAssetId.value = tx.assetId
                     _sharesInput.value = tx.shares.toString()
                     _feeInput.value = tx.fee.toString()
                     _reasonInput.value = tx.reason.orEmpty()
@@ -158,7 +155,6 @@ class AddEditTransactionViewModel @Inject constructor(
                 repository.tradingOpportunitiesFlow.firstOrNull()?.firstOrNull { it.id == opId }?.let { op ->
                     _type.value = op.type
                     _selectedAssetId.value = op.assetId
-                    _assetIdInput.value = op.assetId?.toString().orEmpty()
                     _sharesInput.value = op.shares.toString()
                     _feeInput.value = op.fee.toString()
                     _reasonInput.value = op.reason
@@ -169,17 +165,14 @@ class AddEditTransactionViewModel @Inject constructor(
         // If launched directly from an asset
         initialAssetId?.let { aid ->
             _selectedAssetId.value = aid
-            _assetIdInput.value = aid.toString()
         }
     }
 
     /* -----------------------  Intents  ----------------------- */
     fun onTypeChange(value: TradeType) { _type.value = value; validateShares() }
-    fun onAssetIdChange(value: String) { _assetIdInput.value = value }
 
     fun onAssetSelected(asset: Asset?) {
         _selectedAssetId.value = asset?.id
-        _assetIdInput.value = asset?.id?.toString().orEmpty()
         validateShares()
     }
 

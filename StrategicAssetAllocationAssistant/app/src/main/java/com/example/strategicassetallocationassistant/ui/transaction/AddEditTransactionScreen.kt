@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 fun AddEditTransactionScreen(navController: NavController) {
     val viewModel: AddEditTransactionViewModel = hiltViewModel()
     val type by viewModel.type.collectAsState()
-    val assetId by viewModel.assetIdInput.collectAsState()
     val shares by viewModel.sharesInput.collectAsState()
     val currentPrice by viewModel.currentPrice.collectAsState()
     val fee by viewModel.feeInput.collectAsState()
@@ -38,7 +37,6 @@ fun AddEditTransactionScreen(navController: NavController) {
     val previewInfos by viewModel.previewInfos.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    var typeExpanded by remember { mutableStateOf(false) }
     val isEditing = viewModel.isEditing
 
     Scaffold(topBar = {
@@ -82,7 +80,19 @@ fun AddEditTransactionScreen(navController: NavController) {
             // 行1: 买/卖切换按钮 + 份额输入
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val isBuy = type == TradeType.BUY
-                val btnColors = ButtonDefaults.filledTonalButtonColors()
+                val btnColors = if (isBuy) {
+                    // 买入按钮使用主题色
+                    ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    // 卖出按钮使用错误色
+                    ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                }
                 FilledTonalButton(
                     onClick = { viewModel.onTypeChange(if (isBuy) TradeType.SELL else TradeType.BUY) },
                     colors = btnColors,

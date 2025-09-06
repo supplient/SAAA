@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -16,7 +17,17 @@ class TransactionViewModel @Inject constructor(
     private val repository: com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
 ) : ViewModel() {
 
-    val transactionsState: StateFlow<List<Transaction>> = repository.transactionsFlow.stateIn(
+    val transactionsState: StateFlow<List<TransactionDisplayItem>> = combine(
+        repository.transactionsFlow,
+        repository.assetsFlow
+    ) { transactions, assets ->
+        transactions.map { transaction ->
+            val assetName = transaction.assetId?.let { assetId ->
+                assets.firstOrNull { it.id == assetId }?.name ?: "未知资产"
+            } ?: "现金交易"
+            TransactionDisplayItem(transaction, assetName)
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
