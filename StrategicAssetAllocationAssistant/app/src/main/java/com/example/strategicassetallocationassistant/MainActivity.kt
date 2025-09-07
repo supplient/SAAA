@@ -34,17 +34,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             StrategicAssetAllocationAssistantTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val navController = rememberNavController()
+                val navController = rememberNavController()
 
-                    NavHost(
-                        navController = navController,
-                        startDestination = NavRoutes.AssetList.route,
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable(NavRoutes.AssetList.route) {
-                            val viewModel: PortfolioViewModel = hiltViewModel()
-                            AssetListScreen(
+                NavHost(
+                    navController = navController,
+                    startDestination = NavRoutes.AssetList.route,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    composable(NavRoutes.AssetList.route) {
+                        val viewModel: PortfolioViewModel = hiltViewModel()
+                        AssetListScreen(
                                 viewModel = viewModel,
                                 modifier = Modifier.fillMaxSize(),
                                 onAddAsset = {
@@ -157,7 +156,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                }
             }
         }
     }
