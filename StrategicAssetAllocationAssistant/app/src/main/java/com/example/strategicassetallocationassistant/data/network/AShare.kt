@@ -183,27 +183,137 @@ object AShare {
             null
         }
 
-        // --- 90 日年化波动率 ---
-        val annualVol: Double? = if (historicalPrices.size >= 2) {
-            val effectiveList = if (historicalPrices.size >= 90) historicalPrices.takeLast(90) else {
-                Log.i(
-                    "AShare",
-                    "getMarketStats: historicalPrices.size < 90 for code: $code, using available ${historicalPrices.size} records to calculate annualVol"
-                )
-                historicalPrices
-            }
-
-            val deltas = effectiveList.windowed(2) { (p1, p2) -> kotlin.math.ln(p1.close / p2.close) }
-            if (deltas.isEmpty()) null else {
-                val mean = deltas.average()
-                val variance = deltas.sumOf { (it - mean) * (it - mean) } / deltas.size
-                kotlin.math.sqrt(variance) * 15.87
-            }
-        } else {
+        // --- 90 日年化波动率（Yang–Zhang） ---
+        val effectiveList = if (historicalPrices.size >= 90) historicalPrices.takeLast(90) else {
+            Log.i(
+                "AShare",
+                "getMarketStats: historicalPrices.size < 90 for code: $code, using available ${historicalPrices.size} records to calculate annualVol"
+            )
+            historicalPrices
+        }
+        val annualVol: Double? = calculateYangZhangAnnualVolatility(effectiveList) ?: run {
+            Log.i(
+                "AShare",
+                "getMarketStats: insufficient or invalid OHLC data for Yang–Zhang volatility for code: $code"
+            )
             null
         }
 
         return MarketStats(latestClose, sevenDayReturn, annualVol)
+    }
+
+
+    /**
+     * 计算给定日K线数据的杨-张（Yang-Zhang）年化波动率。
+     *
+     * 杨-张波动率是一种结合开盘价、最高价、最低价和收盘价的波动率估计方法，
+     * 能够有效处理价格跳空和趋势漂移等情况，提供更准确的波动率估计。
+     *
+     * 计算步骤：
+     * 1. 计算开盘跳空方差（σ_o²）：衡量开盘价相对于前一日收盘价的变动程度。
+     * 2. 计算收盘方差（σ_c²）：衡量收盘价相对于开盘价的变动程度。
+     * 3. 计算 Rogers-Satchell 方差（σ_rs²）：综合考虑最高价、最低价、开盘价和收盘价的变动情况。
+     * 4. 计算权重系数 k：用于在综合波动率计算中平衡各方差的贡献。
+     * 5. 计算日方差（σ_d²）：综合上述方差和权重系数，得到每日的波动率估计。
+     * 6. 年化波动率：将日方差乘以 252（假设一年有 252 个交易日），再开平方，得到年化波动率。
+     *
+     * 注意事项：
+     * - 输入的 K 线数据应包含开盘价、最高价、最低价和收盘价。
+     * - 数据长度应至少为 2，否则无法计算波动率。
+     * - 方法会自动过滤价格非正的情况，并在数据不足时返回 null。
+     *
+     * @param ohlc 包含日 K 线数据的列表，每个元素应包含开盘价、最高价、最低价和收盘价。
+     * @param tradingDaysPerYear 年交易天数，默认为 252 天。
+     * @return 计算得到的杨-张年化波动率，若数据不足或无效，则返回 null。
+     */
+    fun calculateYangZhangAnnualVolatility(
+        ohlc: List<StockData>,
+        tradingDaysPerYear: Int = 252
+    ): Double? {
+        // 数据长度检查：至少需要3个数据点才能计算波动率
+        if (ohlc.size < 3) return null
+
+        val n = ohlc.size
+        // 初始化存储列表
+        val ocList = ArrayList<Double>(n - 1) // 存储 ln(O_i / C_{i-1}) - 开盘跳空对数收益率
+        val coList = ArrayList<Double>(n)     // 存储 ln(C_i / O_i) - 日内收盘对开盘对数收益率
+        val rsList = ArrayList<Double>(n)     // 存储 Rogers-Satchell 项
+
+        // 遍历每个交易日，计算各项对数收益率
+        for (i in 0 until n) {
+            val day = ohlc[i]
+            val open = day.open.toDouble()
+            val close = day.close.toDouble()
+            val high = day.high.toDouble()
+            val low = day.low.toDouble()
+
+            // 过滤无效价格数据（价格必须为正数）
+            if (open <= 0.0 || close <= 0.0 || high <= 0.0 || low <= 0.0) continue
+
+            // 计算日内收盘对开盘的对数收益率：ln(C_i / O_i)
+            coList.add(kotlin.math.ln(close / open))
+
+            // 计算 Rogers-Satchell 项：
+            // ln(H_i/C_i) * ln(H_i/O_i) + ln(L_i/C_i) * ln(L_i/O_i)
+            val rsTerm = kotlin.math.ln(high / close) * kotlin.math.ln(high / open) +
+                    kotlin.math.ln(low / close) * kotlin.math.ln(low / open)
+            rsList.add(rsTerm)
+
+            // 计算开盘跳空对数收益率：ln(O_i / C_{i-1})
+            // 需要前一日收盘价，所以从第二个交易日开始计算
+            if (i >= 1) {
+                val prevClose = ohlc[i - 1].close.toDouble()
+                if (prevClose > 0.0) {
+                    ocList.add(kotlin.math.ln(open / prevClose))
+                }
+            }
+        }
+
+        // 获取有效数据点数量
+        val coCount = coList.size
+        val ocCount = ocList.size
+        val rsCount = rsList.size
+
+        // 数据充足性检查：需要足够的数据点才能计算方差
+        if (coCount < 2 || ocCount < 2 || rsCount < 1) return null
+
+        // 计算各项对数收益率的均值
+        val muCo = coList.average()  // 日内收盘对开盘对数收益率的均值
+        val muOc = ocList.average()  // 开盘跳空对数收益率的均值
+
+        // 计算收盘方差 σ_c² = (1/(n-1)) * Σ(ln(C_i/O_i) - μ_c)²
+        var sumSqCo = 0.0
+        for (v in coList) {
+            val d = v - muCo
+            sumSqCo += d * d
+        }
+        val sigmaC2 = sumSqCo / (coCount - 1)
+
+        // 计算开盘跳空方差 σ_o² = (1/(n-1)) * Σ(ln(O_i/C_{i-1}) - μ_o)²
+        var sumSqOc = 0.0
+        for (v in ocList) {
+            val d = v - muOc
+            sumSqOc += d * d
+        }
+        val sigmaO2 = sumSqOc / (ocCount - 1)
+
+        // 计算 Rogers-Satchell 方差 σ_rs² = (1/n) * Σ[ln(H_i/C_i)*ln(H_i/O_i) + ln(L_i/C_i)*ln(L_i/O_i)]
+        var sumRs = 0.0
+        for (v in rsList) sumRs += v
+        val sigmaRS2 = sumRs / rsCount
+
+        // 计算权重系数 k = 0.34 / (1.34 + (n+1)/(n-1))
+        // 使用最小有效样本数确保计算稳定性
+        val nForK = kotlin.math.min(kotlin.math.min(coCount, rsCount), ocCount + 1)
+        if (nForK <= 1) return null
+        val k = 0.34 / (1.34 + (nForK + 1.0) / (nForK - 1.0))
+
+        // 计算 Yang-Zhang 日方差：σ_yz² = σ_o² + k*σ_c² + (1-k)*σ_rs²
+        val yzVarianceDaily = sigmaO2 + k * sigmaC2 + (1.0 - k) * sigmaRS2
+        if (yzVarianceDaily < 0.0) return null
+
+        // 年化波动率：σ_yz_annual = √(σ_yz² * 年交易天数)
+        return kotlin.math.sqrt(yzVarianceDaily * tradingDaysPerYear)
     }
 
 
