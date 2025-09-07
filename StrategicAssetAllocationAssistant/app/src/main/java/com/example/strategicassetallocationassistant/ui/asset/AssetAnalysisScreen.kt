@@ -90,6 +90,12 @@ fun AssetAnalysisScreen(
                 analyses = viewModel.sortedAssetAnalyses.collectAsState().value,
                 isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                 onEditAsset = onEditAsset,
+                showSortDialog = showSortDialog,
+                onSortOptionSelected = { option ->
+                    viewModel.setSortOption(option)
+                    showSortDialog = false
+                },
+                onDismissSortDialog = { showSortDialog = false },
                 modifier = Modifier.weight(1f)
             )
             
@@ -106,99 +112,7 @@ fun AssetAnalysisScreen(
                 onSaveCash = { newCash -> viewModel.updateCash(newCash) }
             )
         }
-        
-        // 排序对话框
-        if (showSortDialog) {
-            AnalysisSortDialog(
-                currentSortOption = viewModel.sortOption.collectAsState().value,
-                isAscending = viewModel.isAscending.collectAsState().value,
-                onSortOptionSelected = { option ->
-                    viewModel.setSortOption(option)
-                    showSortDialog = false
-                },
-                onDismiss = { showSortDialog = false }
-            )
-        }
     }
 }
 
 
-/**
- * 分析界面专用的排序对话框组件
- * 只显示与分析相关的排序选项
- */
-@Composable
-private fun AnalysisSortDialog(
-    currentSortOption: PortfolioViewModel.SortOption,
-    isAscending: Boolean,
-    onSortOptionSelected: (PortfolioViewModel.SortOption) -> Unit,
-    onDismiss: () -> Unit
-) {
-    // 分析界面相关的排序选项
-    val analysisRelevantOptions = listOf(
-        PortfolioViewModel.SortOption.ORIGINAL,
-        PortfolioViewModel.SortOption.CURRENT_WEIGHT,
-        PortfolioViewModel.SortOption.TARGET_WEIGHT,
-        PortfolioViewModel.SortOption.WEIGHT_DEVIATION,
-        PortfolioViewModel.SortOption.WEIGHT_DEVIATION_ABS,
-        PortfolioViewModel.SortOption.SEVEN_DAY_RETURN,
-        PortfolioViewModel.SortOption.BUY_FACTOR,
-        PortfolioViewModel.SortOption.SELL_THRESHOLD,
-        PortfolioViewModel.SortOption.RELATIVE_OFFSET,
-        PortfolioViewModel.SortOption.OFFSET_FACTOR,
-        PortfolioViewModel.SortOption.DRAWDOWN_FACTOR,
-        PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR,
-        PortfolioViewModel.SortOption.ASSET_RISK
-    )
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("选择排序方案") },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                analysisRelevantOptions.forEach { option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSortOptionSelected(option) }
-                            .padding(vertical = 8.dp, horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = option.displayName,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        
-                        // 显示当前排序方案和升降序指示器
-                        if (option == currentSortOption) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = if (isAscending) "↑" else "↓",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = if (isAscending) "升序" else "降序",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
-            }
-        }
-    )
-}

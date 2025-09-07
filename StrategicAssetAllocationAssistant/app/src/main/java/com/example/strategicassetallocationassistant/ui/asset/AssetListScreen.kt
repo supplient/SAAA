@@ -142,6 +142,12 @@ fun AssetListScreen(
                     onAddTransaction = onAddTransactionForAsset,
                     onEditAsset = onEditAsset,
                     onAddAsset = onAddAsset,
+                    showSortDialog = showSortDialog,
+                    onSortOptionSelected = { option ->
+                        viewModel.setSortOption(option)
+                        showSortDialog = false
+                    },
+                    onDismissSortDialog = { showSortDialog = false },
                     modifier = Modifier.weight(1f)
                 )
                 
@@ -158,86 +164,10 @@ fun AssetListScreen(
                     onSaveCash = { newCash -> viewModel.updateCash(newCash) }
                 )
             }
-            
-            // 排序对话框
-            if (showSortDialog) {
-                SortDialog(
-                    currentSortOption = viewModel.sortOption.collectAsState().value,
-                    isAscending = viewModel.isAscending.collectAsState().value,
-                    onSortOptionSelected = { option ->
-                        viewModel.setSortOption(option)
-                        showSortDialog = false
-                    },
-                    onDismiss = { showSortDialog = false }
-                )
-            }
-            
-
         }
         }
     }
 }
 
-/**
- * 排序对话框组件
- */
-@Composable
-private fun SortDialog(
-    currentSortOption: PortfolioViewModel.SortOption,
-    isAscending: Boolean,
-    onSortOptionSelected: (PortfolioViewModel.SortOption) -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("选择排序方案") },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PortfolioViewModel.SortOption.values().forEach { option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSortOptionSelected(option) }
-                            .padding(vertical = 8.dp, horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = option.displayName,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        
-                        // 显示当前排序方案和升降序指示器
-                        if (option == currentSortOption) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = if (isAscending) "↑" else "↓",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = if (isAscending) "升序" else "降序",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("关闭")
-            }
-        }
-    )
-}
 
 

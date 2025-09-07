@@ -13,6 +13,9 @@ fun AssetAnalysisTable(
     analyses: List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>,
     isHidden: Boolean,
     onEditAsset: (UUID) -> Unit,
+    showSortDialog: Boolean = false,
+    onSortOptionSelected: ((com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption) -> Unit)? = null,
+    onDismissSortDialog: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val columns = remember {
@@ -36,6 +39,9 @@ fun AssetAnalysisTable(
         columns = columns,
         behavior = behavior,
         isHidden = isHidden,
+        showSortDialog = showSortDialog,
+        onSortOptionSelected = onSortOptionSelected,
+        onDismissSortDialog = onDismissSortDialog,
         modifier = modifier
     )
 }

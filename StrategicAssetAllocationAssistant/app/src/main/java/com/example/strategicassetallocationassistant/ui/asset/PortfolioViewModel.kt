@@ -139,6 +139,7 @@ class PortfolioViewModel @Inject constructor(
         UNIT_PRICE("单价"),
         SHARES("份额"),
         SEVEN_DAY_RETURN("七日涨跌幅"),
+        VOLATILITY("波动率"),
         BUY_FACTOR("买入因子"),
         SELL_THRESHOLD("卖出阈值"),
         RELATIVE_OFFSET("相对偏移"),
@@ -186,6 +187,7 @@ class PortfolioViewModel @Inject constructor(
             SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
             SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
             SortOption.SEVEN_DAY_RETURN -> if (ascending) analyses.sortedBy { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY } else analyses.sortedByDescending { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY }
+            SortOption.VOLATILITY -> if (ascending) analyses.sortedBy { it.volatility ?: 0.0 } else analyses.sortedByDescending { it.volatility ?: 0.0 }
             SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.buyFactor ?: 0.0 }
             SortOption.SELL_THRESHOLD -> if (ascending) analyses.sortedBy { it.sellThreshold ?: 0.0 } else analyses.sortedByDescending { it.sellThreshold ?: 0.0 }
             SortOption.RELATIVE_OFFSET -> if (ascending) analyses.sortedBy { it.relativeOffset ?: Double.NEGATIVE_INFINITY } else analyses.sortedByDescending { it.relativeOffset ?: Double.NEGATIVE_INFINITY }

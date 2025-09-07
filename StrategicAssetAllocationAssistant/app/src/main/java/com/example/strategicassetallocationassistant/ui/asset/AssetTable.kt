@@ -15,6 +15,9 @@ fun AssetTable(
     onAddTransaction: (UUID) -> Unit,
     onEditAsset: (UUID) -> Unit,
     onAddAsset: () -> Unit = {},
+    showSortDialog: Boolean = false,
+    onSortOptionSelected: ((com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption) -> Unit)? = null,
+    onDismissSortDialog: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val columns = remember {
@@ -43,6 +46,9 @@ fun AssetTable(
         isHidden = isHidden,
         showAddButton = true,
         onAddClick = onAddAsset,
+        showSortDialog = showSortDialog,
+        onSortOptionSelected = onSortOptionSelected,
+        onDismissSortDialog = onDismissSortDialog,
         modifier = modifier
     )
 }

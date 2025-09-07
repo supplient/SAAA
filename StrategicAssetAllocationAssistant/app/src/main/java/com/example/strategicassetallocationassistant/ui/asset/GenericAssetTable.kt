@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import com.example.strategicassetallocationassistant.AssetMetricsCells
+import com.example.strategicassetallocationassistant.PortfolioViewModel
 
 /**
  * 资产表格列定义
@@ -35,7 +38,8 @@ data class AssetTableColumn(
     val width: Dp,
     val headerAlignment: Alignment = Alignment.Center,
     val contentAlignment: Alignment = Alignment.Center,
-    val content: @Composable (analysis: com.example.strategicassetallocationassistant.ui.common.model.AssetInfo, isHidden: Boolean) -> Unit
+    val content: @Composable (analysis: com.example.strategicassetallocationassistant.ui.common.model.AssetInfo, isHidden: Boolean) -> Unit,
+    val sortOptions: List<com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption> = emptyList()
 )
 
 /**
@@ -59,6 +63,9 @@ fun GenericAssetTable(
     useLazy: Boolean = true,
     showAddButton: Boolean = false,
     onAddClick: (() -> Unit)? = null,
+    showSortDialog: Boolean = false,
+    onSortOptionSelected: ((PortfolioViewModel.SortOption) -> Unit)? = null,
+    onDismissSortDialog: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
@@ -128,6 +135,15 @@ fun GenericAssetTable(
                     )
                 }
             }
+        }
+        
+        // 统一的排序对话框
+        if (showSortDialog && onSortOptionSelected != null && onDismissSortDialog != null) {
+            UnifiedSortDialog(
+                columns = columns,
+                onSortOptionSelected = onSortOptionSelected,
+                onDismiss = onDismissSortDialog
+            )
         }
     }
 }
@@ -335,7 +351,8 @@ object CommonAssetColumns {
         width = 60.dp,
         headerAlignment = Alignment.CenterStart,
         contentAlignment = Alignment.CenterStart,
-        content = { info, _ -> AssetMetricsCells.AssetName(info) }
+        content = { info, _ -> AssetMetricsCells.AssetName(info) },
+        sortOptions = emptyList() // 资产名称通常不参与排序
     )
     
     /**
@@ -350,7 +367,13 @@ object CommonAssetColumns {
                 AssetMetricsCells.TargetWeight(info)
                 AssetMetricsCells.WeightDeviation(info)
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.CURRENT_WEIGHT,
+            PortfolioViewModel.SortOption.TARGET_WEIGHT,
+            PortfolioViewModel.SortOption.WEIGHT_DEVIATION,
+            PortfolioViewModel.SortOption.WEIGHT_DEVIATION_ABS
+        )
     )
     
     /**
@@ -374,7 +397,11 @@ object CommonAssetColumns {
                     color = MaterialTheme.colorScheme.tertiary
                 )
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.BUY_FACTOR,
+            PortfolioViewModel.SortOption.SELL_THRESHOLD
+        )
     )
     
     /**
@@ -389,7 +416,12 @@ object CommonAssetColumns {
                 AssetMetricsCells.Shares(info, hidden)
                 AssetMetricsCells.Volatility(info)
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.UNIT_PRICE,
+            PortfolioViewModel.SortOption.SHARES,
+            PortfolioViewModel.SortOption.VOLATILITY
+        )
     )
     
     /**
@@ -404,7 +436,13 @@ object CommonAssetColumns {
                 AssetMetricsCells.TargetMarketValue(info, hidden)
                 AssetMetricsCells.MarketValueDeviation(info, hidden)
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.CURRENT_MARKET_VALUE,
+            PortfolioViewModel.SortOption.TARGET_MARKET_VALUE,
+            PortfolioViewModel.SortOption.MARKET_VALUE_DEVIATION,
+            PortfolioViewModel.SortOption.MARKET_VALUE_DEVIATION_ABS
+        )
     )
     
     /**
@@ -418,7 +456,8 @@ object CommonAssetColumns {
                 AssetMetricsCells.UpdateTimeClock(info)
                 AssetMetricsCells.UpdateTimeDate(info)
             }
-        }
+        },
+        sortOptions = emptyList() // 更新时间通常不参与排序
     )
     
     /**
@@ -429,7 +468,8 @@ object CommonAssetColumns {
         width = 160.dp,
         contentAlignment = Alignment.CenterStart,
         headerAlignment = Alignment.Center,
-        content = { info, _ -> AssetMetricsCells.Note(info) }
+        content = { info, _ -> AssetMetricsCells.Note(info) },
+        sortOptions = emptyList() // 备注通常不参与排序
     )
     
     /**
@@ -444,7 +484,12 @@ object CommonAssetColumns {
                 AssetMetricsCells.Volatility(info)
                 AssetMetricsCells.RelativeOffset(info)
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.SEVEN_DAY_RETURN,
+            PortfolioViewModel.SortOption.VOLATILITY,
+            PortfolioViewModel.SortOption.RELATIVE_OFFSET
+        )
     )
 
     /**
@@ -459,7 +504,12 @@ object CommonAssetColumns {
                 AssetMetricsCells.DrawdownFactor(info)
                 AssetMetricsCells.PreVolatilityBuyFactor(info)
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.OFFSET_FACTOR,
+            PortfolioViewModel.SortOption.DRAWDOWN_FACTOR,
+            PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR
+        )
     )
 
     /**
@@ -474,7 +524,12 @@ object CommonAssetColumns {
                 AssetMetricsCells.SellThreshold(info)
                 AssetMetricsCells.AssetRisk(info)
             }
-        }
+        },
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.BUY_FACTOR,
+            PortfolioViewModel.SortOption.SELL_THRESHOLD,
+            PortfolioViewModel.SortOption.ASSET_RISK
+        )
     )
     
     /**
@@ -483,7 +538,8 @@ object CommonAssetColumns {
     fun sevenDayReturnColumn() = AssetTableColumn(
         title = "七日涨跌幅",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.SevenDayReturn(info) }
+        content = { info, _ -> AssetMetricsCells.SevenDayReturn(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.SEVEN_DAY_RETURN)
     )
     
     /**
@@ -492,7 +548,8 @@ object CommonAssetColumns {
     fun volatilityColumn() = AssetTableColumn(
         title = "波动率",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.Volatility(info) }
+        content = { info, _ -> AssetMetricsCells.Volatility(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.VOLATILITY)
     )
     
     /**
@@ -501,7 +558,8 @@ object CommonAssetColumns {
     fun buyFactorColumn() = AssetTableColumn(
         title = "买入因子",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.BuyFactor(info) }
+        content = { info, _ -> AssetMetricsCells.BuyFactor(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.BUY_FACTOR)
     )
     
     /**
@@ -510,7 +568,8 @@ object CommonAssetColumns {
     fun sellThresholdColumn() = AssetTableColumn(
         title = "卖出阈值",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.SellThreshold(info) }
+        content = { info, _ -> AssetMetricsCells.SellThreshold(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.SELL_THRESHOLD)
     )
     
     /**
@@ -519,7 +578,8 @@ object CommonAssetColumns {
     fun relativeOffsetColumn() = AssetTableColumn(
         title = "相对偏移",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.RelativeOffset(info) }
+        content = { info, _ -> AssetMetricsCells.RelativeOffset(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.RELATIVE_OFFSET)
     )
     
     /**
@@ -528,7 +588,8 @@ object CommonAssetColumns {
     fun offsetFactorColumn() = AssetTableColumn(
         title = "偏移因子",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.OffsetFactor(info) }
+        content = { info, _ -> AssetMetricsCells.OffsetFactor(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.OFFSET_FACTOR)
     )
     
     /**
@@ -537,7 +598,8 @@ object CommonAssetColumns {
     fun drawdownFactorColumn() = AssetTableColumn(
         title = "跌幅因子",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.DrawdownFactor(info) }
+        content = { info, _ -> AssetMetricsCells.DrawdownFactor(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.DRAWDOWN_FACTOR)
     )
     
     /**
@@ -546,7 +608,8 @@ object CommonAssetColumns {
     fun preVolatilityBuyFactorColumn() = AssetTableColumn(
         title = "去波动买入因子",
         width = 100.dp,
-        content = { info, _ -> AssetMetricsCells.PreVolatilityBuyFactor(info) }
+        content = { info, _ -> AssetMetricsCells.PreVolatilityBuyFactor(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR)
     )
     
     /**
@@ -555,6 +618,54 @@ object CommonAssetColumns {
     fun assetRiskColumn() = AssetTableColumn(
         title = "资产风险",
         width = 80.dp,
-        content = { info, _ -> AssetMetricsCells.AssetRisk(info) }
+        content = { info, _ -> AssetMetricsCells.AssetRisk(info) },
+        sortOptions = listOf(PortfolioViewModel.SortOption.ASSET_RISK)
+    )
+}
+
+/**
+ * 统一的排序对话框组件
+ * 从所有列中收集可用的排序选项
+ */
+@Composable
+private fun UnifiedSortDialog(
+    columns: List<AssetTableColumn>,
+    onSortOptionSelected: (PortfolioViewModel.SortOption) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // 从所有列中收集排序选项，并添加原排序选项
+    val availableSortOptions = listOf(PortfolioViewModel.SortOption.ORIGINAL) + 
+        columns.flatMap { it.sortOptions }.distinct()
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("选择排序方案") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                availableSortOptions.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSortOptionSelected(option) }
+                            .padding(vertical = 8.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = option.displayName,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("关闭")
+            }
+        }
     )
 }
