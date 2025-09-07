@@ -407,7 +407,7 @@ object CommonAssetColumns {
      */
     fun assetNameColumn() = AssetTableColumn(
         title = "资产名称",
-        width = 60.dp,
+        width = 80.dp,
         headerAlignment = Alignment.CenterStart,
         contentAlignment = Alignment.CenterStart,
         content = { info, _ -> AssetMetricsCells.AssetName(info) },
@@ -491,7 +491,7 @@ object CommonAssetColumns {
      */
     fun marketValueColumn() = AssetTableColumn(
         title = "市值",
-        width = 100.dp,
+        width = 90.dp,
         content = { info, hidden ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AssetMetricsCells.CurrentMarketValue(info, hidden)
