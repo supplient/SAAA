@@ -35,6 +35,11 @@ fun AssetAnalysisScreen(
     // 排序对话框状态
     var showSortDialog by remember { mutableStateOf(false) }
     
+    // 获取当前排序状态
+    val currentSort by viewModel.sortOption.collectAsState()
+    val isAscending by viewModel.isAscending.collectAsState()
+    val currentSortColumnTitle by viewModel.currentSortColumnTitle.collectAsState()
+
     // 计算目标占比总和和总资产
     val targetWeightSum = analyses.sumOf { it.asset.targetWeight }
     val totalAssets = portfolio.cash + analyses.sumOf { it.marketValue }
@@ -59,10 +64,6 @@ fun AssetAnalysisScreen(
                     }
                 },
                 actions = {
-                    // 排序按钮
-                    IconButton(onClick = { showSortDialog = true }) {
-                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "排序")
-                    }
                     // 隐藏资产数目按钮
                     IconButton(onClick = { viewModel.toggleAssetAmountHidden() }) {
                         val isHidden by viewModel.isAssetAmountHidden.collectAsState()
@@ -96,6 +97,13 @@ fun AssetAnalysisScreen(
                     showSortDialog = false
                 },
                 onDismissSortDialog = { showSortDialog = false },
+                currentSort = currentSort,
+                currentSortColumnTitle = currentSortColumnTitle,
+                isAscending = isAscending,
+                onHeaderClick = { column ->
+                    viewModel.setCurrentSortColumnTitle(column.title)
+                    showSortDialog = true
+                },
                 modifier = Modifier.weight(1f)
             )
             

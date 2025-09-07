@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.ui.Alignment
 import java.time.format.DateTimeFormatter
 import com.example.strategicassetallocationassistant.ui.common.model.AssetInfo
@@ -264,6 +266,23 @@ object AssetMetricsCells {
                 )
             }
         }
+    }
+    
+    /**
+     * 排序图标组件
+     * 用于在表头显示排序方向
+     */
+    @Composable
+    fun SortIcon(
+        isAscending: Boolean,
+        modifier: Modifier = Modifier
+    ) {
+        Icon(
+            imageVector = if (isAscending) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+            contentDescription = if (isAscending) "升序" else "降序",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = modifier.size(16.dp)
+        )
     }
 }
 

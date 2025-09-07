@@ -16,6 +16,10 @@ fun AssetAnalysisTable(
     showSortDialog: Boolean = false,
     onSortOptionSelected: ((com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption) -> Unit)? = null,
     onDismissSortDialog: (() -> Unit)? = null,
+    currentSort: com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption? = null,
+    currentSortColumnTitle: String? = null,
+    isAscending: Boolean = false,
+    onHeaderClick: ((com.example.strategicassetallocationassistant.AssetTableColumn) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val columns = remember {
@@ -42,6 +46,10 @@ fun AssetAnalysisTable(
         showSortDialog = showSortDialog,
         onSortOptionSelected = onSortOptionSelected,
         onDismissSortDialog = onDismissSortDialog,
+        currentSort = currentSort,
+        currentSortColumnTitle = currentSortColumnTitle,
+        isAscending = isAscending,
+        onHeaderClick = onHeaderClick,
         modifier = modifier
     )
 }

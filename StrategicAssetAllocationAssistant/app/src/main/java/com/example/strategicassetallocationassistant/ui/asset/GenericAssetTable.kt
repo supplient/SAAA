@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -39,7 +41,7 @@ data class AssetTableColumn(
     val headerAlignment: Alignment = Alignment.Center,
     val contentAlignment: Alignment = Alignment.Center,
     val content: @Composable (analysis: com.example.strategicassetallocationassistant.ui.common.model.AssetInfo, isHidden: Boolean) -> Unit,
-    val sortOptions: List<com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption> = emptyList()
+    val sortOptions: List<com.example.strategicassetallocationassistant.PortfolioViewModel.SortOption> = listOf(PortfolioViewModel.SortOption.ORIGINAL)
 )
 
 /**
@@ -66,10 +68,17 @@ fun GenericAssetTable(
     showSortDialog: Boolean = false,
     onSortOptionSelected: ((PortfolioViewModel.SortOption) -> Unit)? = null,
     onDismissSortDialog: (() -> Unit)? = null,
+    currentSort: PortfolioViewModel.SortOption? = null,
+    currentSortColumnTitle: String? = null,
+    isAscending: Boolean = false,
+    onHeaderClick: ((AssetTableColumn) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
     val (fixedColumn, scrollableColumns) = columns.partition { it.title == "资产名称" }
+    
+    // 当前点击的列状态
+    var currentClickedColumn by remember { mutableStateOf<AssetTableColumn?>(null) }
     
     Column(modifier = modifier) {
         // 表头
@@ -77,6 +86,12 @@ fun GenericAssetTable(
             fixedColumn = fixedColumn.firstOrNull(),
             scrollableColumns = scrollableColumns,
             horizontalScrollState = horizontalScrollState,
+            currentSort = currentSort,
+            currentSortColumnTitle = currentSortColumnTitle,
+            onHeaderClick = { column ->
+                currentClickedColumn = column
+                onHeaderClick?.invoke(column)
+            },
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -141,6 +156,9 @@ fun GenericAssetTable(
         if (showSortDialog && onSortOptionSelected != null && onDismissSortDialog != null) {
             UnifiedSortDialog(
                 columns = columns,
+                currentColumn = currentClickedColumn,
+                currentSort = currentSort,
+                isAscending = isAscending,
                 onSortOptionSelected = onSortOptionSelected,
                 onDismiss = onDismissSortDialog
             )
@@ -156,6 +174,9 @@ private fun GenericAssetTableHeader(
     fixedColumn: AssetTableColumn?,
     scrollableColumns: List<AssetTableColumn>,
     horizontalScrollState: androidx.compose.foundation.ScrollState,
+    currentSort: PortfolioViewModel.SortOption? = null,
+    currentSortColumnTitle: String? = null,
+    onHeaderClick: ((AssetTableColumn) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -165,18 +186,37 @@ private fun GenericAssetTableHeader(
     ) {
         // 固定列（如果存在）
         fixedColumn?.let { column ->
+            val isCurrentSortColumn = currentSortColumnTitle == column.title
+            val isSortable = column.sortOptions.isNotEmpty()
+            
             Box(
                 modifier = Modifier
                     .width(column.width)
-                    .padding(horizontal = 2.dp),
+                    .padding(horizontal = 2.dp)
+                    .let { 
+                        if (isSortable && onHeaderClick != null) {
+                            it.clickable { onHeaderClick(column) }
+                        } else it
+                    }
+                    .background(
+                        if (isCurrentSortColumn) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        else Color.Transparent
+                    )
+                    .padding(4.dp),
                 contentAlignment = column.headerAlignment
             ) {
-                Text(
-                    text = column.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = column.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isCurrentSortColumn) MaterialTheme.colorScheme.primary 
+                               else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
         
@@ -187,19 +227,38 @@ private fun GenericAssetTableHeader(
                 .padding(start = 2.dp)
         ) {
             scrollableColumns.forEach { column ->
+                val isCurrentSortColumn = currentSortColumnTitle == column.title
+                val isSortable = column.sortOptions.isNotEmpty()
+                
                 Box(
                     modifier = Modifier
                         .width(column.width)
-                        .padding(horizontal = 2.dp),
+                        .padding(horizontal = 2.dp)
+                        .let { 
+                            if (isSortable && onHeaderClick != null) {
+                                it.clickable { onHeaderClick(column) }
+                            } else it
+                        }
+                        .background(
+                            if (isCurrentSortColumn) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            else Color.Transparent
+                        )
+                        .padding(4.dp),
                     contentAlignment = column.headerAlignment
                 ) {
-                    Text(
-                        text = column.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        textAlign = TextAlign.Center
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = column.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isCurrentSortColumn) MaterialTheme.colorScheme.primary 
+                                   else MaterialTheme.colorScheme.onPrimaryContainer,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
@@ -352,7 +411,7 @@ object CommonAssetColumns {
         headerAlignment = Alignment.CenterStart,
         contentAlignment = Alignment.CenterStart,
         content = { info, _ -> AssetMetricsCells.AssetName(info) },
-        sortOptions = emptyList() // 资产名称通常不参与排序
+        sortOptions = listOf(PortfolioViewModel.SortOption.ORIGINAL) // 资产名称通常不参与排序，只保留原排序
     )
     
     /**
@@ -369,6 +428,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.CURRENT_WEIGHT,
             PortfolioViewModel.SortOption.TARGET_WEIGHT,
             PortfolioViewModel.SortOption.WEIGHT_DEVIATION,
@@ -399,6 +459,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.BUY_FACTOR,
             PortfolioViewModel.SortOption.SELL_THRESHOLD
         )
@@ -418,6 +479,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.UNIT_PRICE,
             PortfolioViewModel.SortOption.SHARES,
             PortfolioViewModel.SortOption.VOLATILITY
@@ -438,6 +500,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.CURRENT_MARKET_VALUE,
             PortfolioViewModel.SortOption.TARGET_MARKET_VALUE,
             PortfolioViewModel.SortOption.MARKET_VALUE_DEVIATION,
@@ -457,7 +520,7 @@ object CommonAssetColumns {
                 AssetMetricsCells.UpdateTimeDate(info)
             }
         },
-        sortOptions = emptyList() // 更新时间通常不参与排序
+        sortOptions = listOf(PortfolioViewModel.SortOption.ORIGINAL) // 更新时间通常不参与排序，只保留原排序
     )
     
     /**
@@ -469,7 +532,7 @@ object CommonAssetColumns {
         contentAlignment = Alignment.CenterStart,
         headerAlignment = Alignment.Center,
         content = { info, _ -> AssetMetricsCells.Note(info) },
-        sortOptions = emptyList() // 备注通常不参与排序
+        sortOptions = listOf(PortfolioViewModel.SortOption.ORIGINAL) // 备注通常不参与排序，只保留原排序
     )
     
     /**
@@ -486,6 +549,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.SEVEN_DAY_RETURN,
             PortfolioViewModel.SortOption.VOLATILITY,
             PortfolioViewModel.SortOption.RELATIVE_OFFSET
@@ -506,6 +570,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.OFFSET_FACTOR,
             PortfolioViewModel.SortOption.DRAWDOWN_FACTOR,
             PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR
@@ -526,6 +591,7 @@ object CommonAssetColumns {
             }
         },
         sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
             PortfolioViewModel.SortOption.BUY_FACTOR,
             PortfolioViewModel.SortOption.SELL_THRESHOLD,
             PortfolioViewModel.SortOption.ASSET_RISK
@@ -539,7 +605,10 @@ object CommonAssetColumns {
         title = "七日涨跌幅",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.SevenDayReturn(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.SEVEN_DAY_RETURN)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.SEVEN_DAY_RETURN
+        )
     )
     
     /**
@@ -549,7 +618,10 @@ object CommonAssetColumns {
         title = "波动率",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.Volatility(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.VOLATILITY)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.VOLATILITY
+        )
     )
     
     /**
@@ -559,7 +631,10 @@ object CommonAssetColumns {
         title = "买入因子",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.BuyFactor(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.BUY_FACTOR)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.BUY_FACTOR
+        )
     )
     
     /**
@@ -569,7 +644,10 @@ object CommonAssetColumns {
         title = "卖出阈值",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.SellThreshold(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.SELL_THRESHOLD)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.SELL_THRESHOLD
+        )
     )
     
     /**
@@ -579,7 +657,10 @@ object CommonAssetColumns {
         title = "相对偏移",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.RelativeOffset(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.RELATIVE_OFFSET)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.RELATIVE_OFFSET
+        )
     )
     
     /**
@@ -589,7 +670,10 @@ object CommonAssetColumns {
         title = "偏移因子",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.OffsetFactor(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.OFFSET_FACTOR)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.OFFSET_FACTOR
+        )
     )
     
     /**
@@ -599,7 +683,10 @@ object CommonAssetColumns {
         title = "跌幅因子",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.DrawdownFactor(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.DRAWDOWN_FACTOR)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.DRAWDOWN_FACTOR
+        )
     )
     
     /**
@@ -609,7 +696,10 @@ object CommonAssetColumns {
         title = "去波动买入因子",
         width = 100.dp,
         content = { info, _ -> AssetMetricsCells.PreVolatilityBuyFactor(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR
+        )
     )
     
     /**
@@ -619,23 +709,57 @@ object CommonAssetColumns {
         title = "资产风险",
         width = 80.dp,
         content = { info, _ -> AssetMetricsCells.AssetRisk(info) },
-        sortOptions = listOf(PortfolioViewModel.SortOption.ASSET_RISK)
+        sortOptions = listOf(
+            PortfolioViewModel.SortOption.ORIGINAL,
+            PortfolioViewModel.SortOption.ASSET_RISK
+        )
     )
 }
 
 /**
+ * 判断排序选项是否为升序
+ */
+private fun isAscendingSort(sortOption: PortfolioViewModel.SortOption): Boolean {
+    return when (sortOption) {
+        PortfolioViewModel.SortOption.CURRENT_WEIGHT,
+        PortfolioViewModel.SortOption.TARGET_WEIGHT,
+        PortfolioViewModel.SortOption.WEIGHT_DEVIATION,
+        PortfolioViewModel.SortOption.WEIGHT_DEVIATION_ABS,
+        PortfolioViewModel.SortOption.CURRENT_MARKET_VALUE,
+        PortfolioViewModel.SortOption.TARGET_MARKET_VALUE,
+        PortfolioViewModel.SortOption.MARKET_VALUE_DEVIATION,
+        PortfolioViewModel.SortOption.MARKET_VALUE_DEVIATION_ABS,
+        PortfolioViewModel.SortOption.UNIT_PRICE,
+        PortfolioViewModel.SortOption.SHARES,
+        PortfolioViewModel.SortOption.VOLATILITY,
+        PortfolioViewModel.SortOption.SEVEN_DAY_RETURN,
+        PortfolioViewModel.SortOption.RELATIVE_OFFSET,
+        PortfolioViewModel.SortOption.OFFSET_FACTOR,
+        PortfolioViewModel.SortOption.DRAWDOWN_FACTOR,
+        PortfolioViewModel.SortOption.PRE_VOLATILITY_BUY_FACTOR,
+        PortfolioViewModel.SortOption.BUY_FACTOR,
+        PortfolioViewModel.SortOption.SELL_THRESHOLD,
+        PortfolioViewModel.SortOption.ASSET_RISK -> true
+        else -> false
+    }
+}
+
+/**
  * 统一的排序对话框组件
- * 从所有列中收集可用的排序选项
+ * 显示当前列的排序选项
  */
 @Composable
 private fun UnifiedSortDialog(
     columns: List<AssetTableColumn>,
+    currentColumn: AssetTableColumn?,
+    currentSort: PortfolioViewModel.SortOption?,
+    isAscending: Boolean,
     onSortOptionSelected: (PortfolioViewModel.SortOption) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // 从所有列中收集排序选项，并添加原排序选项
-    val availableSortOptions = listOf(PortfolioViewModel.SortOption.ORIGINAL) + 
-        columns.flatMap { it.sortOptions }.distinct()
+    // 获取当前列的排序选项，如果没有则使用所有列的选项
+    val availableSortOptions = currentColumn?.sortOptions ?: 
+        listOf(PortfolioViewModel.SortOption.ORIGINAL) + columns.flatMap { it.sortOptions }.distinct()
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -646,6 +770,9 @@ private fun UnifiedSortDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 availableSortOptions.forEach { option ->
+                    val isCurrentOption = currentSort == option
+                    val showArrow = isCurrentOption && option != PortfolioViewModel.SortOption.ORIGINAL
+                    
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -656,8 +783,19 @@ private fun UnifiedSortDialog(
                     ) {
                         Text(
                             text = option.displayName,
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isCurrentOption) MaterialTheme.colorScheme.primary 
+                                   else MaterialTheme.colorScheme.onSurface
                         )
+                        if (showArrow) {
+                            Icon(
+                                imageVector = if (isAscending) Icons.Default.KeyboardArrowUp 
+                                           else Icons.Default.KeyboardArrowDown,
+                                contentDescription = if (isAscending) "升序" else "降序",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }

@@ -156,9 +156,12 @@ class PortfolioViewModel @Inject constructor(
     private val _isAscending = MutableStateFlow(false)
     val isAscending: StateFlow<Boolean> = _isAscending.asStateFlow()
 
+    private val _currentSortColumnTitle = MutableStateFlow<String?>(null)
+    val currentSortColumnTitle: StateFlow<String?> = _currentSortColumnTitle.asStateFlow()
+
     /** 设置排序方案 */
     fun setSortOption(option: SortOption) {
-        if (_sortOption.value == option) {
+        if (_sortOption.value == option && option != SortOption.ORIGINAL) {
             // 如果选择的是当前排序方案，则切换升降序
             _isAscending.value = !_isAscending.value
         } else {
@@ -166,6 +169,13 @@ class PortfolioViewModel @Inject constructor(
             _sortOption.value = option
             _isAscending.value = false
         }
+        if (option == SortOption.ORIGINAL) {
+            _currentSortColumnTitle.value = null
+        }
+    }
+
+    fun setCurrentSortColumnTitle(title: String) {
+        _currentSortColumnTitle.value = title
     }
 
     /** 排序后的资产分析列表 */

@@ -66,6 +66,11 @@ fun AssetListScreen(
     // 排序对话框状态
     var showSortDialog by remember { mutableStateOf(false) }
     
+    // 获取当前排序状态
+    val currentSort by viewModel.sortOption.collectAsState()
+    val isAscending by viewModel.isAscending.collectAsState()
+    val currentSortColumnTitle by viewModel.currentSortColumnTitle.collectAsState()
+    
     // 计算总资产
     val totalAssets = portfolio.cash + analyses.sumOf { it.marketValue }
     val assetsValue = analyses.sumOf { it.marketValue }
@@ -102,10 +107,6 @@ fun AssetListScreen(
                         // 交易记录按钮
                         IconButton(onClick = onOpenTransactions) {
                             Icon(Icons.AutoMirrored.Filled.List, contentDescription = "交易记录")
-                        }
-                        // 排序按钮
-                        IconButton(onClick = { showSortDialog = true }) {
-                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "排序")
                         }
                         // 隐藏资产数目按钮
                         IconButton(onClick = { viewModel.toggleAssetAmountHidden() }) {
@@ -148,6 +149,13 @@ fun AssetListScreen(
                         showSortDialog = false
                     },
                     onDismissSortDialog = { showSortDialog = false },
+                    currentSort = currentSort,
+                    currentSortColumnTitle = currentSortColumnTitle,
+                    isAscending = isAscending,
+                    onHeaderClick = { column ->
+                        viewModel.setCurrentSortColumnTitle(column.title)
+                        showSortDialog = true
+                    },
                     modifier = Modifier.weight(1f)
                 )
                 
