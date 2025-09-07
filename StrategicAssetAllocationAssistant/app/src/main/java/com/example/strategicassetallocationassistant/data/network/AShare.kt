@@ -145,26 +145,36 @@ object AShare {
      *  - 90 日年化波动率
      */
     suspend fun getMarketStats(code: String): MarketStats? {
-        // 拉取 90 个交易日的收盘价（含今天）
-        val prices = getPrice(code = code, count = 90, frequency = "1d")
-        if (prices.isEmpty()) {
-            Log.e("AShare", "getMarketStats: prices is empty for code: $code")
+        // 获取最新收盘价（使用分钟级数据）
+        val latestPrice = getPrice(code = code, count = 1, frequency = "1m")
+        if (latestPrice.isEmpty()) {
+            Log.e("AShare", "getMarketStats: latest price is empty for code: $code")
+            return null
+        }
+        val latestClose = latestPrice.last().close.toDouble()
+
+        // 获取昨天的日期作为 endDate，确保获取的是之前交易日的数据
+        val yesterday = LocalDate.now().minusDays(1)
+        val yesterdayStr = yesterday.toString()
+
+        // 拉取 90 个交易日的历史收盘价（不包含今天）
+        val historicalPrices = getPrice(code = code, endDate = yesterdayStr, count = 90, frequency = "1d")
+        if (historicalPrices.isEmpty()) {
+            Log.e("AShare", "getMarketStats: historical prices is empty for code: $code")
             return null
         }
 
-        val latestClose = prices.last().close.toDouble()
-
         // --- 七日涨跌幅 ---
-        val sevenDayReturn: Double? = if (prices.isNotEmpty()) {
+        val sevenDayReturn: Double? = if (historicalPrices.isNotEmpty()) {
             val referenceClose: Double
-            if (prices.size >= 8) {
-                referenceClose = prices[prices.size - 8].close.toDouble()
+            if (historicalPrices.size >= 7) {
+                referenceClose = historicalPrices[historicalPrices.size - 7].close.toDouble()
             } else {
                 // 使用最早交易日的收盘价进行计算
-                referenceClose = prices.first().close.toDouble()
+                referenceClose = historicalPrices.first().close.toDouble()
                 Log.i(
                     "AShare",
-                    "getMarketStats: prices.size < 8 for code: $code, using data ${prices.size - 1} days ago to calculate sevenDayReturn"
+                    "getMarketStats: historicalPrices.size < 7 for code: $code, using data ${historicalPrices.size - 1} days ago to calculate sevenDayReturn"
                 )
             }
 
@@ -174,13 +184,13 @@ object AShare {
         }
 
         // --- 90 日年化波动率 ---
-        val annualVol: Double? = if (prices.size >= 2) {
-            val effectiveList = if (prices.size >= 90) prices.takeLast(90) else {
+        val annualVol: Double? = if (historicalPrices.size >= 2) {
+            val effectiveList = if (historicalPrices.size >= 90) historicalPrices.takeLast(90) else {
                 Log.i(
                     "AShare",
-                    "getMarketStats: prices.size < 90 for code: $code, using available ${prices.size} records to calculate annualVol"
+                    "getMarketStats: historicalPrices.size < 90 for code: $code, using available ${historicalPrices.size} records to calculate annualVol"
                 )
-                prices
+                historicalPrices
             }
 
             val deltas = effectiveList.windowed(2) { (p1, p2) -> kotlin.math.ln(p1.close / p2.close) }
