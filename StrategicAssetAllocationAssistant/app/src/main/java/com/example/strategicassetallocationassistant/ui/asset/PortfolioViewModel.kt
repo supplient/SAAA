@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
+import com.example.strategicassetallocationassistant.ui.common.util.MoneyUtils
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
@@ -44,10 +46,12 @@ class PortfolioViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    // 当资产列表更新时，自动计算每个资产的市值，并创建一个 ID → 市值 的映射（遵循 A2B 命名）
-    val assetId2Value: StateFlow<Map<UUID, Double>> = assets.map { assetList ->
+    // 步骤8: 移除Double版本的assetId2Value，已由assetId2ValueDecimal替代
+
+    // BigDecimal版本的资产ID到市值映射 (步骤5: UI模型双字段过渡)
+    val assetId2ValueDecimal: StateFlow<Map<UUID, BigDecimal>> = assets.map { assetList ->
         assetList.associate { asset ->
-            asset.id to asset.currentMarketValue
+            asset.id to asset.currentMarketValueDecimal
         }
     }.stateIn(
         scope = viewModelScope,
@@ -61,20 +65,21 @@ class PortfolioViewModel @Inject constructor(
 
     // AssetInfo 已迁移到 ui.common.model 包
 
-    /** AssetInfo 列表 Flow */
-    val assetAnalyses: StateFlow<List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>> = combine(
+    // 步骤8: 移除Double版本的assetAnalyses，已由assetAnalysesDecimal替代
+
+    /** BigDecimal版本的AssetInfo列表Flow (步骤5: UI模型双字段过渡) */
+    val assetAnalysesDecimal: StateFlow<List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>> = combine(
         assets,
         portfolioState,
         failedRefreshAssetIds,
         repository.assetAnalysisFlow
     ) { assetList, portfolio, failedIds, analysisDataList ->
-        val totalMarketValue = assetList.sumOf { it.currentMarketValue }
-        val totalAssetsValue = totalMarketValue + portfolio.cash
+        val totalAssetsValueDecimal = portfolio.totalAssetsValueDecimal
         val analysisMap = analysisDataList.associateBy { it.assetId }
         assetList.map { asset ->
-            com.example.strategicassetallocationassistant.ui.common.util.buildAssetInfo(
+            com.example.strategicassetallocationassistant.ui.common.util.buildAssetInfoWithDecimal(
                 asset = asset,
-                totalAssetsValue = totalAssetsValue,
+                totalAssetsValueDecimal = totalAssetsValueDecimal,
                 analysis = analysisMap[asset.id],
                 isRefreshFailed = failedIds.contains(asset.id)
             )
@@ -100,10 +105,19 @@ class PortfolioViewModel @Inject constructor(
         }
     }
 
-    /** 更新可用现金 */
+    /** 更新可用现金 - 步骤6: 内部切换到BigDecimal版本 */
     fun updateCash(newCash: Double) {
         viewModelScope.launch {
-            repository.updateCash(newCash)
+            // 步骤6: 向后兼容的Double版本，内部转换为BigDecimal
+            repository.updateCashDecimal(BigDecimal.valueOf(newCash))
+        }
+    }
+
+    /** BigDecimal版本的更新可用现金 (步骤5: UI模型双字段过渡) */
+    fun updateCashDecimal(newCashDecimal: BigDecimal) {
+        viewModelScope.launch {
+            // 步骤6: 切换到Repository的BigDecimal版本
+            repository.updateCashDecimal(newCashDecimal)
         }
     }
 
@@ -178,24 +192,26 @@ class PortfolioViewModel @Inject constructor(
         _currentSortColumnTitle.value = title
     }
 
-    /** 排序后的资产分析列表 */
-    val sortedAssetAnalyses: StateFlow<List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>> = combine(
-        assetAnalyses,
+    // 步骤8: 移除Double版本的sortedAssetAnalyses，已由sortedAssetAnalysesDecimal替代
+
+    /** BigDecimal版本的排序后资产分析列表 (步骤5: UI模型双字段过渡) */
+    val sortedAssetAnalysesDecimal: StateFlow<List<com.example.strategicassetallocationassistant.ui.common.model.AssetInfo>> = combine(
+        assetAnalysesDecimal,
         sortOption,
         isAscending
     ) { analyses, sort, ascending ->
         when (sort) {
             SortOption.ORIGINAL -> analyses
-            SortOption.CURRENT_WEIGHT -> if (ascending) analyses.sortedBy { it.currentWeight } else analyses.sortedByDescending { it.currentWeight }
+            SortOption.CURRENT_WEIGHT -> if (ascending) analyses.sortedBy { it.getCurrentWeightValue() } else analyses.sortedByDescending { it.getCurrentWeightValue() }
             SortOption.TARGET_WEIGHT -> if (ascending) analyses.sortedBy { it.asset.targetWeight } else analyses.sortedByDescending { it.asset.targetWeight }
-            SortOption.WEIGHT_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationPct } else analyses.sortedByDescending { it.deviationPct }
-            SortOption.WEIGHT_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationPct) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationPct) }
-            SortOption.CURRENT_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.marketValue } else analyses.sortedByDescending { it.marketValue }
-            SortOption.TARGET_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.targetMarketValue } else analyses.sortedByDescending { it.targetMarketValue }
-            SortOption.MARKET_VALUE_DEVIATION -> if (ascending) analyses.sortedBy { it.deviationValue } else analyses.sortedByDescending { it.deviationValue }
-            SortOption.MARKET_VALUE_DEVIATION_ABS -> if (ascending) analyses.sortedBy { kotlin.math.abs(it.deviationValue) } else analyses.sortedByDescending { kotlin.math.abs(it.deviationValue) }
-            SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.unitValue ?: 0.0 } else analyses.sortedByDescending { it.asset.unitValue ?: 0.0 }
-            SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.shares ?: 0.0 } else analyses.sortedByDescending { it.asset.shares ?: 0.0 }
+            SortOption.WEIGHT_DEVIATION -> if (ascending) analyses.sortedBy { it.getDeviationPctValue() } else analyses.sortedByDescending { it.getDeviationPctValue() }
+            SortOption.WEIGHT_DEVIATION_ABS -> if (ascending) analyses.sortedBy { it.getDeviationPctValue().abs() } else analyses.sortedByDescending { it.getDeviationPctValue().abs() }
+            SortOption.CURRENT_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.getMarketValueValue() } else analyses.sortedByDescending { it.getMarketValueValue() }
+            SortOption.TARGET_MARKET_VALUE -> if (ascending) analyses.sortedBy { it.getTargetMarketValueValue() } else analyses.sortedByDescending { it.getTargetMarketValueValue() }
+            SortOption.MARKET_VALUE_DEVIATION -> if (ascending) analyses.sortedBy { it.getDeviationValueValue() } else analyses.sortedByDescending { it.getDeviationValueValue() }
+            SortOption.MARKET_VALUE_DEVIATION_ABS -> if (ascending) analyses.sortedBy { it.getDeviationValueValue().abs() } else analyses.sortedByDescending { it.getDeviationValueValue().abs() }
+            SortOption.UNIT_PRICE -> if (ascending) analyses.sortedBy { it.asset.getUnitValueValue() ?: BigDecimal.ZERO } else analyses.sortedByDescending { it.asset.getUnitValueValue() ?: BigDecimal.ZERO }
+            SortOption.SHARES -> if (ascending) analyses.sortedBy { it.asset.getSharesValue() ?: BigDecimal.ZERO } else analyses.sortedByDescending { it.asset.getSharesValue() ?: BigDecimal.ZERO }
             SortOption.SEVEN_DAY_RETURN -> if (ascending) analyses.sortedBy { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY } else analyses.sortedByDescending { it.sevenDayReturn ?: Double.NEGATIVE_INFINITY }
             SortOption.VOLATILITY -> if (ascending) analyses.sortedBy { it.volatility ?: 0.0 } else analyses.sortedByDescending { it.volatility ?: 0.0 }
             SortOption.BUY_FACTOR -> if (ascending) analyses.sortedBy { it.buyFactor ?: 0.0 } else analyses.sortedByDescending { it.buyFactor ?: 0.0 }

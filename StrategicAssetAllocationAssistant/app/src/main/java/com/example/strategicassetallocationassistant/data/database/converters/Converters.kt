@@ -1,6 +1,7 @@
 package com.example.strategicassetallocationassistant.data.database.converters
 
 import androidx.room.TypeConverter
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -36,5 +37,25 @@ class Converters {
     @TypeConverter
     fun toTradeType(tradeTypeString: String): com.example.strategicassetallocationassistant.TradeType {
         return com.example.strategicassetallocationassistant.TradeType.valueOf(tradeTypeString)
+    }
+    
+    /**
+     * BigDecimal转换器
+     * 将BigDecimal转换为String存储到数据库，保证精度不丢失
+     */
+    @TypeConverter
+    fun fromBigDecimal(bigDecimal: BigDecimal?): String? {
+        return bigDecimal?.toString()
+    }
+
+    @TypeConverter
+    fun toBigDecimal(bigDecimalString: String?): BigDecimal? {
+        return bigDecimalString?.let { 
+            try {
+                BigDecimal(it)
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
     }
 }

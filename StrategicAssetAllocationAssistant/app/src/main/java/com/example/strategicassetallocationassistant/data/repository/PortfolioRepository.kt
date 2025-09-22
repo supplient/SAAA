@@ -6,6 +6,7 @@ import com.example.strategicassetallocationassistant.Portfolio
 import com.example.strategicassetallocationassistant.TradeType
 import com.example.strategicassetallocationassistant.TradingOpportunity
 import com.example.strategicassetallocationassistant.Transaction
+import java.math.BigDecimal
 import com.example.strategicassetallocationassistant.data.database.AppDatabase
 import com.example.strategicassetallocationassistant.data.database.dao.AssetDao
 import com.example.strategicassetallocationassistant.data.database.dao.PortfolioDao
@@ -84,6 +85,7 @@ class PortfolioRepository @Inject constructor(
 
     /**
      * Observe the full [Portfolio] (assets + cash) in one convenient stream.
+     * 步骤6: 切换到BigDecimal版本
      */
     val portfolioFlow: Flow<Portfolio> = kotlinx.coroutines.flow.combine(
         portfolioDao.getPortfolio(),
@@ -91,7 +93,9 @@ class PortfolioRepository @Inject constructor(
     ) { entity, assets ->
         Portfolio(
             assets = assets,
-            cash = entity?.cash ?: 0.0,
+            // 步骤6: 优先使用BigDecimal，向后兼容Double
+            cash = entity?.getCashValue()?.toDouble() ?: 0.0,
+            cashDecimal = entity?.getCashValue(),
             note = entity?.note,
             overallRiskFactor = entity?.overallRiskFactor,
             overallRiskFactorLog = entity?.overallRiskFactorLog
@@ -119,7 +123,12 @@ class PortfolioRepository @Inject constructor(
         val entity = portfolioDao.getPortfolioSuspend()
         val cash = entity?.cash ?: 0.0
         val note = entity?.note
-        return Portfolio(assets.map { it.toDomain() }, cash, note)
+        return Portfolio(
+            assets = assets.map { it.toDomain() }, 
+            cash = cash,
+            cashDecimal = entity?.getCashValue(),
+            note = note
+        )
     }
 
     /* ---------------------------- 写入数据 ---------------------------- */
@@ -141,12 +150,21 @@ class PortfolioRepository @Inject constructor(
     }
 
     suspend fun updateCash(cash: Double) {
+        // 步骤6: 向后兼容的Double版本，内部转换为BigDecimal
+        updateCashDecimal(BigDecimal.valueOf(cash))
+    }
+
+    /** 
+     * 步骤6: BigDecimal版本的现金更新，提供精确计算
+     */
+    suspend fun updateCashDecimal(cashDecimal: BigDecimal) {
         val current = portfolioDao.getPortfolioSuspend()
         if (current == null) {
             // Insert new record if not exist
-            portfolioDao.insertPortfolio(PortfolioEntity(cash = cash))
+            portfolioDao.insertPortfolio(PortfolioEntity.createWithDecimal(cashDecimal = cashDecimal))
         } else {
-            portfolioDao.updateCash(cash)
+            // 更新时保持BigDecimal和Double同步
+            portfolioDao.updateCash(cashDecimal.toDouble())
         }
     }
 
@@ -154,7 +172,7 @@ class PortfolioRepository @Inject constructor(
         val current = portfolioDao.getPortfolioSuspend()
         if (current == null) {
             // insert new record with note
-            portfolioDao.insertPortfolio(PortfolioEntity(cash = 0.0, note = note))
+            portfolioDao.insertPortfolio(PortfolioEntity.create(cash = 0.0, note = note))
         } else {
             portfolioDao.updateNote(note)
         }
@@ -256,28 +274,47 @@ class PortfolioRepository @Inject constructor(
 
     /**
      * 添加一条交易记录，同时原子更新资产份额和现金。
+     * 步骤6: 切换到BigDecimal精确计算
      */
     suspend fun addTransaction(tx: Transaction) {
         db.withTransaction {
             // 插入交易
             transactionDao.insertTransaction(tx.toEntity())
 
-            // 更新资产 shares
+            // 更新资产 shares - 使用BigDecimal精确计算
             tx.assetId?.let { aid ->
                 val asset = assetDao.getAssetById(aid.toString()) ?: return@withTransaction
-                val currentShares = asset.shares ?: 0.0
-                val deltaShares = if (tx.type == TradeType.BUY) tx.shares else -tx.shares
-                val updated = asset.copy(shares = currentShares + deltaShares)
+                val currentSharesDecimal = asset.getSharesValue() ?: BigDecimal.ZERO
+                val deltaSharesDecimal = tx.getSharesValue()
+                val newSharesDecimal = if (tx.type == TradeType.BUY) {
+                    currentSharesDecimal.add(deltaSharesDecimal)
+                } else {
+                    currentSharesDecimal.subtract(deltaSharesDecimal)
+                }
+                
+                // 更新资产，同时维护Double和BigDecimal同步
+                val updated = asset.withSyncedFields().copy(
+                    shares = newSharesDecimal.toDouble(),
+                    sharesDecimal = newSharesDecimal
+                )
                 assetDao.updateAsset(updated)
             }
 
-            // 更新现金
-            val cashDelta = if (tx.type == TradeType.BUY) -tx.amount else tx.amount
+            // 更新现金 - 使用BigDecimal精确计算
+            val cashDeltaDecimal = tx.getAmountValue()
+            val finalCashDelta = if (tx.type == TradeType.BUY) {
+                cashDeltaDecimal.negate()
+            } else {
+                cashDeltaDecimal
+            }
+            
             val currentPortfolio = portfolioDao.getPortfolioSuspend()
             if (currentPortfolio == null) {
-                portfolioDao.insertPortfolio(PortfolioEntity(cash = cashDelta))
+                portfolioDao.insertPortfolio(PortfolioEntity.createWithDecimal(cashDecimal = finalCashDelta))
             } else {
-                portfolioDao.updateCash(currentPortfolio.cash + cashDelta)
+                val currentCashDecimal = currentPortfolio.getCashValue()
+                val newCashDecimal = currentCashDecimal.add(finalCashDelta)
+                portfolioDao.updateCash(newCashDecimal.toDouble())
             }
         }
     }
@@ -286,24 +323,45 @@ class PortfolioRepository @Inject constructor(
         return transactionDao.getAllTransactions().first().firstOrNull { java.util.UUID.fromString(it.id) == id }?.toDomain()
     }
 
+    /**
+     * 步骤6: 切换到BigDecimal精确计算
+     */
     suspend fun deleteTransaction(tx: Transaction) {
         db.withTransaction {
             // 先获取数据库中的最新交易记录，以免调用方传入的是过时对象
             val entity = transactionDao.getTransactionById(tx.id.toString()) ?: return@withTransaction
 
-            // 还原资产 shares
+            // 还原资产 shares - 使用BigDecimal精确计算
             entity.assetId?.let { aid ->
                 val asset = assetDao.getAssetById(aid) ?: return@withTransaction
-                val currentShares = asset.shares ?: 0.0
-                val deltaShares = if (entity.type == TradeType.BUY) -entity.shares else entity.shares
-                assetDao.updateAsset(asset.copy(shares = currentShares + deltaShares))
+                val currentSharesDecimal = asset.getSharesValue() ?: BigDecimal.ZERO
+                val deltaSharesDecimal = entity.getSharesValue()
+                val newSharesDecimal = if (entity.type == TradeType.BUY) {
+                    currentSharesDecimal.subtract(deltaSharesDecimal) // 回滚买入
+                } else {
+                    currentSharesDecimal.add(deltaSharesDecimal) // 回滚卖出
+                }
+                
+                val updated = asset.withSyncedFields().copy(
+                    shares = newSharesDecimal.toDouble(),
+                    sharesDecimal = newSharesDecimal
+                )
+                assetDao.updateAsset(updated)
             }
 
-            // 还原现金
-            val cashDelta = if (entity.type == TradeType.BUY) entity.amount else -entity.amount
+            // 还原现金 - 使用BigDecimal精确计算
+            val cashDeltaDecimal = entity.getAmountValue()
+            val finalCashDelta = if (entity.type == TradeType.BUY) {
+                cashDeltaDecimal // 回滚买入，退回现金
+            } else {
+                cashDeltaDecimal.negate() // 回滚卖出，扣除现金
+            }
+            
             val portfolio = portfolioDao.getPortfolioSuspend()
             if (portfolio != null) {
-                portfolioDao.updateCash(portfolio.cash + cashDelta)
+                val currentCashDecimal = portfolio.getCashValue()
+                val newCashDecimal = currentCashDecimal.add(finalCashDelta)
+                portfolioDao.updateCash(newCashDecimal.toDouble())
             }
 
             // 删除交易
@@ -311,34 +369,80 @@ class PortfolioRepository @Inject constructor(
         }
     }
 
+    /**
+     * 步骤6: 切换到BigDecimal精确计算
+     */
     suspend fun updateTransaction(tx: Transaction) {
         db.withTransaction {
             val old = transactionDao.getTransactionById(tx.id.toString())
             if (old != null) {
-                // 先回滚旧交易
+                // 先回滚旧交易 - 使用BigDecimal精确计算
                 old.assetId?.let { aid ->
                     val asset = assetDao.getAssetById(aid) ?: return@withTransaction
-                    val currentShares = asset.shares ?: 0.0
-                    val deltaShares = if (old.type == TradeType.BUY) -old.shares else old.shares
-                    assetDao.updateAsset(asset.copy(shares = currentShares + deltaShares))
+                    val currentSharesDecimal = asset.getSharesValue() ?: BigDecimal.ZERO
+                    val deltaSharesDecimal = old.getSharesValue()
+                    val newSharesDecimal = if (old.type == TradeType.BUY) {
+                        currentSharesDecimal.subtract(deltaSharesDecimal) // 回滚买入
+                    } else {
+                        currentSharesDecimal.add(deltaSharesDecimal) // 回滚卖出
+                    }
+                    
+                    val updated = asset.withSyncedFields().copy(
+                        shares = newSharesDecimal.toDouble(),
+                        sharesDecimal = newSharesDecimal
+                    )
+                    assetDao.updateAsset(updated)
                 }
 
-                val cashDeltaRollback = if (old.type == TradeType.BUY) old.amount else -old.amount
-                portfolioDao.getPortfolioSuspend()?.let { portfolioDao.updateCash(it.cash + cashDeltaRollback) }
+                // 回滚现金变动
+                val cashDeltaRollbackDecimal = old.getAmountValue()
+                val finalCashRollback = if (old.type == TradeType.BUY) {
+                    cashDeltaRollbackDecimal // 回滚买入，退回现金
+                } else {
+                    cashDeltaRollbackDecimal.negate() // 回滚卖出，扣除现金
+                }
+                
+                portfolioDao.getPortfolioSuspend()?.let { portfolio ->
+                    val currentCashDecimal = portfolio.getCashValue()
+                    val newCashDecimal = currentCashDecimal.add(finalCashRollback)
+                    portfolioDao.updateCash(newCashDecimal.toDouble())
+                }
             }
 
             // 应用新交易
             transactionDao.updateTransaction(tx.toEntity())
 
+            // 应用新交易的资产变动 - 使用BigDecimal精确计算
             tx.assetId?.let { aid ->
                 val asset = assetDao.getAssetById(aid.toString()) ?: return@withTransaction
-                val currentShares = asset.shares ?: 0.0
-                val deltaShares = if (tx.type == TradeType.BUY) tx.shares else -tx.shares
-                assetDao.updateAsset(asset.copy(shares = currentShares + deltaShares))
+                val currentSharesDecimal = asset.getSharesValue() ?: BigDecimal.ZERO
+                val deltaSharesDecimal = tx.getSharesValue()
+                val newSharesDecimal = if (tx.type == TradeType.BUY) {
+                    currentSharesDecimal.add(deltaSharesDecimal)
+                } else {
+                    currentSharesDecimal.subtract(deltaSharesDecimal)
+                }
+                
+                val updated = asset.withSyncedFields().copy(
+                    shares = newSharesDecimal.toDouble(),
+                    sharesDecimal = newSharesDecimal
+                )
+                assetDao.updateAsset(updated)
             }
 
-            val cashDeltaApply = if (tx.type == TradeType.BUY) -tx.amount else tx.amount
-            portfolioDao.getPortfolioSuspend()?.let { portfolioDao.updateCash(it.cash + cashDeltaApply) }
+            // 应用新交易的现金变动
+            val cashDeltaApplyDecimal = tx.getAmountValue()
+            val finalCashApply = if (tx.type == TradeType.BUY) {
+                cashDeltaApplyDecimal.negate() // 买入扣除现金
+            } else {
+                cashDeltaApplyDecimal // 卖出增加现金
+            }
+            
+            portfolioDao.getPortfolioSuspend()?.let { portfolio ->
+                val currentCashDecimal = portfolio.getCashValue()
+                val newCashDecimal = currentCashDecimal.add(finalCashApply)
+                portfolioDao.updateCash(newCashDecimal.toDouble())
+            }
         }
     }
 
@@ -382,20 +486,29 @@ class PortfolioRepository @Inject constructor(
         code = code,
         shares = shares,
         unitValue = unitValue,
+        // 步骤3: 添加BigDecimal字段支持
+        sharesDecimal = getSharesValue(),
+        unitValueDecimal = getUnitValueValue(),
         lastUpdateTime = lastUpdateTime,
         note = note
     )
 
-    private fun Asset.toEntity(): AssetEntity = AssetEntity.create(
-        id = id,
-        name = name,
-        targetWeight = targetWeight,
-        code = code,
-        shares = shares,
-        unitValue = unitValue,
-        lastUpdateTime = lastUpdateTime,
-        note = note
-    )
+    private fun Asset.toEntity(): AssetEntity {
+        // 步骤3: 优先使用BigDecimal字段
+        val shares = getSharesValue()
+        val unitValue = getUnitValueValue()
+        
+        return AssetEntity.createWithDecimal(
+            id = id,
+            name = name,
+            targetWeight = targetWeight,
+            code = code,
+            sharesDecimal = shares,
+            unitValueDecimal = unitValue,
+            lastUpdateTime = lastUpdateTime,
+            note = note
+        )
+    }
 
     // no longer used combineCashFlow
 
@@ -408,21 +521,34 @@ class PortfolioRepository @Inject constructor(
         price = price,
         fee = fee,
         amount = amount,
+        // 步骤3: 添加BigDecimal字段支持
+        sharesDecimal = getSharesValue(),
+        priceDecimal = getPriceValue(),
+        feeDecimal = getFeeValue(),
+        amountDecimal = getAmountValue(),
         time = time,
         reason = reason
     )
 
-    private fun Transaction.toEntity(): TransactionEntity = TransactionEntity.create(
-        id = id,
-        assetId = assetId,
-        type = type,
-        shares = shares,
-        price = price,
-        fee = fee,
-        amount = amount,
-        time = time,
-        reason = reason
-    )
+    private fun Transaction.toEntity(): TransactionEntity {
+        // 步骤3: 优先使用BigDecimal字段
+        val shares = getSharesValue()
+        val price = getPriceValue()
+        val fee = getFeeValue()
+        val amount = getAmountValue()
+        
+        return TransactionEntity.createWithDecimal(
+            id = id,
+            assetId = assetId,
+            type = type,
+            sharesDecimal = shares,
+            priceDecimal = price,
+            feeDecimal = fee,
+            amountDecimal = amount,
+            time = time,
+            reason = reason
+        )
+    }
 
     /* ---------------------------- AssetAnalysis 转换 ---------------------------- */
     private fun com.example.strategicassetallocationassistant.data.database.entities.AssetAnalysisEntity.toDomain(): com.example.strategicassetallocationassistant.AssetAnalysis =
@@ -468,22 +594,34 @@ class PortfolioRepository @Inject constructor(
             price = price,
             fee = fee,
             amount = amount,
+            // 步骤3: 添加BigDecimal字段支持
+            sharesDecimal = getSharesValue(),
+            priceDecimal = getPriceValue(),
+            feeDecimal = getFeeValue(),
+            amountDecimal = getAmountValue(),
             time = time,
             reason = reason
         )
 
-    private fun com.example.strategicassetallocationassistant.TradingOpportunity.toEntity(): TradingOpportunityEntity =
-        TradingOpportunityEntity.create(
+    private fun com.example.strategicassetallocationassistant.TradingOpportunity.toEntity(): TradingOpportunityEntity {
+        // 步骤3: 优先使用BigDecimal字段
+        val shares = getSharesValue()
+        val price = getPriceValue()
+        val fee = getFeeValue()
+        val amount = getAmountValue()
+        
+        return TradingOpportunityEntity.createWithDecimal(
             id = id,
             assetId = assetId,
             type = type,
-            shares = shares,
-            price = price,
-            fee = fee,
-            amount = amount,
+            sharesDecimal = shares,
+            priceDecimal = price,
+            feeDecimal = fee,
+            amountDecimal = amount,
             time = time,
             reason = reason
         )
+    }
 }
 
 

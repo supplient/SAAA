@@ -11,6 +11,8 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.json.Json
+import com.example.strategicassetallocationassistant.data.network.BigDecimalSerializer
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -41,10 +43,11 @@ object UUIDSerializer : KSerializer<UUID> {
     }
 }
 
-// Serialization module for LocalDateTime and UUID
+// Serialization module for LocalDateTime, UUID and BigDecimal
 val serializationModule = SerializersModule {
     contextual(LocalDateTimeSerializer)
     contextual(UUIDSerializer)
+    // 注意：BigDecimal序列化器通过@Serializable(with = BigDecimalSerializer::class)注解直接使用
 }
 
 // JSON instance with custom LocalDateTime serializer
@@ -69,12 +72,60 @@ data class Asset(
     val code: String? = null,                       // 资产代码：基金编号或股票编号
     val shares: Double? = null,                    // 份额/股数
     val unitValue: Double? = null,                 // 单位价格：货币基金恒为1，股票为每股价格，基金为净值
+    
+    // 新增BigDecimal字段 (步骤3: 域模型双字段过渡)
+    @Serializable(with = BigDecimalSerializer::class)
+    val sharesDecimal: BigDecimal? = null,         // 份额/股数 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val unitValueDecimal: BigDecimal? = null,      // 单位价格 (BigDecimal版本)
+    
     @Contextual val lastUpdateTime: LocalDateTime? = null,  // 数据最后更新时间
     val note: String? = null                     // 备注
 ) {
-    // 计算当前市场价值
+    // 计算当前市场价值 (Double版本，向后兼容)
     val currentMarketValue: Double
         get() = (shares ?: 0.0) * (unitValue ?: 0.0)
+    
+    // ========== 双字段过渡期间的同步逻辑 ==========
+    
+    /**
+     * 获取份额值，优先使用BigDecimal字段
+     */
+    fun getSharesValue(): BigDecimal? {
+        return sharesDecimal ?: shares?.let { BigDecimal.valueOf(it) }
+    }
+    
+    /**
+     * 获取单位价值，优先使用BigDecimal字段
+     */
+    fun getUnitValueValue(): BigDecimal? {
+        return unitValueDecimal ?: unitValue?.let { BigDecimal.valueOf(it) }
+    }
+    
+    /**
+     * 计算当前市场价值 (BigDecimal版本)
+     */
+    val currentMarketValueDecimal: BigDecimal
+        get() {
+            val shares = getSharesValue() ?: return BigDecimal.ZERO
+            val unitValue = getUnitValueValue() ?: return BigDecimal.ZERO
+            return shares.multiply(unitValue)
+        }
+    
+    /**
+     * 同步数据到双字段，确保数据一致性
+     */
+    fun withSyncedFields(): Asset {
+        val syncedShares = sharesDecimal ?: shares?.let { BigDecimal.valueOf(it) }
+        val syncedUnitValue = unitValueDecimal ?: unitValue?.let { BigDecimal.valueOf(it) }
+        
+        return this.copy(
+            shares = syncedShares?.toDouble(),
+            unitValue = syncedUnitValue?.toDouble(),
+            sharesDecimal = syncedShares,
+            unitValueDecimal = syncedUnitValue
+        )
+    }
 }
 
 // 资产分析数据模型
@@ -105,10 +156,43 @@ data class AssetAnalysis(
 data class Portfolio(
     val assets: List<Asset>,
     val cash: Double,
+    
+    // 新增BigDecimal字段 (步骤3: 域模型双字段过渡)
+    @Serializable(with = BigDecimalSerializer::class)
+    val cashDecimal: BigDecimal? = null,        // 现金金额 (BigDecimal版本)
+    
     val note: String? = null,
     val overallRiskFactor: Double? = null,
     val overallRiskFactorLog: String? = null    // 总体风险因子计算过程日志
-)
+) {
+    // ========== 双字段过渡期间的同步逻辑 ==========
+    
+    /**
+     * 获取现金值，优先使用BigDecimal字段
+     */
+    fun getCashValue(): BigDecimal {
+        return cashDecimal ?: BigDecimal.valueOf(cash)
+    }
+    
+    /**
+     * 计算总资产值 (BigDecimal版本)
+     */
+    val totalAssetsValueDecimal: BigDecimal
+        get() = getCashValue() + assets.sumOf { it.currentMarketValueDecimal }
+    
+    /**
+     * 同步数据到双字段，确保数据一致性
+     */
+    fun withSyncedFields(): Portfolio {
+        val syncedCash = cashDecimal ?: BigDecimal.valueOf(cash)
+        
+        return this.copy(
+            cash = syncedCash.toDouble(),
+            cashDecimal = syncedCash,
+            assets = assets.map { it.withSyncedFields() }
+        )
+    }
+}
 
 // 交易记录
 @Serializable
@@ -120,9 +204,71 @@ data class Transaction(
     val price: Double,
     val fee: Double,
     val amount: Double,
+    
+    // 新增BigDecimal字段 (步骤3: 域模型双字段过渡)
+    @Serializable(with = BigDecimalSerializer::class)
+    val sharesDecimal: BigDecimal? = null,      // 份额 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val priceDecimal: BigDecimal? = null,       // 价格 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val feeDecimal: BigDecimal? = null,         // 手续费 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val amountDecimal: BigDecimal? = null,      // 金额 (BigDecimal版本)
+    
     @Contextual val time: LocalDateTime,
     val reason: String? = null
-)
+) {
+    // ========== 双字段过渡期间的同步逻辑 ==========
+    
+    /**
+     * 获取份额值，优先使用BigDecimal字段
+     */
+    fun getSharesValue(): BigDecimal {
+        return sharesDecimal ?: BigDecimal.valueOf(shares)
+    }
+    
+    /**
+     * 获取价格值，优先使用BigDecimal字段
+     */
+    fun getPriceValue(): BigDecimal {
+        return priceDecimal ?: BigDecimal.valueOf(price)
+    }
+    
+    /**
+     * 获取手续费值，优先使用BigDecimal字段
+     */
+    fun getFeeValue(): BigDecimal {
+        return feeDecimal ?: BigDecimal.valueOf(fee)
+    }
+    
+    /**
+     * 获取金额值，优先使用BigDecimal字段
+     */
+    fun getAmountValue(): BigDecimal {
+        return amountDecimal ?: BigDecimal.valueOf(amount)
+    }
+    
+    /**
+     * 同步数据到双字段，确保数据一致性
+     */
+    fun withSyncedFields(): Transaction {
+        val syncedShares = sharesDecimal ?: BigDecimal.valueOf(shares)
+        val syncedPrice = priceDecimal ?: BigDecimal.valueOf(price)
+        val syncedFee = feeDecimal ?: BigDecimal.valueOf(fee)
+        val syncedAmount = amountDecimal ?: BigDecimal.valueOf(amount)
+        
+        return this.copy(
+            shares = syncedShares.toDouble(),
+            price = syncedPrice.toDouble(),
+            fee = syncedFee.toDouble(),
+            amount = syncedAmount.toDouble(),
+            sharesDecimal = syncedShares,
+            priceDecimal = syncedPrice,
+            feeDecimal = syncedFee,
+            amountDecimal = syncedAmount
+        )
+    }
+}
 
 // 交易机会（和 Transaction 字段一致，额外包含触发理由）
 @Serializable
@@ -134,9 +280,71 @@ data class TradingOpportunity(
     val price: Double,
     val fee: Double,
     val amount: Double,
+    
+    // 新增BigDecimal字段 (步骤3: 域模型双字段过渡)
+    @Serializable(with = BigDecimalSerializer::class)
+    val sharesDecimal: BigDecimal? = null,      // 份额 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val priceDecimal: BigDecimal? = null,       // 价格 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val feeDecimal: BigDecimal? = null,         // 手续费 (BigDecimal版本)
+    @Serializable(with = BigDecimalSerializer::class)
+    val amountDecimal: BigDecimal? = null,      // 金额 (BigDecimal版本)
+    
     @Contextual val time: LocalDateTime,
     val reason: String
-)
+) {
+    // ========== 双字段过渡期间的同步逻辑 ==========
+    
+    /**
+     * 获取份额值，优先使用BigDecimal字段
+     */
+    fun getSharesValue(): BigDecimal {
+        return sharesDecimal ?: BigDecimal.valueOf(shares)
+    }
+    
+    /**
+     * 获取价格值，优先使用BigDecimal字段
+     */
+    fun getPriceValue(): BigDecimal {
+        return priceDecimal ?: BigDecimal.valueOf(price)
+    }
+    
+    /**
+     * 获取手续费值，优先使用BigDecimal字段
+     */
+    fun getFeeValue(): BigDecimal {
+        return feeDecimal ?: BigDecimal.valueOf(fee)
+    }
+    
+    /**
+     * 获取金额值，优先使用BigDecimal字段
+     */
+    fun getAmountValue(): BigDecimal {
+        return amountDecimal ?: BigDecimal.valueOf(amount)
+    }
+    
+    /**
+     * 同步数据到双字段，确保数据一致性
+     */
+    fun withSyncedFields(): TradingOpportunity {
+        val syncedShares = sharesDecimal ?: BigDecimal.valueOf(shares)
+        val syncedPrice = priceDecimal ?: BigDecimal.valueOf(price)
+        val syncedFee = feeDecimal ?: BigDecimal.valueOf(fee)
+        val syncedAmount = amountDecimal ?: BigDecimal.valueOf(amount)
+        
+        return this.copy(
+            shares = syncedShares.toDouble(),
+            price = syncedPrice.toDouble(),
+            fee = syncedFee.toDouble(),
+            amount = syncedAmount.toDouble(),
+            sharesDecimal = syncedShares,
+            priceDecimal = syncedPrice,
+            feeDecimal = syncedFee,
+            amountDecimal = syncedAmount
+        )
+    }
+}
 
 // 交易记录显示项（包含资产名称）
 data class TransactionDisplayItem(

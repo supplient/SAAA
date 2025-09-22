@@ -160,7 +160,7 @@ object AssetMetricsCells {
     @Composable
     fun UnitPrice(info: AssetInfo) {
         Text(
-            text = "¥${String.format("%.4f", info.asset.unitValue ?: 0.0)}",
+            text = "¥${String.format("%.3f", info.asset.unitValue ?: 0.0)}",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -180,7 +180,7 @@ object AssetMetricsCells {
     @Composable
     fun CurrentMarketValue(info: AssetInfo, isHidden: Boolean) {
         Text(
-            text = if (isHidden) "***" else "¥${String.format("%.2f", info.marketValue)}",
+            text = if (isHidden) "***" else "¥${String.format("%.3f", info.marketValue)}",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
@@ -191,7 +191,7 @@ object AssetMetricsCells {
     @Composable
     fun TargetMarketValue(info: AssetInfo, isHidden: Boolean) {
         Text(
-            text = if (isHidden) "***" else "= ¥${String.format("%.2f", info.targetMarketValue)}",
+            text = if (isHidden) "***" else "= ¥${String.format("%.3f", info.targetMarketValue)}",
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
@@ -202,7 +202,7 @@ object AssetMetricsCells {
     fun MarketValueDeviation(info: AssetInfo, isHidden: Boolean) {
         val dev = info.deviationValue
         Text(
-            text = if (isHidden) "***" else "${if (dev >= 0) "+" else ""}¥${String.format("%.2f", dev)}",
+            text = if (isHidden) "***" else "${if (dev >= 0) "+" else ""}¥${String.format("%.3f", dev)}",
             style = MaterialTheme.typography.bodySmall,
             color = if (dev >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center

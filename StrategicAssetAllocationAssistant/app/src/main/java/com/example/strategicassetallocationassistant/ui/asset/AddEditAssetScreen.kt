@@ -56,8 +56,8 @@ fun AddEditAssetScreen(
     // Collect UI state from ViewModel
     val name by viewModel.name.collectAsState()
     
-    // 获取当前编辑资产的分析数据
-    val assetAnalyses by portfolioViewModel.assetAnalyses.collectAsState()
+    // 获取当前编辑资产的分析数据 - 步骤7: 切换到BigDecimal版本
+    val assetAnalyses by portfolioViewModel.assetAnalysesDecimal.collectAsState()
     val currentAssetAnalysis = viewModel.editingAssetId?.let { assetId ->
         assetAnalyses.find { it.asset.id == assetId }
     }
@@ -106,10 +106,10 @@ fun AddEditAssetScreen(
                     Text("取消")
                 }
 
-                // 右侧：保存
+                // 右侧：保存 - 步骤7: 切换到BigDecimal版本
                 Button(onClick = {
                     coroutineScope.launch {
-                        if (viewModel.save()) {
+                        if (viewModel.saveWithDecimal()) {
                             navController.navigateUp()
                         }
                     }

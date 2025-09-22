@@ -30,7 +30,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         com.example.strategicassetallocationassistant.data.database.entities.TransactionEntity::class,
         com.example.strategicassetallocationassistant.data.database.entities.TradingOpportunityEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -215,6 +215,64 @@ abstract class AppDatabase : RoomDatabase() {
                             db.execSQL("ALTER TABLE asset_analysis ADD COLUMN assetRisk REAL")
                         }
                     })
+                    .addMigrations(object : androidx.room.migration.Migration(10, 11) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            // 步骤2: 数据库双字段过渡 - 添加BigDecimal字段
+                            
+                            // 1) 为assets表添加BigDecimal字段
+                            db.execSQL("ALTER TABLE assets ADD COLUMN sharesDecimal TEXT")
+                            db.execSQL("ALTER TABLE assets ADD COLUMN unitValueDecimal TEXT")
+                            
+                            // 2) 为transactions表添加BigDecimal字段  
+                            db.execSQL("ALTER TABLE transactions ADD COLUMN sharesDecimal TEXT")
+                            db.execSQL("ALTER TABLE transactions ADD COLUMN priceDecimal TEXT")
+                            db.execSQL("ALTER TABLE transactions ADD COLUMN feeDecimal TEXT")
+                            db.execSQL("ALTER TABLE transactions ADD COLUMN amountDecimal TEXT")
+                            
+                            // 3) 为portfolio表添加BigDecimal字段
+                            db.execSQL("ALTER TABLE portfolio ADD COLUMN cashDecimal TEXT")
+                            
+                            // 4) 为trading_opportunities表添加BigDecimal字段
+                            db.execSQL("ALTER TABLE trading_opportunities ADD COLUMN sharesDecimal TEXT")
+                            db.execSQL("ALTER TABLE trading_opportunities ADD COLUMN priceDecimal TEXT")
+                            db.execSQL("ALTER TABLE trading_opportunities ADD COLUMN feeDecimal TEXT")
+                            db.execSQL("ALTER TABLE trading_opportunities ADD COLUMN amountDecimal TEXT")
+                            
+                            // 5) 数据迁移：将现有Double值转换为BigDecimal字符串格式
+                            // 迁移assets表数据
+                            db.execSQL("""
+                                UPDATE assets 
+                                SET sharesDecimal = CAST(shares AS TEXT),
+                                    unitValueDecimal = CAST(unitValue AS TEXT)
+                                WHERE shares IS NOT NULL OR unitValue IS NOT NULL
+                            """.trimIndent())
+                            
+                            // 迁移transactions表数据
+                            db.execSQL("""
+                                UPDATE transactions 
+                                SET sharesDecimal = CAST(shares AS TEXT),
+                                    priceDecimal = CAST(price AS TEXT),
+                                    feeDecimal = CAST(fee AS TEXT),
+                                    amountDecimal = CAST(amount AS TEXT)
+                            """.trimIndent())
+                            
+                            // 迁移portfolio表数据
+                            db.execSQL("""
+                                UPDATE portfolio 
+                                SET cashDecimal = CAST(cash AS TEXT)
+                                WHERE cash IS NOT NULL
+                            """.trimIndent())
+                            
+                            // 迁移trading_opportunities表数据
+                            db.execSQL("""
+                                UPDATE trading_opportunities 
+                                SET sharesDecimal = CAST(shares AS TEXT),
+                                    priceDecimal = CAST(price AS TEXT),
+                                    feeDecimal = CAST(fee AS TEXT),
+                                    amountDecimal = CAST(amount AS TEXT)
+                            """.trimIndent())
+                        }
+                    })
                     .addCallback(PrepopulateCallback(context.applicationContext))
                     .fallbackToDestructiveMigration()
                     .build()
@@ -268,7 +326,7 @@ abstract class AppDatabase : RoomDatabase() {
                     assetDao.insertAssets(sampleAssets)
 
                     // 初始化现金记录
-                    portfolioDao.insertPortfolio(PortfolioEntity(cash = 10000.0))
+                    portfolioDao.insertPortfolio(PortfolioEntity.create(cash = 10000.0))
                 }
             }
         }

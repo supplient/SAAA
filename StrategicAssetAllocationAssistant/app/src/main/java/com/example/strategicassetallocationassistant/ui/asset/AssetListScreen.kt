@@ -53,7 +53,7 @@ fun AssetListScreen(
     onOpenAssetAnalysis: () -> Unit = {}
 ) {
     val portfolio by viewModel.portfolioState.collectAsState()
-    val analyses by viewModel.assetAnalyses.collectAsState()
+    val analyses by viewModel.assetAnalysesDecimal.collectAsState() // 步骤8: 切换到BigDecimal版本
 
     // 计算目标占比总和
     val targetWeightSum = analyses.sumOf { it.asset.targetWeight }
@@ -138,7 +138,7 @@ fun AssetListScreen(
             ) {
                 // 资产列表表格（使用weight让底部信息栏固定）
                 AssetTable(
-                    analyses = viewModel.sortedAssetAnalyses.collectAsState().value,
+                    analyses = viewModel.sortedAssetAnalysesDecimal.collectAsState().value, // 步骤8: 切换到BigDecimal版本
                     isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                     onAddTransaction = onAddTransactionForAsset,
                     onEditAsset = onEditAsset,

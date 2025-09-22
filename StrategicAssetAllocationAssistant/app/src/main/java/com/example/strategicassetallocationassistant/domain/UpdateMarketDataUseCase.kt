@@ -9,6 +9,7 @@ import com.example.strategicassetallocationassistant.domain.SellThresholdCalcula
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
@@ -66,9 +67,11 @@ class UpdateMarketDataUseCase @Inject constructor(
 
         if (stats.latestClose <= 0.0) return false
 
-        // 1. 更新资产价格
+        // 1. 更新资产价格 - 步骤6: 使用BigDecimal精确设置
+        val unitValueDecimal = BigDecimal.valueOf(stats.latestClose)
         val updatedAsset = asset.copy(
-            unitValue = stats.latestClose,
+            unitValue = unitValueDecimal.toDouble(), // 保持Double字段同步
+            unitValueDecimal = unitValueDecimal, // 使用BigDecimal精确值
             lastUpdateTime = LocalDateTime.now()
         )
         repository.updateAsset(updatedAsset)
@@ -106,12 +109,12 @@ class UpdateMarketDataUseCase @Inject constructor(
         val volatilityMap = allAnalyses.associate { it.assetId to it.volatility }
         val sevenDayReturnMap = allAnalyses.associate { it.assetId to it.sevenDayReturn }
 
-        // 1. 计算并更新买入因子及日志
-        val totalAssetsValue = portfolio.assets.sumOf { it.currentMarketValue } + portfolio.cash
+        // 1. 计算并更新买入因子及日志 - 步骤6: 使用BigDecimal精确计算
+        val totalAssetsValueDecimal = portfolio.totalAssetsValueDecimal
         portfolio.assets.forEach { asset ->
             val vol = volatilityMap[asset.id]
             val sevenDayRet = sevenDayReturnMap[asset.id]
-            val factors = buyCalc.calculate(asset, totalAssetsValue, vol, sevenDayRet)
+            val factors = buyCalc.calculate(asset, totalAssetsValueDecimal.toDouble(), vol, sevenDayRet)
             repository.updateAssetBuyFactorWithLog(
                 asset.id,
                 factors.buyFactor,
@@ -123,10 +126,10 @@ class UpdateMarketDataUseCase @Inject constructor(
             )
         }
 
-        // 2. 计算卖出阈值及风险因子
+        // 2. 计算卖出阈值及风险因子 - 步骤6: 使用BigDecimal精确计算
         val sellThresholdResult = sellCalc.calculateWithLogs(
             portfolio.assets,
-            portfolio.cash,
+            portfolio.getCashValue().toDouble(), // 使用BigDecimal现金值
             volatilityMap
         )
 

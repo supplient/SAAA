@@ -28,7 +28,7 @@ fun AssetAnalysisScreen(
     onBackClick: () -> Unit = {},
     onEditAsset: (java.util.UUID) -> Unit = {}
 ) {
-    val analyses by viewModel.assetAnalyses.collectAsState()
+    val analyses by viewModel.assetAnalysesDecimal.collectAsState() // 步骤8: 切换到BigDecimal版本
     val portfolio by viewModel.portfolioState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     
@@ -88,7 +88,7 @@ fun AssetAnalysisScreen(
         ) {
             // 资产分析表格
             AssetAnalysisTable(
-                analyses = viewModel.sortedAssetAnalyses.collectAsState().value,
+                analyses = viewModel.sortedAssetAnalysesDecimal.collectAsState().value, // 步骤8: 切换到BigDecimal版本
                 isHidden = viewModel.isAssetAmountHidden.collectAsState().value,
                 onEditAsset = onEditAsset,
                 showSortDialog = showSortDialog,

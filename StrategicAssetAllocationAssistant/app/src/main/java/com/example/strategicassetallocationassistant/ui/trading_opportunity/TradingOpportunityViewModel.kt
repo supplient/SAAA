@@ -65,23 +65,27 @@ class TradingOpportunityViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
+    /** 步骤6: 切换到BigDecimal版本的卖出机会检查 */
     fun checkSell() {
         viewModelScope.launch {
             val portfolio = repository.getPortfolioOnce()
-            val items = sellCalculator.calculate(portfolio)
+            val items = sellCalculator.calculateWithDecimal(portfolio)
             if (items.isNotEmpty()) repository.insertTradingOpportunities(items)
             _reasoningLog.value = sellCalculator.lastLog
         }
     }
 
+    /** 步骤6: 切换到BigDecimal版本的买入机会检查 */
     fun checkBuy() {
         viewModelScope.launch {
             val portfolio = repository.getPortfolioOnce()
-            val items = buyCalculator.calculate(portfolio)
+            val items = buyCalculator.calculateWithDecimal(portfolio)
             if (items.isNotEmpty()) repository.insertTradingOpportunities(items)
             _reasoningLog.value = buyCalculator.lastLog
         }
     }
+
+    // 步骤8: 移除Double版本的方法，已完全切换到BigDecimal版本
 
     fun clearAll() {
         viewModelScope.launch { repository.clearTradingOpportunities() }

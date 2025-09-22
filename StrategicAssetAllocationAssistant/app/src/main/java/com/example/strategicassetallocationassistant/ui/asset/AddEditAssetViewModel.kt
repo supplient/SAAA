@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.SavedStateHandle
 import com.example.strategicassetallocationassistant.data.repository.PortfolioRepository
+import com.example.strategicassetallocationassistant.ui.common.util.MoneyUtils
+import com.example.strategicassetallocationassistant.ui.common.util.toBigDecimalMoney
+import com.example.strategicassetallocationassistant.ui.common.util.toBigDecimalShare
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
@@ -62,8 +66,9 @@ class AddEditAssetViewModel @Inject constructor(
                     _name.value = asset.name
                     _targetWeightInput.value = (asset.targetWeight * 100).toString()
                     _code.value = asset.code ?: ""
-                    _sharesInput.value = asset.shares?.toString() ?: ""
-                    _unitValueInput.value = asset.unitValue?.toString() ?: ""
+                    // 优先使用BigDecimal字段 (步骤5: UI模型双字段过渡)
+                    _sharesInput.value = asset.getSharesValue()?.let { MoneyUtils.formatShare(it) } ?: ""
+                    _unitValueInput.value = asset.getUnitValueValue()?.let { MoneyUtils.formatMoney(it) } ?: ""
                     _note.value = asset.note.orEmpty()
                 }
             }
@@ -117,5 +122,40 @@ class AddEditAssetViewModel @Inject constructor(
             lastUpdateTime = LocalDateTime.now(),
             note = _note.value.ifBlank { null }
         )
+    }
+
+    /** BigDecimal版本的Asset构建 (步骤5: UI模型双字段过渡) */
+    private fun buildAssetDecimal(): Asset? {
+        // Basic validation
+        if (_name.value.isBlank()) return null
+        val targetWeight = _targetWeightInput.value.toDoubleOrNull() ?: return null
+        val sharesDecimal = if (_sharesInput.value.isBlank()) null else _sharesInput.value.toBigDecimalShare()
+        val unitValueDecimal = if (_unitValueInput.value.isBlank()) null else _unitValueInput.value.toBigDecimalMoney()
+
+        return Asset(
+            id = editingAssetId ?: UUID.randomUUID(),
+            name = _name.value.trim(),
+            targetWeight = targetWeight / 100.0, // UI uses percentage input
+            code = _code.value.ifBlank { null },
+            // Double字段 (向后兼容)
+            shares = sharesDecimal?.toDouble(),
+            unitValue = unitValueDecimal?.toDouble(),
+            // BigDecimal字段 (精确版本)
+            sharesDecimal = sharesDecimal,
+            unitValueDecimal = unitValueDecimal,
+            lastUpdateTime = LocalDateTime.now(),
+            note = _note.value.ifBlank { null }
+        )
+    }
+
+    /** BigDecimal版本的保存方法 */
+    suspend fun saveWithDecimal(): Boolean {
+        val parsed = buildAssetDecimal() ?: return false
+        if (editingAssetId == null) {
+            repository.insertAsset(parsed)
+        } else {
+            repository.updateAsset(parsed)
+        }
+        return true
     }
 }

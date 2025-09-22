@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.example.strategicassetallocationassistant.GenericAssetTable
 import com.example.strategicassetallocationassistant.CommonAssetColumns
+import com.example.strategicassetallocationassistant.ui.common.util.MoneyUtils
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,10 +32,10 @@ fun AddEditTransactionScreen(navController: NavController) {
     val viewModel: AddEditTransactionViewModel = hiltViewModel()
     val type by viewModel.type.collectAsState()
     val shares by viewModel.sharesInput.collectAsState()
-    val currentPrice by viewModel.currentPrice.collectAsState()
+    val currentPrice by viewModel.currentPriceDecimal.collectAsState() // 步骤7: 切换到BigDecimal版本
     val fee by viewModel.feeInput.collectAsState()
     val reason by viewModel.reasonInput.collectAsState()
-    val previewInfos by viewModel.previewInfos.collectAsState()
+    val previewInfos by viewModel.previewInfosDecimal.collectAsState() // 步骤7: 切换到BigDecimal版本
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val isEditing = viewModel.isEditing
@@ -127,7 +128,7 @@ fun AddEditTransactionScreen(navController: NavController) {
             // 行2 单价 + 刷新
             val isRefreshing by viewModel.isRefreshing.collectAsState()
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "单价: ¥${currentPrice?.let { String.format("%.4f", it) } ?: "-"}", modifier = Modifier.weight(1f))
+                Text(text = "单价: ${currentPrice?.let { MoneyUtils.formatMoney(it) } ?: "-"}", modifier = Modifier.weight(1f))
                 if (isRefreshing) {
                     CircularProgressIndicator(Modifier.size(20.dp))
                 } else {
@@ -142,9 +143,9 @@ fun AddEditTransactionScreen(navController: NavController) {
                 }
             }
 
-            // 行3 手续费 & 总额
+            // 行3 手续费 & 总额 - 步骤7: 切换到BigDecimal版本显示
             val feeError by viewModel.feeError.collectAsState()
-            val totalAmount by viewModel.totalAmount.collectAsState()
+            val totalAmount by viewModel.totalAmountDecimal.collectAsState()
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = fee,
@@ -183,7 +184,8 @@ fun AddEditTransactionScreen(navController: NavController) {
                 val canSave by viewModel.canSave.collectAsState()
                 Button(enabled = canSave, onClick = {
                     coroutineScope.launch {
-                        val success = viewModel.save()
+                        // 步骤7: 切换到BigDecimal版本的保存方法
+                        val success = viewModel.saveWithDecimal()
                         if (success) {
                             Toast.makeText(context, "保存成功", Toast.LENGTH_SHORT).show()
                             navController.navigateUp()
