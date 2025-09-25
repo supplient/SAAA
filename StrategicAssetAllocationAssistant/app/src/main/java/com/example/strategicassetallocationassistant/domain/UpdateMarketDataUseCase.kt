@@ -94,11 +94,12 @@ class UpdateMarketDataUseCase @Inject constructor(
         val rTilde = prefs.halfSaturationR.first()
         val dTilde = prefs.halfSaturationD.first()
         val alpha = prefs.alpha.first()
+        val volatilityWeight = prefs.volatilityWeight.first()
 
         val baseSell = prefs.baseSellThreshold.first()
         val halfRisk = prefs.halfTotalRisk.first()
 
-        val buyCalc = BuyFactorCalculator(rTilde, dTilde, alpha)
+        val buyCalc = BuyFactorCalculator(rTilde, dTilde, alpha, volatilityWeight)
         val sellCalc = SellThresholdCalculator(baseSell, halfRisk)
 
         // 重新获取最新 Portfolio（已包含更新后的 unitValue）

@@ -125,17 +125,20 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
             val halfR by viewModel.halfSaturationR.collectAsState()
             val halfD by viewModel.halfSaturationD.collectAsState()
             val alpha by viewModel.alpha.collectAsState()
+            val volatilityWeight by viewModel.volatilityWeight.collectAsState()
 
             fun Double.toInputString(): String = String.format("%.8f", this)
 
             var rInput by remember { mutableStateOf(halfR.toInputString()) }
             var dInput by remember { mutableStateOf(halfD.toInputString()) }
             var alphaInput by remember { mutableStateOf(alpha.toInputString()) }
+            var volatilityWeightInput by remember { mutableStateOf(volatilityWeight.toInputString()) }
 
             // 同步输入框的值与ViewModel的值
             LaunchedEffect(halfR) { rInput = halfR.toInputString() }
             LaunchedEffect(halfD) { dInput = halfD.toInputString() }
             LaunchedEffect(alpha) { alphaInput = alpha.toInputString() }
+            LaunchedEffect(volatilityWeight) { volatilityWeightInput = volatilityWeight.toInputString() }
 
             Text("买入因子参数", modifier = Modifier.padding(top = 16.dp))
 
@@ -166,6 +169,16 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = 
                     it.toDoubleOrNull()?.let { v -> viewModel.onAlphaChanged(v) }
                 },
                 label = { Text("偏移权重 α (0-1)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = volatilityWeightInput,
+                onValueChange = {
+                    volatilityWeightInput = it
+                    it.toDoubleOrNull()?.let { v -> viewModel.onVolatilityWeightChanged(v) }
+                },
+                label = { Text("波动率权重 w (0-1)") },
                 modifier = Modifier.fillMaxWidth()
             )
 

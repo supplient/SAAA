@@ -33,6 +33,9 @@ class SettingsViewModel @Inject constructor(
     private val _alpha = MutableStateFlow(PreferencesRepository.DEFAULT_ALPHA)
     val alpha: StateFlow<Double> = _alpha
 
+    private val _volatilityWeight = MutableStateFlow(PreferencesRepository.DEFAULT_VOLATILITY_WEIGHT)
+    val volatilityWeight: StateFlow<Double> = _volatilityWeight
+
     private val _baseSell = MutableStateFlow(PreferencesRepository.DEFAULT_BASE_SELL_THRESHOLD)
     val baseSell: StateFlow<Double> = _baseSell
 
@@ -49,6 +52,7 @@ class SettingsViewModel @Inject constructor(
             _halfSatR.value = prefs.halfSaturationR.first()
             _halfSatD.value = prefs.halfSaturationD.first()
             _alpha.value = prefs.alpha.first()
+            _volatilityWeight.value = prefs.volatilityWeight.first()
 
             _baseSell.value = prefs.baseSellThreshold.first()
             _halfRisk.value = prefs.halfTotalRisk.first()
@@ -80,6 +84,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             prefs.setAlpha(value)
             _alpha.value = value
+        }
+    }
+
+    fun onVolatilityWeightChanged(value: Double) {
+        viewModelScope.launch {
+            prefs.setVolatilityWeight(value)
+            _volatilityWeight.value = value
         }
     }
 
