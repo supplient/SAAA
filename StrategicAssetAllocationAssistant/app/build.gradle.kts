@@ -17,8 +17,8 @@ android {
         applicationId = "com.example.strategicassetallocationassistant"
         minSdk = 33
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.2.0"
+        versionCode = 14
+        versionName = "0.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

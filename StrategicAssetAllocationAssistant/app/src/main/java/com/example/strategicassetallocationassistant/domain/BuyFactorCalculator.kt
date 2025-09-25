@@ -9,19 +9,21 @@ import kotlin.math.max
  * 公式来源：
  *  E = r / (r + r~)  其中 r = (target - current)/target
  *  D = d / (d + d~)  其中 d = max(0, -delta) ; delta 为七日涨跌幅
- *  B = (1 - k) ( alpha * E + (1 - alpha) * D )
+ *  B = (1 - w * k) ( alpha * E + (1 - alpha) * D )
  *
  * 默认参数：
  *  r~  = 0.10   (半饱和相对偏移)
  *  d~  = 0.05   (半饱和跌幅)
  *  alpha = 0.8  (偏移权重)
+ *  w   = 0.5    (波动率权重)
  *
  * 其中 k 为资产年化波动率 [0,1]（>=1 时会将 B 裁剪为 0）。
  */
 class BuyFactorCalculator(
     private val halfSaturationRelativeOffset: Double = 0.10, // r~
     private val halfSaturationDrawdown: Double = 0.05,      // d~
-    private val alpha: Double = 0.8                         // α
+    private val alpha: Double = 0.8,                        // α
+    private val volatilityWeight: Double = 0.5              // w - 波动率权重
 ) {
 
     data class Result(
@@ -58,12 +60,15 @@ class BuyFactorCalculator(
         val d = max(0.0, -delta)
         val drawdownFactor = if (d <= 0) 0.0 else d / (d + halfSaturationDrawdown)
 
+        // 去波动率的买入因子
+        val preVolatilityBuyFactor = alpha * offsetFactor + (1 - alpha) * drawdownFactor
+
+        // 资产波动率
         val k = volatility ?: 0.0
         val kClamped = k.coerceIn(0.0, 1.0)
 
-        // 去波动率的买入因子
-        val preVolatilityBuyFactor = alpha * offsetFactor + (1 - alpha) * drawdownFactor
-        val buyFactor = (1 - kClamped) * preVolatilityBuyFactor
+        // 最终买入因子
+        val buyFactor = (1 - volatilityWeight * kClamped) * preVolatilityBuyFactor
 
         // 生成计算过程日志
         val log = buildString {
@@ -82,8 +87,8 @@ class BuyFactorCalculator(
             append("<偏移权重>*<偏移因子>+<1-偏移权重>*<跌幅因子>=<去波动率的买入因子>; ")
             append(String.format("%.3f*%.3f+%.3f*%.3f=%.3f", alpha, offsetFactor, 1-alpha, drawdownFactor, preVolatilityBuyFactor))
             append("; ")
-            append("<1-资产波动率>*<去波动率的买入因子>=<买入因子>; ")
-            append(String.format("%.3f*%.3f=%.3f", 1-kClamped, preVolatilityBuyFactor, buyFactor))
+            append("<1-波动率权重*资产波动率>*<去波动率的买入因子>=<买入因子>; ")
+            append(String.format("(1-%.3f*%.3f)*%.3f=%.3f", volatilityWeight, kClamped, preVolatilityBuyFactor, buyFactor))
         }
 
         return Result(relativeOffset, offsetFactor, drawdownFactor, preVolatilityBuyFactor, buyFactor, log)

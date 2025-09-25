@@ -32,13 +32,16 @@ fun AddEditTransactionScreen(navController: NavController) {
     val viewModel: AddEditTransactionViewModel = hiltViewModel()
     val type by viewModel.type.collectAsState()
     val shares by viewModel.sharesInput.collectAsState()
-    val currentPrice by viewModel.currentPriceDecimal.collectAsState() // 步骤7: 切换到BigDecimal版本
+    val priceInput by viewModel.priceInput.collectAsState()
     val fee by viewModel.feeInput.collectAsState()
     val reason by viewModel.reasonInput.collectAsState()
     val previewInfos by viewModel.previewInfosDecimal.collectAsState() // 步骤7: 切换到BigDecimal版本
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val isEditing = viewModel.isEditing
+    
+    // 删除确认对话框状态
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(title = {
@@ -127,10 +130,19 @@ fun AddEditTransactionScreen(navController: NavController) {
 
             // 行2 单价 + 刷新
             val isRefreshing by viewModel.isRefreshing.collectAsState()
+            val priceError by viewModel.priceError.collectAsState()
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "单价: ${currentPrice?.let { MoneyUtils.formatMoney(it) } ?: "-"}", modifier = Modifier.weight(1f))
+                OutlinedTextField(
+                    value = priceInput,
+                    onValueChange = viewModel::onPriceChange,
+                    label = { Text("单价") },
+                    isError = priceError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
                 if (isRefreshing) {
-                    CircularProgressIndicator(Modifier.size(20.dp))
+                    CircularProgressIndicator(Modifier.size(40.dp))
                 } else {
                     IconButton(onClick = {
                         coroutineScope.launch {
@@ -172,11 +184,12 @@ fun AddEditTransactionScreen(navController: NavController) {
 
                 if (isEditing) {
                     Spacer(Modifier.width(8.dp))
-                    OutlinedButton(onClick = {
-                        coroutineScope.launch {
-                            viewModel.delete(); navController.navigateUp()
-                        }
-                    }) { Text("删除") }
+                    OutlinedButton(
+                        onClick = { showDeleteDialog = true },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) { Text("删除") }
                 }
 
                 Spacer(Modifier.weight(1f))
@@ -196,5 +209,66 @@ fun AddEditTransactionScreen(navController: NavController) {
                 }) { Text("保存") }
             }
         }
+        
+        // 删除确认对话框
+        if (showDeleteDialog) {
+            DeleteTransactionDialog(
+                onConfirm = {
+                    coroutineScope.launch {
+                        viewModel.delete()
+                        navController.navigateUp()
+                    }
+                    showDeleteDialog = false
+                },
+                onCancel = {
+                    showDeleteDialog = false
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun DeleteTransactionDialog(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Text("删除交易记录")
+        },
+        text = {
+            Column {
+                Text("确认要删除这条交易记录吗？")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "⚠️ 此操作会回滚该交易对可用现金和资产份额的影响",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "此操作不可撤销！",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("确认删除")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text("取消")
+            }
+        }
+    )
 }

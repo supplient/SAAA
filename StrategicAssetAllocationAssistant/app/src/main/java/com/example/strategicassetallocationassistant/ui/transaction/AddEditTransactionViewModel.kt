@@ -61,11 +61,24 @@ class AddEditTransactionViewModel @Inject constructor(
     private val _sharesError = MutableStateFlow(false)
     val sharesError: StateFlow<Boolean> = _sharesError.asStateFlow()
 
+    // 用户输入的单价
+    private val _priceInput = MutableStateFlow("")
+    val priceInput: StateFlow<String> = _priceInput.asStateFlow()
+
+    // 单价输入错误状态
+    private val _priceError = MutableStateFlow(false)
+    val priceError: StateFlow<Boolean> = _priceError.asStateFlow()
+
     // 步骤8: 移除Double版本的currentPrice，已由currentPriceDecimal替代
 
     // BigDecimal版本的当前资产单价 (步骤5: UI模型双字段过渡)
     val currentPriceDecimal: StateFlow<BigDecimal?> = combine(assets, _selectedAssetId) { list, id ->
         list.firstOrNull { it.id == id }?.getUnitValueValue()
+    }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = null)
+
+    // 用户输入的价格（用于计算，优先使用用户输入，否则使用资产当前价格）
+    val userPriceDecimal: StateFlow<BigDecimal?> = combine(_priceInput, currentPriceDecimal) { inputStr, assetPrice ->
+        inputStr.toBigDecimalMoney() ?: assetPrice
     }.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = null)
 
     private val _feeInput = MutableStateFlow("5")
@@ -77,7 +90,7 @@ class AddEditTransactionViewModel @Inject constructor(
     // 步骤8: 移除Double版本的totalAmount，已由totalAmountDecimal替代
 
     // BigDecimal版本的总金额计算 (步骤5: UI模型双字段过渡)
-    val totalAmountDecimal: StateFlow<String> = combine(_sharesInput, currentPriceDecimal, _feeInput) { sharesStr, priceDecimal, feeStr ->
+    val totalAmountDecimal: StateFlow<String> = combine(_sharesInput, userPriceDecimal, _feeInput) { sharesStr, priceDecimal, feeStr ->
         val sharesDecimal = sharesStr.toBigDecimalShare()
         val feeDecimal = feeStr.toBigDecimalMoney()
         if (sharesDecimal == null || priceDecimal == null || feeDecimal == null) return@combine "-"
@@ -97,6 +110,13 @@ class AddEditTransactionViewModel @Inject constructor(
         val asset = assets.value.firstOrNull { it.id == assetId } ?: return false
         _isRefreshing.value = true
         val ok = updateMarketData.refreshAsset(asset)
+        if (ok) {
+            // 等待资产数据更新后获取新价格，避免竞态条件
+            val updatedAsset = assets.first().firstOrNull { it.id == assetId }
+            updatedAsset?.getUnitValueValue()?.let { newPrice ->
+                _priceInput.value = MoneyUtils.formatMoneyPlain(newPrice)
+            }
+        }
         _isRefreshing.value = false
         return ok
     }
@@ -114,6 +134,15 @@ class AddEditTransactionViewModel @Inject constructor(
     val isEditing: Boolean get() = editingTxId != null
 
     init {
+        // 当选择资产或资产价格变化时，自动填充价格输入框（仅在新增模式且价格输入框为空时）
+        viewModelScope.launch {
+            currentPriceDecimal.collect { price ->
+                if (price != null && !isEditing && _priceInput.value.isBlank()) {
+                    _priceInput.value = MoneyUtils.formatMoneyPlain(price)
+                }
+            }
+        }
+
         // 步骤8: 移除Double版本的预览计算逻辑，保留BigDecimal版本
 
         // BigDecimal版本的预览信息计算 (步骤5: UI模型双字段过渡)
@@ -164,6 +193,7 @@ class AddEditTransactionViewModel @Inject constructor(
                     _type.value = tx.type
                     _selectedAssetId.value = tx.assetId
                     _sharesInput.value = tx.shares.toString()
+                    _priceInput.value = tx.priceDecimal?.let { MoneyUtils.formatMoneyPlain(it) } ?: tx.price.toString()
                     _feeInput.value = tx.fee.toString()
                     _reasonInput.value = tx.reason.orEmpty()
                 }
@@ -177,6 +207,8 @@ class AddEditTransactionViewModel @Inject constructor(
                     _type.value = op.type
                     _selectedAssetId.value = op.assetId
                     _sharesInput.value = op.shares.toString()
+                    // 对于机会，使用当前资产价格而不是机会中的价格（机会可能过期）
+                    // 价格会在选择资产后自动填充
                     _feeInput.value = op.fee.toString()
                     _reasonInput.value = op.reason
                 }
@@ -198,6 +230,8 @@ class AddEditTransactionViewModel @Inject constructor(
     }
 
     fun onSharesChange(value: String) { _sharesInput.value = value; validateShares() }
+
+    fun onPriceChange(value: String) { _priceInput.value = value; validatePrice() }
 
     /** 增加100股 */
     fun incrementShares() {
@@ -233,21 +267,26 @@ class AddEditTransactionViewModel @Inject constructor(
         _feeError.value = _feeInput.value.toDoubleOrNull()?.let { it < 0 } ?: true
     }
 
+    private fun validatePrice() {
+        val price = _priceInput.value.toBigDecimalMoney()
+        _priceError.value = price?.let { it <= BigDecimal.ZERO } ?: true
+    }
+
     // 保存按钮可用状态
-    private val _basicValid: StateFlow<Pair<Boolean, Boolean>> = combine(sharesError, feeError) { sErr, fErr ->
-        Pair(!sErr, !fErr)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(false, false))
+    private val _basicValid: StateFlow<Triple<Boolean, Boolean, Boolean>> = combine(sharesError, feeError, priceError) { sErr, fErr, pErr ->
+        Triple(!sErr, !fErr, !pErr)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Triple(false, false, false))
 
     val canSave: StateFlow<Boolean> = combine(
         _basicValid,
         _selectedAssetId,
-        currentPriceDecimal, // 步骤8: 切换到BigDecimal版本
+        userPriceDecimal, // 使用用户输入的价格
         _sharesInput,
         _feeInput
-    ) { validPair, aid, price, sharesStr, feeStr ->
-        val (shareOk, feeOk) = validPair
-        shareOk && feeOk && aid != null && price != null &&
-                sharesStr.isNotBlank() && feeStr.isNotBlank()
+    ) { validTriple, aid, price, sharesStr, feeStr ->
+        val (shareOk, feeOk, priceOk) = validTriple
+        shareOk && feeOk && priceOk && aid != null && price != null &&
+                sharesStr.isNotBlank() && feeStr.isNotBlank() && _priceInput.value.isNotBlank()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     // 步骤8: 移除Double版本的save()方法，已由saveWithDecimal()替代
@@ -265,7 +304,7 @@ class AddEditTransactionViewModel @Inject constructor(
     /** BigDecimal版本的Transaction构建 (步骤5: UI模型双字段过渡) */
     private fun buildTransactionDecimal(): Transaction? {
         val sharesDecimal = _sharesInput.value.toBigDecimalShare() ?: return null
-        val priceDecimal = currentPriceDecimal.value ?: return null
+        val priceDecimal = userPriceDecimal.value ?: return null  // 使用用户输入的价格
         val feeDecimal = _feeInput.value.toBigDecimalMoney() ?: MoneyUtils.createMoney("5")
         val assetUuid = _selectedAssetId.value ?: return null
 

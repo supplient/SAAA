@@ -446,6 +446,14 @@ class PortfolioRepository @Inject constructor(
         }
     }
 
+    /**
+     * 清空所有交易记录，但不影响资产份额和现金
+     * 与deleteTransaction()不同，这个方法只删除交易记录本身
+     */
+    suspend fun clearAllTransactions() {
+        transactionDao.deleteAllTransactions()
+    }
+
     /* ---------------------------- 交易机会 CRUD ---------------------------- */
     suspend fun insertTradingOpportunities(items: List<com.example.strategicassetallocationassistant.TradingOpportunity>) {
         tradingOpportunityDao.insertAll(items.map { it.toEntity() })

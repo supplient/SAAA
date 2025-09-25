@@ -23,6 +23,7 @@ class PreferencesRepository @Inject constructor(
         private val KEY_HALF_SATURATION_R = androidx.datastore.preferences.core.doublePreferencesKey("half_saturation_relative_offset")
         private val KEY_HALF_SATURATION_D = androidx.datastore.preferences.core.doublePreferencesKey("half_saturation_drawdown")
         private val KEY_ALPHA = androidx.datastore.preferences.core.doublePreferencesKey("offset_weight_alpha")
+        private val KEY_VOLATILITY_WEIGHT = androidx.datastore.preferences.core.doublePreferencesKey("volatility_weight")
 
         // Sell threshold params
         private val KEY_BASE_SELL_THRESHOLD = androidx.datastore.preferences.core.doublePreferencesKey("base_sell_threshold")
@@ -31,6 +32,7 @@ class PreferencesRepository @Inject constructor(
         const val DEFAULT_HALF_SATURATION_R = 0.10
         const val DEFAULT_HALF_SATURATION_D = 0.05
         const val DEFAULT_ALPHA = 0.8
+        const val DEFAULT_VOLATILITY_WEIGHT = 0.5
 
         const val DEFAULT_BASE_SELL_THRESHOLD = 0.30
         const val DEFAULT_HALF_TOTAL_RISK = 0.00035
@@ -43,6 +45,7 @@ class PreferencesRepository @Inject constructor(
     val halfSaturationR: Flow<Double> = context.dataStore.data.map { it[KEY_HALF_SATURATION_R] ?: DEFAULT_HALF_SATURATION_R }
     val halfSaturationD: Flow<Double> = context.dataStore.data.map { it[KEY_HALF_SATURATION_D] ?: DEFAULT_HALF_SATURATION_D }
     val alpha: Flow<Double> = context.dataStore.data.map { it[KEY_ALPHA] ?: DEFAULT_ALPHA }
+    val volatilityWeight: Flow<Double> = context.dataStore.data.map { it[KEY_VOLATILITY_WEIGHT] ?: DEFAULT_VOLATILITY_WEIGHT }
 
     val baseSellThreshold: Flow<Double> = context.dataStore.data.map { it[KEY_BASE_SELL_THRESHOLD] ?: DEFAULT_BASE_SELL_THRESHOLD }
     val halfTotalRisk: Flow<Double> = context.dataStore.data.map { it[KEY_HALF_TOTAL_RISK] ?: DEFAULT_HALF_TOTAL_RISK }
@@ -63,6 +66,11 @@ class PreferencesRepository @Inject constructor(
 
     suspend fun setAlpha(value: Double) {
         context.dataStore.edit { it[KEY_ALPHA] = value }
+    }
+
+    suspend fun setVolatilityWeight(value: Double) {
+        val clampedValue = value.coerceIn(0.0, 1.0)
+        context.dataStore.edit { it[KEY_VOLATILITY_WEIGHT] = clampedValue }
     }
 
     suspend fun setBaseSellThreshold(value: Double) {
