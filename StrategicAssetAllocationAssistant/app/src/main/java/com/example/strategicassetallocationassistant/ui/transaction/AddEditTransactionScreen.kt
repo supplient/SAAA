@@ -33,6 +33,7 @@ fun AddEditTransactionScreen(navController: NavController) {
     val type by viewModel.type.collectAsState()
     val shares by viewModel.sharesInput.collectAsState()
     val currentPrice by viewModel.currentPriceDecimal.collectAsState() // 步骤7: 切换到BigDecimal版本
+    val priceInput by viewModel.priceInput.collectAsState()
     val fee by viewModel.feeInput.collectAsState()
     val reason by viewModel.reasonInput.collectAsState()
     val previewInfos by viewModel.previewInfosDecimal.collectAsState() // 步骤7: 切换到BigDecimal版本
@@ -127,10 +128,19 @@ fun AddEditTransactionScreen(navController: NavController) {
 
             // 行2 单价 + 刷新
             val isRefreshing by viewModel.isRefreshing.collectAsState()
+            val priceError by viewModel.priceError.collectAsState()
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "单价: ${currentPrice?.let { MoneyUtils.formatMoney(it) } ?: "-"}", modifier = Modifier.weight(1f))
+                OutlinedTextField(
+                    value = priceInput,
+                    onValueChange = viewModel::onPriceChange,
+                    label = { Text("单价") },
+                    isError = priceError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
                 if (isRefreshing) {
-                    CircularProgressIndicator(Modifier.size(20.dp))
+                    CircularProgressIndicator(Modifier.size(40.dp))
                 } else {
                     IconButton(onClick = {
                         coroutineScope.launch {

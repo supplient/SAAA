@@ -128,6 +128,13 @@ object MoneyUtils {
     }
     
     /**
+     * 格式化为金额字符串，不带货币符号 (4位小数显示)
+     */
+    fun formatMoneyPlain(amount: BigDecimal): String {
+        return amount.setScale(4, DEFAULT_ROUNDING).toString()
+    }
+    
+    /**
      * 判断两个BigDecimal是否在指定精度下相等
      */
     fun isEqual(a: BigDecimal?, b: BigDecimal?, scale: Int = MONEY_SCALE): Boolean {
