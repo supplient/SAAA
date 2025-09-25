@@ -6,14 +6,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,10 +26,36 @@ fun TransactionListScreen(
     viewModel: TransactionViewModel = hiltViewModel()
 ) {
     val transactions by viewModel.transactionsState.collectAsState()
+    val scope = rememberCoroutineScope()
+    
+    // 清空确认对话框状态
+    var showClearDialog by remember { mutableStateOf(false) }
+    var countdown by remember { mutableStateOf(5) }
+    var canConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("交易记录") })
+            CenterAlignedTopAppBar(
+                title = { Text("交易记录") },
+                actions = {
+                    // 只有当有交易记录时才显示清空按钮
+                    if (transactions.isNotEmpty()) {
+                        IconButton(
+                            onClick = { 
+                                showClearDialog = true
+                                countdown = 5
+                                canConfirm = false
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteSweep,
+                                contentDescription = "清空所有交易记录",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            )
         }
     ) { inner ->
         if (transactions.isEmpty()) {
@@ -41,6 +70,34 @@ fun TransactionListScreen(
             ) {
                 items(transactions) { displayItem ->
                     TransactionRow(displayItem = displayItem, onClick = { navToEdit(displayItem.transaction.id) })
+                }
+            }
+        }
+        
+        // 清空确认对话框
+        if (showClearDialog) {
+            ClearTransactionsDialog(
+                countdown = countdown,
+                canConfirm = canConfirm,
+                onConfirm = {
+                    scope.launch {
+                        viewModel.clearAllTransactions()
+                        showClearDialog = false
+                    }
+                },
+                onCancel = {
+                    showClearDialog = false
+                }
+            )
+            
+            // 倒计时逻辑
+            LaunchedEffect(showClearDialog) {
+                if (showClearDialog) {
+                    repeat(5) {
+                        delay(1000)
+                        countdown--
+                    }
+                    canConfirm = true
                 }
             }
         }
@@ -112,4 +169,54 @@ private fun TransactionRow(displayItem: TransactionDisplayItem, onClick: () -> U
             }
         }
     }
+}
+
+@Composable
+private fun ClearTransactionsDialog(
+    countdown: Int,
+    canConfirm: Boolean,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Text("清空所有交易记录")
+        },
+        text = {
+            Column {
+                Text("此操作将删除所有交易记录，但不会影响您的资产份额和可用现金。")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "⚠️ 此操作不可撤销！",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (!canConfirm && countdown > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "请等待 $countdown 秒后确认",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = canConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("确认清空")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text("取消")
+            }
+        }
+    )
 }

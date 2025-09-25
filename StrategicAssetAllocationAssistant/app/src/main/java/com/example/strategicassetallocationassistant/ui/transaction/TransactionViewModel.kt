@@ -36,4 +36,11 @@ class TransactionViewModel @Inject constructor(
     suspend fun deleteTransaction(tx: Transaction) {
         repository.deleteTransaction(tx)
     }
+
+    /**
+     * 清空所有交易记录，但不影响资产份额和现金
+     */
+    suspend fun clearAllTransactions() {
+        repository.clearAllTransactions()
+    }
 }
