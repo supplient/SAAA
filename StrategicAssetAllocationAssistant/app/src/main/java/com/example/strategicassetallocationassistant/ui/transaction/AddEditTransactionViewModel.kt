@@ -111,8 +111,9 @@ class AddEditTransactionViewModel @Inject constructor(
         _isRefreshing.value = true
         val ok = updateMarketData.refreshAsset(asset)
         if (ok) {
-            // 刷新成功后，更新价格输入框为新的资产价格
-            currentPriceDecimal.value?.let { newPrice ->
+            // 等待资产数据更新后获取新价格，避免竞态条件
+            val updatedAsset = assets.first().firstOrNull { it.id == assetId }
+            updatedAsset?.getUnitValueValue()?.let { newPrice ->
                 _priceInput.value = MoneyUtils.formatMoneyPlain(newPrice)
             }
         }
