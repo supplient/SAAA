@@ -164,7 +164,7 @@ class PortfolioRepository @Inject constructor(
             portfolioDao.insertPortfolio(PortfolioEntity.createWithDecimal(cashDecimal = cashDecimal))
         } else {
             // 更新时保持BigDecimal和Double同步
-            portfolioDao.updateCash(cashDecimal.toDouble())
+            portfolioDao.updateCashWithDecimal(cashDecimal.toDouble(), cashDecimal.toString())
         }
     }
 
@@ -314,7 +314,7 @@ class PortfolioRepository @Inject constructor(
             } else {
                 val currentCashDecimal = currentPortfolio.getCashValue()
                 val newCashDecimal = currentCashDecimal.add(finalCashDelta)
-                portfolioDao.updateCash(newCashDecimal.toDouble())
+                portfolioDao.updateCashWithDecimal(newCashDecimal.toDouble(), newCashDecimal.toString())
             }
         }
     }
@@ -361,7 +361,7 @@ class PortfolioRepository @Inject constructor(
             if (portfolio != null) {
                 val currentCashDecimal = portfolio.getCashValue()
                 val newCashDecimal = currentCashDecimal.add(finalCashDelta)
-                portfolioDao.updateCash(newCashDecimal.toDouble())
+                portfolioDao.updateCashWithDecimal(newCashDecimal.toDouble(), newCashDecimal.toString())
             }
 
             // 删除交易
@@ -405,7 +405,7 @@ class PortfolioRepository @Inject constructor(
                 portfolioDao.getPortfolioSuspend()?.let { portfolio ->
                     val currentCashDecimal = portfolio.getCashValue()
                     val newCashDecimal = currentCashDecimal.add(finalCashRollback)
-                    portfolioDao.updateCash(newCashDecimal.toDouble())
+                    portfolioDao.updateCashWithDecimal(newCashDecimal.toDouble(), newCashDecimal.toString())
                 }
             }
 
@@ -441,7 +441,7 @@ class PortfolioRepository @Inject constructor(
             portfolioDao.getPortfolioSuspend()?.let { portfolio ->
                 val currentCashDecimal = portfolio.getCashValue()
                 val newCashDecimal = currentCashDecimal.add(finalCashApply)
-                portfolioDao.updateCash(newCashDecimal.toDouble())
+                portfolioDao.updateCashWithDecimal(newCashDecimal.toDouble(), newCashDecimal.toString())
             }
         }
     }

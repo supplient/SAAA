@@ -41,6 +41,12 @@ interface PortfolioDao {
     @Query("UPDATE portfolio SET cash = :cash WHERE id = 1")
     suspend fun updateCash(cash: Double)
 
+    /**
+     * 更新现金金额（同时更新cash和cashDecimal字段以保持同步）
+     */
+    @Query("UPDATE portfolio SET cash = :cash, cashDecimal = :cashDecimal WHERE id = 1")
+    suspend fun updateCashWithDecimal(cash: Double, cashDecimal: String)
+
     /** 更新整体资产配置备注 */
     @Query("UPDATE portfolio SET note = :note WHERE id = 1")
     suspend fun updateNote(note: String?)
